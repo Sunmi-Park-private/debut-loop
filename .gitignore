@@ -1,0 +1,21 @@
+# 의존성
+node_modules/
+
+# 빌드 산출물
+dist/
+dist-single/
+
+# QA·분석 도구 출력
+.shots/
+graphify-out/
+
+# 임시 파일
+*.tmp.mjs
+*.log
+
+# OS
+.DS_Store
+
+# 마이그레이션 작업 문서 (로컬 전용 — 커밋하지 않음)
+docs/superpowers/specs/2026-08-06-incremental-pr-migration-design.md
+docs/superpowers/plans/2026-08-06-incremental-pr-migration.md
