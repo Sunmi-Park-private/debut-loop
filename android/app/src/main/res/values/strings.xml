@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Debut Loop!</string>
+    <string name="title_activity_main">Debut Loop!</string>
+    <string name="package_name">com.debutloop.game</string>
+    <string name="custom_url_scheme">com.debutloop.game</string>
+</resources>
