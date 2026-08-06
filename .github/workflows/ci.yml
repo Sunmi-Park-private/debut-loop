@@ -1,0 +1,30 @@
+# PR 검증 — 타입체크와 유닛 테스트로 회귀를 막는다.
+# 에셋을 내려받지 않으므로 1분 안쪽에 끝난다.
+name: CI
+
+on:
+  pull_request:
+
+# 같은 PR에 새 커밋이 오면 이전 실행은 취소 — 마지막 상태만 검증하면 된다
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: 타입체크
+        run: npm run typecheck
+
+      - name: 유닛 테스트
+        run: npx vitest run
