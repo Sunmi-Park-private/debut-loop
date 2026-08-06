@@ -1,0 +1,70 @@
+[
+  {
+    "id": "act2",
+    "trigger": {
+      "act": 2
+    },
+    "engine": "rhythm",
+    "name": "센터 대결",
+    "ticket": "audition_pass",
+    "gauges": {
+      "skill": 4,
+      "reputation": 4
+    }
+  },
+  {
+    "id": "act3",
+    "trigger": {
+      "act": 3
+    },
+    "engine": "rhythm",
+    "name": "무대 집중",
+    "ticket": "underground",
+    "gauges": {
+      "skill": 4,
+      "mental": 4
+    }
+  },
+  {
+    "id": "act4",
+    "trigger": {
+      "act": 4
+    },
+    "engine": "slot",
+    "skin": "photo",
+    "name": "포토카드 촬영",
+    "ticket": "photocard",
+    "gauges": {
+      "reputation": 4,
+      "bond": 4
+    }
+  },
+  {
+    "id": "clue4",
+    "trigger": {
+      "beatId": "d2_w22_clue4"
+    },
+    "engine": "dodge",
+    "skin": "clue",
+    "name": "단서 대조",
+    "ticket": "clue_piece",
+    "gauges": {
+      "mental": 4,
+      "bond": 2
+    }
+  },
+  {
+    "id": "block",
+    "trigger": {
+      "beatId": "d2_w24_block"
+    },
+    "engine": "dodge",
+    "name": "사보타주 저지",
+    "ticket": "true_gate",
+    "gauges": {
+      "skill": 3,
+      "mental": 3,
+      "reputation": 3
+    }
+  }
+]

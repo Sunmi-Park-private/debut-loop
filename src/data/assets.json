@@ -1,0 +1,24 @@
+{
+  "_note": "에셋 슬롯 매니페스트 — 파일이 public/ 아래 경로에 존재하면 자동 반영, 없으면 플레이스홀더. 디자이너는 파일만 드롭.",
+  "background": "assets/bg/practice.png",
+  "title": "assets/bg/title.png",
+  "loading": "assets/bg/loading.png",
+  "characters": {
+    "haru": {
+      "bust": "assets/char/haru_bust.png",
+      "stand": "assets/char/haru_stand.png",
+      "idle": {
+        "base": "assets/char/haru_idle_",
+        "frames": 16,
+        "fps": 10
+      }
+    },
+    "staff": {
+      "bust": "assets/char/staff_bust.png"
+    }
+  },
+  "gates": {
+    "rhythm": "assets/bg/gate_rhythm.jpg",
+    "dodge": "assets/bg/gate_dodge.jpg"
+  }
+}

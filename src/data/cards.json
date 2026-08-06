@@ -1,0 +1,59 @@
+[
+  {
+    "id": "vocal",
+    "name": "보컬 카드",
+    "icon": "🎤",
+    "source": "vocal",
+    "baseGauges": {
+      "skill": 6
+    }
+  },
+  {
+    "id": "dance",
+    "name": "안무 카드",
+    "icon": "💃",
+    "source": "dance",
+    "baseGauges": {
+      "skill": 4,
+      "mental": 2
+    }
+  },
+  {
+    "id": "promo",
+    "name": "홍보 카드",
+    "icon": "📸",
+    "source": "promo",
+    "baseGauges": {
+      "reputation": 6
+    }
+  },
+  {
+    "id": "funds",
+    "name": "자금 카드",
+    "icon": "💰",
+    "source": "funds",
+    "baseGauges": {
+      "capital": 6
+    }
+  },
+  {
+    "id": "audition",
+    "name": "오디션 카드",
+    "icon": "🎯",
+    "source": "audition",
+    "baseGauges": {
+      "reputation": 5,
+      "skill": 1
+    }
+  },
+  {
+    "id": "bond",
+    "name": "유대 카드",
+    "icon": "🤝",
+    "source": "bond",
+    "baseGauges": {
+      "mental": 5,
+      "bond": 8
+    }
+  }
+]

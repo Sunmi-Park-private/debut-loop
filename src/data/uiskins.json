@@ -1,0 +1,1643 @@
+{
+  "_note": "UI 스킨 슬롯 SSOT — ui.html 에디터가 읽음. 이미지가 있으면 skinNode가 교체, 없으면 기존 벡터.",
+  "screens": [
+    {
+      "id": "title",
+      "label": "타이틀 화면",
+      "slots": [
+        {
+          "id": "title-hero",
+          "label": "게임 타이틀 + 시작 버튼 통짜 (🎬 영상 · 화면 전체 cover · 권장 1080×2400)",
+          "file": "assets/ui/title-hero.mp4",
+          "size": [
+            430,
+            956
+          ],
+          "mode": "stretch",
+          "vid": true,
+          "scale": 1
+        }
+      ]
+    },
+    {
+      "id": "common",
+      "label": "UI 공통",
+      "slots": [
+        {
+          "id": "ui-frame",
+          "label": "프레임 (모든 팝업 패널 공통 — 개별 스킨 없을 때 폴백)",
+          "file": "",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "9slice",
+          "slice": 24,
+          "scale": 0.9
+        },
+        {
+          "id": "ui-back",
+          "label": "뒤로가기 버튼 (연습 ← 닫기 · ← 로비) — 1배율=원본 크기",
+          "file": "assets/ui/ui-back.png",
+          "size": [
+            160,
+            48
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1.3,
+          "natural": true,
+          "opacity": 0.2
+        },
+        {
+          "id": "ui-close-x",
+          "label": "X 버튼 (팝업 우상단 공통) — 1배율=원본 크기",
+          "file": "assets/ui/ui-close-x.png",
+          "size": [
+            44,
+            44
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.3,
+          "natural": true
+        },
+        {
+          "id": "ui-btn",
+          "label": "공용 버튼 (개별 스킨 없는 버튼 폴백) — 1배율=원본 크기",
+          "file": "assets/ui/ui-btn.png",
+          "size": [
+            200,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1.3,
+          "natural": true,
+          "opacity": 0.2
+        },
+        {
+          "id": "ui-start",
+          "label": "게임 시작 버튼 (타이틀 화면) — 1배율=원본 크기",
+          "file": "assets/ui/ui-start.png",
+          "size": [
+            220,
+            60
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.6,
+          "natural": true
+        }
+      ]
+    },
+    {
+      "id": "lobby",
+      "label": "메인 로비",
+      "slots": [
+        {
+          "id": "lobby-gauge-bar",
+          "label": "상단 게이지 상태바 · 로비",
+          "file": "assets/ui/lobby-gauge-bar.png",
+          "size": [
+            394,
+            64
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "game-gauge-bar",
+          "label": "상단 게이지 상태바 · 본게임(스토리)",
+          "file": "assets/ui/game-gauge-bar.png",
+          "size": [
+            394,
+            64
+          ],
+          "mode": "stretch",
+          "scale": 1
+        },
+        {
+          "id": "lobby-start",
+          "label": "START 원형 버튼",
+          "file": "assets/ui/lobby-start.png",
+          "size": [
+            128,
+            128
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1.5
+        },
+        {
+          "id": "lobby-icon-daily",
+          "label": "사이드 아이콘 · 데일리",
+          "file": "assets/ui/lobby-icon-daily.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1
+        },
+        {
+          "id": "lobby-icon-album",
+          "label": "사이드 아이콘 · 앨범",
+          "file": "assets/ui/lobby-icon-album.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1.1
+        },
+        {
+          "id": "lobby-icon-shop",
+          "label": "사이드 아이콘 · 상점",
+          "file": "assets/ui/lobby-icon-shop.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1.1
+        },
+        {
+          "id": "lobby-icon-settings",
+          "label": "사이드 아이콘 · 설정",
+          "file": "assets/ui/lobby-icon-settings.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1.1
+        },
+        {
+          "id": "lobby-deck-banner",
+          "label": "하단 카드덱 곡선 배너",
+          "file": "assets/ui/lobby-deck-banner.png",
+          "size": [
+            430,
+            230
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1.1
+        },
+        {
+          "id": "lobby-badge-loop",
+          "label": "회차 원형 배지",
+          "file": "assets/ui/lobby-badge-loop.png",
+          "size": [
+            46,
+            46
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1
+        },
+        {
+          "id": "lobby-badge-star",
+          "label": "⭐ 포인트 필 배지",
+          "file": "assets/ui/lobby-badge-star.png",
+          "size": [
+            60,
+            26
+          ],
+          "mode": "9slice",
+          "slice": 12,
+          "small": true,
+          "scale": 1
+        },
+        {
+          "id": "lobby-icon-frame",
+          "label": "사이드 아이콘 공통 프레임 (이모지 유지)",
+          "file": "assets/ui/lobby-icon-frame.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1
+        }
+      ]
+    },
+    {
+      "id": "game",
+      "label": "본게임 (스토리)",
+      "slots": [
+        {
+          "id": "game-card-frame",
+          "label": "스와이프 카드 프레임 (카드 높이가 업로드 아트 비율을 자동으로 따름 — 원본 무왜곡)",
+          "file": "assets/ui/game-card-frame.png",
+          "size": [
+            394,
+            273
+          ],
+          "mode": "stretch",
+          "scale": 1
+        },
+        {
+          "id": "game-btn-left",
+          "label": "좌 선택 버튼",
+          "file": "assets/ui/game-btn-left.png",
+          "size": [
+            178,
+            60
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "game-btn-right",
+          "label": "우 선택 버튼",
+          "file": "assets/ui/game-btn-right.png",
+          "size": [
+            178,
+            60
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "game-back",
+          "label": "← 로비 버튼",
+          "file": "assets/ui/game-back.png",
+          "size": [
+            66,
+            26
+          ],
+          "mode": "stretch",
+          "scale": 1
+        },
+        {
+          "id": "game-btn-lobby",
+          "label": "← 로비 버튼 (스토리 상단)",
+          "file": "assets/ui/game-btn-lobby.png",
+          "size": [
+            93,
+            26
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1.2
+        },
+        {
+          "id": "game-btn-member",
+          "label": "👥 멤버 버튼 (스토리 상단)",
+          "file": "assets/ui/game-btn-member.png",
+          "size": [
+            93,
+            26
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 1.2
+        }
+      ]
+    },
+    {
+      "id": "training",
+      "label": "연습하기",
+      "slots": [
+        {
+          "id": "train-panel",
+          "label": "공통 · 보드 패널 프레임 (통짜)",
+          "file": "assets/ui/train-panel.png",
+          "size": [
+            394,
+            610
+          ],
+          "mode": "stretch",
+          "opacity": -0.5
+        },
+        {
+          "id": "train-head",
+          "label": "공통 · 보드 헤더 스트립",
+          "file": "assets/ui/train-head.png",
+          "size": [
+            388,
+            46
+          ],
+          "mode": "9slice",
+          "slice": 14
+        },
+        {
+          "id": "train-title",
+          "label": "공통 · 연습 시간 타이틀 패널",
+          "file": "assets/ui/train-title.png",
+          "size": [
+            250,
+            82
+          ],
+          "mode": "stretch",
+          "scale": 1
+        },
+        {
+          "id": "train-row",
+          "label": "공통 · 우측 컬럼 배경 (통짜)",
+          "file": "",
+          "size": [
+            232,
+            516
+          ],
+          "mode": "stretch",
+          "scale": 1
+        },
+        {
+          "id": "train-icon-vocal",
+          "label": "공통 · 진입 아이콘 (활동 배너) · 보컬 연습",
+          "file": "assets/ui/train-icon-vocal.png",
+          "size": [
+            706,
+            161
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-icon-dance",
+          "label": "공통 · 진입 아이콘 (활동 배너) · 안무 연습",
+          "file": "assets/ui/train-icon-dance.png",
+          "size": [
+            706,
+            161
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-icon-promo",
+          "label": "공통 · 진입 아이콘 (활동 배너) · SNS 홍보",
+          "file": "assets/ui/train-icon-promo.png",
+          "size": [
+            706,
+            161
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-icon-funds",
+          "label": "공통 · 진입 아이콘 (활동 배너) · 알바",
+          "file": "assets/ui/train-icon-funds.png",
+          "size": [
+            706,
+            161
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-icon-audition",
+          "label": "공통 · 진입 아이콘 (활동 배너) · 오디션 대비",
+          "file": "assets/ui/train-icon-audition.png",
+          "size": [
+            706,
+            161
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-icon-bond",
+          "label": "공통 · 진입 아이콘 (활동 배너) · 휴식",
+          "file": "assets/ui/train-icon-bond.png",
+          "size": [
+            706,
+            161
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-char-panel",
+          "label": "공통 · 하루 소개 명패",
+          "file": "",
+          "size": [
+            220,
+            170
+          ],
+          "mode": "stretch",
+          "scale": 1
+        },
+        {
+          "id": "train-bubble",
+          "label": "공통 · 캐릭터 말풍선",
+          "file": "assets/ui/train-bubble.png",
+          "size": [
+            200,
+            150
+          ],
+          "mode": "stretch",
+          "scale": 0.8
+        },
+        {
+          "id": "train-result-card",
+          "label": "공통 · 연습 결과 카드 프레임 — 원본 비율 유지",
+          "file": "assets/ui/train-result-card.png",
+          "size": [
+            120,
+            160
+          ],
+          "mode": "stretch",
+          "scale": 1
+        },
+        {
+          "id": "train-btn-next",
+          "label": "공통 · 버튼 · 연습 결과 계속 →",
+          "file": "assets/ui/train-btn-next.png",
+          "size": [
+            180,
+            52
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-btn-retry",
+          "label": "공통 · 버튼 · 연습 실패 재도전",
+          "file": "assets/ui/train-btn-retry.png",
+          "size": [
+            220,
+            52
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-btn-quit",
+          "label": "공통 · 버튼 · 연습 실패 종료하기",
+          "file": "assets/ui/train-btn-quit.png",
+          "size": [
+            220,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "opacity": 0.1
+        },
+        {
+          "id": "train-star-1",
+          "label": "공통 · 판정등급 · 별 1개 (common)",
+          "file": "assets/ui/train-star-1.png",
+          "size": [
+            90,
+            28
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.6
+        },
+        {
+          "id": "train-star-2",
+          "label": "공통 · 판정등급 · 별 2개 (rare)",
+          "file": "assets/ui/train-star-2.png",
+          "size": [
+            90,
+            28
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.6
+        },
+        {
+          "id": "train-star-3",
+          "label": "공통 · 판정등급 · 별 3개 (epic)",
+          "file": "assets/ui/train-star-3.png",
+          "size": [
+            90,
+            28
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.6
+        },
+        {
+          "id": "train-sym-skill",
+          "label": "공통 · 게이지 심볼 · 실력",
+          "file": "assets/ui/train-sym-skill.png",
+          "size": [
+            40,
+            40
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-sym-capital",
+          "label": "공통 · 게이지 심볼 · 자본",
+          "file": "assets/ui/train-sym-capital.png",
+          "size": [
+            40,
+            40
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-sym-mental",
+          "label": "공통 · 게이지 심볼 · 멘탈",
+          "file": "assets/ui/train-sym-mental.png",
+          "size": [
+            40,
+            40
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-sym-bond",
+          "label": "공통 · 게이지 심볼 · 유대",
+          "file": "assets/ui/train-sym-bond.png",
+          "size": [
+            40,
+            40
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "train-sym-reputation",
+          "label": "공통 · 게이지 심볼 · 평판",
+          "file": "assets/ui/train-sym-reputation.png",
+          "size": [
+            40,
+            40
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-rec-bg",
+          "label": "보컬 연습 · 배경판 (녹음 부스 전체)",
+          "file": "assets/ui/gate-rec-bg.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "gate-rec-wave",
+          "label": "보컬 연습 · 파형 트랙",
+          "file": "assets/ui/gate-rec-wave.png",
+          "size": [
+            300,
+            56
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-rec-head",
+          "label": "보컬 연습 · 플레이헤드 마커",
+          "file": "assets/ui/gate-rec-head.png",
+          "size": [
+            12,
+            70
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-rec-btn",
+          "label": "보컬 연습 · START 버튼 (업로드 시 라벨 문구 미표시) — 1배율=원본 크기",
+          "file": "assets/ui/gate-rec-btn.png",
+          "size": [
+            88,
+            88
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true,
+          "scale": 0.3
+        },
+        {
+          "id": "gate-mirror-bg",
+          "label": "안무 연습 · 배경판 (연습실 전체)",
+          "file": "assets/ui/gate-mirror-bg.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "gate-mirror-char",
+          "label": "안무 연습 · 캐릭터 (🎬 영상 가능)",
+          "file": "assets/ui/gate-mirror-char.webm",
+          "size": [
+            310,
+            324
+          ],
+          "mode": "stretch",
+          "vid": true,
+          "scale": 1.6
+        },
+        {
+          "id": "gate-mirror-track",
+          "label": "안무 연습 · 게이지 트랙 (높이가 아트 비율을 따름)",
+          "file": "assets/ui/gate-mirror-track.png",
+          "size": [
+            300,
+            14
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-mirror-head",
+          "label": "안무 연습 · 플레이헤드 마커 — 1배율=원본 크기",
+          "file": "assets/ui/gate-mirror-head.png",
+          "size": [
+            8,
+            34
+          ],
+          "mode": "stretch",
+          "natural": true,
+          "small": true,
+          "scale": 0.3
+        },
+        {
+          "id": "gate-mirror-btn",
+          "label": "안무 연습 · HOLD 버튼 (업로드 시 라벨 문구 미표시) — 1배율=원본 크기",
+          "file": "assets/ui/gate-mirror-btn.png",
+          "size": [
+            160,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true,
+          "scale": 0.3
+        },
+        {
+          "id": "gate-match-bg",
+          "label": "SNS 홍보 · 배경판 (2×3 그리드 · 6장 전용)",
+          "file": "assets/ui/gate-match-bg.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "gate-match-bg-3x3",
+          "label": "SNS 홍보 · 배경판 (3×3 그리드 · 9장 전용)",
+          "file": "assets/ui/gate-match-bg-3x3.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "gate-stop-bg",
+          "label": "알바 · 바코드 배경판 (편의점 씬 전체)",
+          "file": "assets/ui/gate-stop-bg.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true,
+          "scale": 1
+        },
+        {
+          "id": "gate-stop-track",
+          "label": "알바 · 타이밍 트랙 바 (높이가 아트 비율을 따름 — 원본 무왜곡)",
+          "file": "assets/ui/gate-stop-track.png",
+          "size": [
+            300,
+            26
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-stop-marker",
+          "label": "알바 · 플레이헤드 STOP 마커 (왕복하는 분홍 바) — 1배율=원본 크기",
+          "file": "assets/ui/gate-stop-marker.png",
+          "size": [
+            8,
+            34
+          ],
+          "mode": "stretch",
+          "natural": true,
+          "scale": 0.4
+        },
+        {
+          "id": "gate-stop-btn",
+          "label": "알바 · STOP 버튼 (업로드 시 라벨 문구 미표시) — 1배율=원본 크기",
+          "file": "assets/ui/gate-stop-btn.png",
+          "size": [
+            200,
+            64
+          ],
+          "mode": "stretch",
+          "natural": true,
+          "scale": 0.3
+        },
+        {
+          "id": "gate-rps-bg",
+          "label": "오디션 대비 · 배경판 (가위바위포즈 전체)",
+          "file": "assets/ui/gate-rps-bg.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "gate-rps-rock",
+          "label": "오디션 대비 · 손 · 바위",
+          "file": "assets/ui/gate-rps-rock.png",
+          "size": [
+            108,
+            108
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.5
+        },
+        {
+          "id": "gate-rps-paper",
+          "label": "오디션 대비 · 손 · 보",
+          "file": "assets/ui/gate-rps-paper.png",
+          "size": [
+            108,
+            108
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.5
+        },
+        {
+          "id": "gate-rps-scissors",
+          "label": "오디션 대비 · 손 · 가위",
+          "file": "assets/ui/gate-rps-scissors.png",
+          "size": [
+            108,
+            108
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.5
+        },
+        {
+          "id": "train-rest-bg",
+          "label": "휴식 · 배경판 (결과 화면 전체)",
+          "file": "assets/ui/train-rest-bg.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        }
+      ]
+    },
+    {
+      "id": "gate",
+      "label": "관문 (유형별 막 게임)",
+      "slots": [
+        {
+          "id": "gate-panel",
+          "label": "공통 · 관문 패널 프레임 (배경 이미지 없을 때)",
+          "file": "assets/ui/gate-panel.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "9slice",
+          "slice": 24
+        },
+        {
+          "id": "gate-btn",
+          "label": "공통 · 버튼 (전 관문 일괄 적용)",
+          "file": "assets/ui/gate-btn.png",
+          "size": [
+            200,
+            52
+          ],
+          "mode": "stretch",
+          "scale": 0.7
+        },
+        {
+          "id": "gate-btn-confirm",
+          "label": "공통 · 버튼 · 카드 선택 확인 →",
+          "file": "assets/ui/gate-btn-confirm.png",
+          "size": [
+            180,
+            52
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-btn-retry",
+          "label": "공통 · 버튼 · 관문 실패 재도전",
+          "file": "assets/ui/gate-btn-retry.png",
+          "size": [
+            220,
+            52
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-btn-quit",
+          "label": "공통 · 버튼 · 관문 실패 종료하기",
+          "file": "assets/ui/gate-btn-quit.png",
+          "size": [
+            220,
+            52
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-rhythm-board-easy",
+          "label": "리듬 · 전체 배경판 (1막 · 센터 대결)",
+          "file": "assets/ui/gate-rhythm-board-easy.webm",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "gate-rhythm-board-2",
+          "label": "리듬 · 전체 배경판 (2막 · 무대 집중)",
+          "file": "assets/ui/gate-rhythm-board-2.webm",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "gate-rhythm-easy",
+          "label": "리듬 · 이지 모드 버튼 (2열)",
+          "file": "assets/ui/gate-rhythm-easy.png",
+          "size": [
+            220,
+            52
+          ],
+          "mode": "3slice",
+          "small": true,
+          "slice": 44
+        },
+        {
+          "id": "gate-rhythm-hard",
+          "label": "리듬 · 하드 모드 버튼 (3열)",
+          "file": "assets/ui/gate-rhythm-hard.png",
+          "size": [
+            220,
+            52
+          ],
+          "mode": "3slice",
+          "small": true,
+          "slice": 44
+        },
+        {
+          "id": "gate-rhythm-line",
+          "label": "리듬 · 판정선 (리듬라인)",
+          "file": "assets/ui/gate-rhythm-line.png",
+          "size": [
+            282,
+            12
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-rhythm-lane-easy-1",
+          "label": "리듬 · 레인 스트립 · 이지 왼쪽",
+          "file": "assets/ui/gate-rhythm-lane-easy-1.png",
+          "size": [
+            140,
+            420
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-rhythm-lane-easy-2",
+          "label": "리듬 · 레인 스트립 · 이지 오른쪽",
+          "file": "assets/ui/gate-rhythm-lane-easy-2.png",
+          "size": [
+            140,
+            420
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-rhythm-lane-hard-1",
+          "label": "리듬 · 레인 스트립 · 하드 왼쪽",
+          "file": "assets/ui/gate-rhythm-lane-hard-1.png",
+          "size": [
+            90,
+            420
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-rhythm-lane-hard-2",
+          "label": "리듬 · 레인 스트립 · 하드 가운데",
+          "file": "assets/ui/gate-rhythm-lane-hard-2.png",
+          "size": [
+            90,
+            420
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-rhythm-lane-hard-3",
+          "label": "리듬 · 레인 스트립 · 하드 오른쪽",
+          "file": "assets/ui/gate-rhythm-lane-hard-3.png",
+          "size": [
+            90,
+            420
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-note-left",
+          "label": "리듬 · 노트 좌 (🎤 대체)",
+          "file": "assets/ui/gate-note-left.png",
+          "size": [
+            44,
+            44
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-note-right",
+          "label": "리듬 · 노트 우 (💃 대체)",
+          "file": "assets/ui/gate-note-right.png",
+          "size": [
+            44,
+            44
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-note-center",
+          "label": "리듬 · 노트 중앙 (하드 3열)",
+          "file": "assets/ui/gate-note-center.png",
+          "size": [
+            44,
+            44
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-photo-board",
+          "label": "포토카드 · 전체 배경판 (패널이 아트 비율을 따라감)",
+          "file": "assets/ui/gate-photo-board.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-slot-reel",
+          "label": "포토카드 · 컷 프레임 (3칸 스트립 통짜 · 비율 유지)",
+          "file": "assets/ui/gate-slot-reel.png",
+          "size": [
+            96,
+            130
+          ],
+          "mode": "9slice",
+          "slice": 14
+        },
+        {
+          "id": "gate-cam-btn",
+          "label": "포토카드 · 카메라(찰칵) 버튼",
+          "file": "assets/ui/gate-cam-btn.png",
+          "size": [
+            240,
+            56
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-polaroid",
+          "label": "포토카드 · 폴라로이드 프레임 (연속촬영 결과 3장)",
+          "file": "assets/ui/gate-polaroid.png",
+          "size": [
+            74,
+            92
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-slot-sym-1",
+          "label": "포토카드 · 심볼 1 (하루 — 매 촬영 1컷 보장)",
+          "file": "assets/ui/gate-slot-sym-1.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-slot-sym-2",
+          "label": "포토카드 · 심볼 2",
+          "file": "assets/ui/gate-slot-sym-2.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-slot-sym-3",
+          "label": "포토카드 · 심볼 3",
+          "file": "assets/ui/gate-slot-sym-3.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-slot-sym-4",
+          "label": "포토카드 · 심볼 4",
+          "file": "assets/ui/gate-slot-sym-4.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-slot-sym-5",
+          "label": "포토카드 · 심볼 5",
+          "file": "assets/ui/gate-slot-sym-5.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-dodge-tile",
+          "label": "격자회피 · 전체 배경판 (단서 대조 · 5×5 보드 통짜)",
+          "file": "assets/ui/gate-dodge-tile.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-dodge-tile-block",
+          "label": "격자회피 · 전체 배경판 (사보타주 · 5×5 보드 통짜)",
+          "file": "assets/ui/gate-dodge-tile-block.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-dodge-sym-bomb",
+          "label": "격자회피 · 사보타주(폭탄)",
+          "file": "assets/ui/gate-dodge-sym-bomb.png",
+          "size": [
+            40,
+            40
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-dodge-sym-atk",
+          "label": "격자회피 · 반격(스포트라이트)",
+          "file": "assets/ui/gate-dodge-sym-atk.png",
+          "size": [
+            40,
+            40
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-dodge-sym-heal",
+          "label": "격자회피 · 회복(응원)",
+          "file": "assets/ui/gate-dodge-sym-heal.png",
+          "size": [
+            40,
+            40
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-dodge-sym-shield",
+          "label": "격자회피 · 방어(매니저)",
+          "file": "assets/ui/gate-dodge-sym-shield.png",
+          "size": [
+            40,
+            40
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-dodge-sym-player",
+          "label": "격자회피 · 주인공 (하루)",
+          "file": "assets/ui/gate-dodge-sym-player.png",
+          "size": [
+            44,
+            44
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-match-card",
+          "label": "짝맞추기 · 카드 앞면 프레임 (5:6 · 원본 비율 유지)",
+          "file": "assets/ui/gate-match-card.png",
+          "size": [
+            92,
+            110
+          ],
+          "mode": "stretch",
+          "scale": 1
+        },
+        {
+          "id": "gate-match-card-back",
+          "label": "짝맞추기 · 카드 뒷면 (5:6)",
+          "file": "assets/ui/gate-match-card-back.png",
+          "size": [
+            92,
+            110
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "gate-match-sym-1",
+          "label": "짝맞추기 · 심볼 1",
+          "file": "assets/ui/gate-match-sym-1.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-match-sym-2",
+          "label": "짝맞추기 · 심볼 2",
+          "file": "assets/ui/gate-match-sym-2.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-match-sym-3",
+          "label": "짝맞추기 · 심볼 3",
+          "file": "assets/ui/gate-match-sym-3.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-match-sym-4",
+          "label": "짝맞추기 · 심볼 4",
+          "file": "assets/ui/gate-match-sym-4.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-match-sym-5",
+          "label": "짝맞추기 · 심볼 5",
+          "file": "assets/ui/gate-match-sym-5.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-match-sym-6",
+          "label": "짝맞추기 · 심볼 6",
+          "file": "assets/ui/gate-match-sym-6.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-match-sym-7",
+          "label": "짝맞추기 · 심볼 7",
+          "file": "assets/ui/gate-match-sym-7.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "gate-match-sym-8",
+          "label": "짝맞추기 · 심볼 8",
+          "file": "assets/ui/gate-match-sym-8.png",
+          "size": [
+            48,
+            48
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "grade-perfect",
+          "label": "등급 스탬프 · PERFECT (관문 결과·오디션 결과 공용)",
+          "file": "assets/ui/grade-perfect.png",
+          "size": [
+            180,
+            64
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.7
+        },
+        {
+          "id": "grade-good",
+          "label": "등급 스탬프 · GOOD (관문 결과·오디션 결과 공용)",
+          "file": "assets/ui/grade-good.png",
+          "size": [
+            180,
+            64
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.7
+        },
+        {
+          "id": "grade-clear",
+          "label": "등급 스탬프 · CLEAR (관문 결과·오디션 결과 공용)",
+          "file": "assets/ui/grade-clear.png",
+          "size": [
+            180,
+            64
+          ],
+          "mode": "stretch",
+          "small": true,
+          "scale": 0.7
+        }
+      ]
+    },
+    {
+      "id": "deck",
+      "label": "카드덱",
+      "slots": [
+        {
+          "id": "deck-sheet",
+          "label": "덱 시트 헤더(핸들 포함)",
+          "file": "assets/ui/deck-sheet.png",
+          "size": [
+            430,
+            60
+          ],
+          "mode": "9slice",
+          "slice": 18
+        },
+        {
+          "id": "deck-card",
+          "label": "카드 아이템 프레임 · 앞면 — 원본 비율 유지",
+          "file": "assets/ui/deck-card.png",
+          "size": [
+            82,
+            138
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "deck-card-back",
+          "label": "카드 아이템 프레임 · 뒷면 — 원본 비율 유지",
+          "file": "assets/ui/deck-card-back.png",
+          "size": [
+            82,
+            138
+          ],
+          "mode": "stretch"
+        }
+      ]
+    },
+    {
+      "id": "memberboard",
+      "label": "멤버 점검",
+      "slots": [
+        {
+          "id": "board-bg",
+          "label": "배경판 (점검 화면 전체)",
+          "file": "assets/ui/board-bg.png",
+          "size": [
+            394,
+            660
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "audition-panel",
+          "label": "멤버 점검 프레임 (패널)",
+          "file": "assets/ui/audition-panel.png",
+          "size": [
+            394,
+            660
+          ],
+          "mode": "9slice",
+          "slice": 20,
+          "small": true
+        },
+        {
+          "id": "audition-head",
+          "label": "헤더 바 (제목·주차 텍스트는 코드)",
+          "file": "assets/ui/audition-head.png",
+          "size": [
+            388,
+            46
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "member-row",
+          "label": "멤버 슬롯 행",
+          "file": "assets/ui/member-row.png",
+          "size": [
+            366,
+            56
+          ],
+          "mode": "9slice",
+          "slice": 12,
+          "small": true
+        },
+        {
+          "id": "member-stat-bar",
+          "label": "기량 게이지 트랙 (채움·숫자는 코드)",
+          "file": "assets/ui/member-stat-bar.png",
+          "size": [
+            110,
+            8
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "audition-banner",
+          "label": "상황 안내 배너 (다음 할 일 1줄)",
+          "file": "assets/ui/audition-banner.png",
+          "size": [
+            366,
+            28
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "audition-held-row",
+          "label": "보류 후보 행 배경",
+          "file": "assets/ui/audition-held-row.png",
+          "size": [
+            366,
+            34
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "member-icon-haru",
+          "label": "멤버 프로필 · 하루 (리더 · 고정)",
+          "file": "assets/ui/member-icon-haru.png",
+          "size": [
+            96,
+            96
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "member-icon-yuwol",
+          "label": "멤버 프로필 · 유월 (고정)",
+          "file": "assets/ui/member-icon-yuwol.png",
+          "size": [
+            96,
+            96
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "member-icon-bora",
+          "label": "멤버 프로필 · 보라 (고정)",
+          "file": "assets/ui/member-icon-bora.png",
+          "size": [
+            96,
+            96
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "member-icon-cyan",
+          "label": "멤버 프로필 · 시안 (오디션 후보)",
+          "file": "assets/ui/member-icon-cyan.png",
+          "size": [
+            96,
+            96
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "member-icon-hari",
+          "label": "멤버 프로필 · 하리 (오디션 후보)",
+          "file": "assets/ui/member-icon-hari.png",
+          "size": [
+            96,
+            96
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "member-icon-rian",
+          "label": "멤버 프로필 · 리안 (오디션 후보)",
+          "file": "assets/ui/member-icon-rian.png",
+          "size": [
+            96,
+            96
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "member-icon-daon",
+          "label": "멤버 프로필 · 다온 (오디션 후보)",
+          "file": "assets/ui/member-icon-daon.png",
+          "size": [
+            96,
+            96
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "audition-btn",
+          "label": "버튼 · 공용 폴백 (개별 미업로드 시) — 1배율=원본 크기",
+          "file": "assets/ui/audition-btn.png",
+          "size": [
+            186,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true
+        },
+        {
+          "id": "audition-btn-exchange",
+          "label": "버튼 · 교환 (카드→진행권) — 1배율=원본 크기",
+          "file": "assets/ui/audition-btn-exchange.png",
+          "size": [
+            186,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true,
+          "scale": 0.4
+        },
+        {
+          "id": "audition-btn-hold",
+          "label": "버튼 · 오디션 개최 — 1배율=원본 크기",
+          "file": "assets/ui/audition-btn-hold.png",
+          "size": [
+            186,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true,
+          "scale": 0.4
+        },
+        {
+          "id": "audition-btn-sub",
+          "label": "버튼 · 보조 (보류·돌아가기) — 1배율=원본 크기",
+          "file": "assets/ui/audition-btn-sub.png",
+          "size": [
+            220,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true
+        },
+        {
+          "id": "audition-btn-ok",
+          "label": "버튼 · 확인 (데뷔조 확정) — 1배율=원본 크기",
+          "file": "assets/ui/audition-btn-ok.png",
+          "size": [
+            180,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true
+        },
+        {
+          "id": "audition-btn-mini",
+          "label": "미니 버튼 (영입·버리기 — 텍스트는 코드) — 1배율=원본 크기",
+          "file": "assets/ui/audition-btn-mini.png",
+          "size": [
+            58,
+            24
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true
+        }
+      ]
+    },
+    {
+      "id": "audition",
+      "label": "오디션 (영입)",
+      "slots": [
+        {
+          "id": "audition-board",
+          "label": "심사 무대 배경판 (리듬 판정)",
+          "file": "assets/ui/audition-board.webm",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "audition-recruit-bg",
+          "label": "영입 배경판 (후보 결과·영입 화면 전체)",
+          "file": "assets/ui/audition-recruit-bg.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "audition-card",
+          "label": "후보 결과 카드 — 원본 비율 유지",
+          "file": "assets/ui/audition-card.png",
+          "size": [
+            180,
+            200
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "audition-btn-recruit",
+          "label": "버튼 · 영입 — 1배율=원본 크기",
+          "file": "assets/ui/audition-btn-recruit.png",
+          "size": [
+            220,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "_note": "배경 슬롯 SSOT — bg.html 에디터가 읽고, 게임이 트리거로 전환. file이 없거나 미업로드면 기존 기본 배경 폴백.",
+  "story": [
+    {
+      "id": "prologue-01",
+      "label": "프롤로그-01 · 참사 무대",
+      "beatIds": [
+        "d2_w0_disaster"
+      ],
+      "file": "",
+      "vid": true
+    },
+    {
+      "id": "prologue-02",
+      "label": "프롤로그-02 · 기획사 문 앞",
+      "beatIds": [
+        "d2_w0_rewind",
+        "d2_w0_rewind2"
+      ],
+      "file": "assets/bg/prologue-02.png",
+      "vid": true
+    },
+    {
+      "id": "act0",
+      "label": "W0 · 프롤로그 공통 (참사·되감기 비트 슬롯이 우선)",
+      "act": 0,
+      "file": "assets/bg/act0.png",
+      "vid": true
+    },
+    {
+      "id": "act1",
+      "label": "1막 · 연습생 일상 (W1–4)",
+      "act": 1,
+      "file": "assets/bg/act1.png"
+    },
+    {
+      "id": "act2",
+      "label": "2막 (W5–10)",
+      "act": 2,
+      "file": "assets/bg/act2.png"
+    },
+    {
+      "id": "act3",
+      "label": "3막 (W11–18)",
+      "act": 3,
+      "file": "assets/bg/act3.png"
+    },
+    {
+      "id": "act4",
+      "label": "4막 (W19–23)",
+      "act": 4,
+      "file": "assets/bg/act4.png"
+    },
+    {
+      "id": "act5",
+      "label": "5막 · 데뷔 주 (W24)",
+      "act": 5,
+      "file": "assets/bg/act5.jpg"
+    }
+  ],
+  "gates": [
+    {
+      "id": "gate-act2",
+      "label": "리듬게임 · 센터 대결 (2막)",
+      "gateId": "act2",
+      "file": "assets/bg/gate-act2.png",
+      "vid": true
+    },
+    {
+      "id": "gate-act3",
+      "label": "리듬게임 · 무대 집중 (3막)",
+      "gateId": "act3",
+      "file": "assets/bg/gate-act3.png",
+      "vid": true
+    },
+    {
+      "id": "gate-act4",
+      "label": "슬롯 · 포토카드 촬영 (4막)",
+      "gateId": "act4",
+      "file": "assets/bg/gate-act4.png"
+    },
+    {
+      "id": "gate-clue4",
+      "label": "격자 · 단서 대조 (4→5막)",
+      "gateId": "clue4",
+      "file": "assets/bg/gate-clue4.png"
+    },
+    {
+      "id": "gate-block",
+      "label": "격자 · 사보타주 저지 (5막)",
+      "gateId": "block",
+      "file": "assets/bg/gate-block.png"
+    }
+  ],
+  "system": [
+    {
+      "id": "training",
+      "label": "연습하기 화면",
+      "file": "assets/bg/training.png",
+      "vid": true
+    },
+    {
+      "id": "audition",
+      "label": "오디션 무대 (멤버 점검 리듬게임)",
+      "file": "assets/bg/audition.png",
+      "vid": true
+    },
+    {
+      "id": "title",
+      "label": "타이틀 화면 (🎬 mp4 가능 · 기존 이미지는 영상 삭제 시 폴백)",
+      "file": "assets/bg/title.png",
+      "vid": true
+    },
+    {
+      "id": "loading",
+      "label": "로딩 화면",
+      "file": "assets/bg/loading.mp4",
+      "frameMs": 125,
+      "vid": true
+    }
+  ]
+}

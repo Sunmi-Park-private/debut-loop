@@ -1,0 +1,11 @@
+{
+  "tickets": [
+    { "id": "rank_up",   "name": "연습생 등급업", "cost": 3, "effect": { "gauges": { "skill": 10 } } },
+    { "id": "audition",  "name": "오디션 진행권", "cost": 3, "effect": {} },
+    { "id": "revive",    "name": "패자부활권",   "cost": 5, "effect": { "flags": ["has_revive"] } },
+    { "id": "underground","name": "지하 데뷔권", "cost": 2, "effect": { "gauges": { "reputation": 6, "capital": 5 } } },
+    { "id": "photocard", "name": "포토카드 촬영권", "cost": 2, "effect": { "gauges": { "reputation": 5, "capital": 4 } } },
+    { "id": "sns",       "name": "SNS 홍보권",   "cost": 2, "effect": { "gauges": { "reputation": 8, "mental": -2 } } },
+    { "id": "fancam",    "name": "단독 직캠권",  "cost": 3, "effect": { "flags": ["member_awakened"] } }
+  ]
+}
