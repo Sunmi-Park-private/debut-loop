@@ -1,0 +1,248 @@
+<title>덱빌딩 UI 와이어프레임 — Debut Loop!</title>
+<style>
+  :root{
+    --bg:#f8f5fd; --panel:#fff; --line:#ece4f4; --ink:#5b4a70; --sub:#a99bc0;
+    --pink:#ff7fb0; --lav:#a78be6; --gold:#f0c05a; --mint:#6fd8c4;
+    --common:#c4b8d6; --rare:#a78be6; --epic:#f0c05a;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:#efe9f8; color:var(--ink);
+    font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; padding:30px 16px 70px; }
+  h1{ text-align:center; font-size:21px; margin:0 0 4px; }
+  .note{ text-align:center; font-size:13px; color:var(--sub); margin:0 auto 8px; max-width:720px; line-height:1.7; }
+  h2{ text-align:center; font-size:16px; margin:44px 0 2px; }
+  h2 .q{ display:inline-block; background:var(--pink); color:#fff; font-size:11px; padding:2px 10px; border-radius:12px; vertical-align:middle; margin-right:6px; }
+  .row{ display:flex; flex-wrap:wrap; gap:34px; justify-content:center; margin-top:14px; }
+  .variant{ display:flex; flex-direction:column; gap:8px; align-items:center; }
+  .vlabel{ font-size:14px; font-weight:800; }
+  .vdesc{ font-size:12px; color:var(--sub); max-width:400px; text-align:center; line-height:1.6; }
+  .phone{ width:390px; height:640px; background:var(--bg); border:2px solid #d9cdeb;
+    border-radius:24px; overflow:hidden; position:relative; box-shadow:0 16px 40px rgba(120,100,160,.22); }
+  .statmini{ margin:12px 14px 0; background:var(--panel); border:2px solid var(--line); border-radius:12px;
+    padding:7px 11px; font-size:10.5px; color:var(--sub); display:flex; justify-content:space-between; align-items:center; }
+  .statmini b{ color:var(--ink); }
+  .deckbadge{ background:#fdf0f6; border:1.5px solid #f6d5e6; color:#c9527f; font-weight:800;
+    padding:2px 9px; border-radius:12px; cursor:pointer; font-size:10.5px; }
+  .story{ position:absolute; left:14px; right:14px; top:64px; bottom:120px; background:var(--panel);
+    border:2px solid var(--line); border-radius:18px; padding:14px; font-size:12px; color:var(--sub); }
+
+  /* 카드 아나토미 */
+  .anatomy{ display:flex; gap:26px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .bigcard{ width:150px; height:205px; border-radius:16px; background:linear-gradient(180deg,#f6f0fc,#ece2f8);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; position:relative; }
+  .bigcard .ic{ font-size:44px; }
+  .bigcard .nm{ font-size:13.5px; font-weight:800; }
+  .bigcard .fx{ font-size:11px; color:var(--sub); font-weight:700; }
+  .bigcard .st{ font-size:15px; letter-spacing:3px; color:var(--gold); }
+  .bigcard.common{ border:3px solid var(--common); }
+  .bigcard.rare{ border:3px solid var(--rare); box-shadow:0 6px 18px rgba(167,139,230,.4); }
+  .bigcard.epic{ border:3px solid var(--epic); box-shadow:0 8px 24px rgba(240,192,90,.55); }
+  .bigcard.epic::before{ content:"EPIC"; position:absolute; top:8px; right:10px; font-size:9px; font-weight:800; color:var(--epic); }
+  .bigcard.rare::before{ content:"RARE"; position:absolute; top:8px; right:10px; font-size:9px; font-weight:800; color:var(--rare); }
+  .anot{ font-size:11.5px; color:var(--sub); line-height:2; }
+
+  /* A: 헤더 탭 → 하단 시트 */
+  .sheet{ position:absolute; left:0; right:0; bottom:0; height:330px; background:var(--panel);
+    border-top:3px solid var(--lav); border-radius:22px 22px 0 0; padding:14px 16px; box-shadow:0 -12px 34px rgba(91,74,112,.25); }
+  .sheet .tt{ font-size:13.5px; font-weight:800; display:flex; justify-content:space-between; }
+  .sheet .tt small{ color:var(--sub); font-weight:600; }
+  .sgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-top:12px; }
+  .mini{ aspect-ratio:3/4.2; border-radius:11px; background:#f6f0fc; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:2px; font-size:10px; font-weight:700; }
+  .mini .ic{ font-size:19px; }
+  .mini .st{ color:var(--gold); font-size:9px; letter-spacing:1px; }
+  .mini.common{ border:2px solid var(--common); }
+  .mini.rare{ border:2px solid var(--rare); }
+  .mini.epic{ border:2px solid var(--epic); }
+  .mini.stack{ position:relative; }
+  .mini.stack::after{ content:"×3"; position:absolute; top:4px; right:5px; font-size:9px; color:#c9527f; font-weight:800; }
+
+  /* B: 상시 하단 트레이 */
+  .tray{ position:absolute; left:0; right:0; bottom:0; height:96px; background:rgba(255,255,255,.92);
+    border-top:2px solid var(--line); padding:8px 10px; }
+  .tray .tt{ font-size:10px; color:var(--sub); font-weight:700; margin-bottom:5px; }
+  .traycards{ display:flex; gap:7px; overflow:hidden; }
+  .tcard{ min-width:46px; height:60px; border-radius:8px; background:#f6f0fc; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; font-size:15px; }
+  .tcard small{ font-size:7.5px; color:var(--gold); letter-spacing:1px; }
+  .tcard.common{ border:2px solid var(--common); } .tcard.rare{ border:2px solid var(--rare); } .tcard.epic{ border:2px solid var(--epic); }
+  .tmore{ min-width:46px; height:60px; border-radius:8px; border:2px dashed var(--line); display:flex;
+    align-items:center; justify-content:center; font-size:10px; color:var(--sub); font-weight:700; }
+
+  /* C: 프메식 덱북 */
+  .deckbook{ position:absolute; inset:48px 12px 12px; background:var(--panel); border:3px solid var(--gold);
+    border-radius:16px; box-shadow:inset 0 0 0 3px #fff, inset 0 0 0 5px #f6e3bb; padding:14px; }
+  .deckbook .tt{ text-align:center; font-size:14px; font-weight:800; }
+  .deckbook .sub2{ text-align:center; font-size:10.5px; color:var(--sub); margin:3px 0 10px; }
+  .shelf{ font-size:11px; font-weight:800; color:#c9527f; margin:10px 0 6px; }
+  .shelfrow{ display:flex; gap:8px; }
+  .dim-overlay{ position:absolute; inset:0; background:rgba(91,74,112,.35); }
+
+  /* 관문 픽커: 핸드(부채꼴) */
+  .hand{ position:absolute; bottom:130px; left:50%; width:0; }
+  .hcard{ position:absolute; bottom:0; width:86px; height:118px; border-radius:11px; background:#f6f0fc;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:22px;
+    transform-origin:bottom center; box-shadow:0 6px 16px rgba(91,74,112,.25); }
+  .hcard small{ font-size:8.5px; color:var(--gold); letter-spacing:1px; }
+  .hcard b{ font-size:9.5px; }
+  .hcard.rare{ border:2.5px solid var(--rare); } .hcard.epic{ border:2.5px solid var(--epic); } .hcard.common{ border:2.5px solid var(--common); }
+  .hcard.sel{ transform:translateY(-34px) !important; border-color:var(--pink); box-shadow:0 12px 26px rgba(255,127,176,.5); }
+  .pickinfo{ position:absolute; top:96px; left:0; right:0; text-align:center; font-size:12.5px; font-weight:800; }
+  .pickinfo small{ display:block; color:var(--sub); font-weight:600; font-size:10.5px; margin-top:4px; }
+  .sumline{ position:absolute; bottom:88px; left:0; right:0; text-align:center; font-size:11.5px; color:#3fb98a; font-weight:800; }
+  .confirm{ position:absolute; bottom:26px; left:50%; transform:translateX(-50%); background:var(--pink);
+    color:#fff; font-size:13px; font-weight:800; padding:12px 44px; border-radius:14px; }
+  .gridpick{ position:absolute; inset:120px 24px auto; display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
+
+  .verdict{ max-width:760px; margin:50px auto 0; background:var(--panel); border:2px solid var(--line);
+    border-radius:16px; padding:18px 22px; font-size:13px; line-height:1.9; }
+  .verdict b{ color:#c9527f; }
+  .tag{ position:absolute; top:8px; left:12px; font-size:10px; background:#5b4a70; color:#fff;
+    padding:3px 9px; border-radius:10px; opacity:.75; z-index:5; }
+</style>
+
+<h1>🎴 덱빌딩 UI 와이어프레임</h1>
+<p class="note">논의 포인트 3가지: <b>① 카드 한 장의 얼굴</b> · <b>② 모은 덱을 어디서 보나</b> · <b>③ 관문에서 어떻게 고르나</b><br>
+회색/보라/골드 테두리 = 등급(★/★★/★★★). 수치·아이콘은 자리표시용.</p>
+
+<!-- ① 카드 아나토미 -->
+<h2><span class="q">①</span> 카드 아나토미 — 등급이 한눈에</h2>
+<div class="row">
+  <div class="anatomy">
+    <div class="bigcard common"><span class="ic">🎤</span><span class="nm">보컬</span><span class="st">★</span><span class="fx">실력 +6</span></div>
+    <div class="bigcard rare"><span class="ic">🎤</span><span class="nm">보컬</span><span class="st">★★</span><span class="fx">실력 +8</span></div>
+    <div class="bigcard epic"><span class="ic">🎤</span><span class="nm">보컬</span><span class="st">★★★</span><span class="fx">실력 +11</span></div>
+    <div class="anot">
+      · 테두리 색+그림자 = 등급 (회색→라벤더→골드)<br>
+      · ★ 개수 + 우상단 라벨(RARE/EPIC) 이중 표기<br>
+      · 효과 수치를 카드에 직접 표기 → 픽커에서 계산 없이 선택<br>
+      · 아이콘 자리엔 추후 실제 카드 아트(비주얼 담당)
+    </div>
+  </div>
+</div>
+
+<!-- ② 덱 열람 -->
+<h2><span class="q">②</span> 덱 열람 — 모은 카드를 어디서 확인?</h2>
+<div class="row">
+  <div class="variant">
+    <div class="vlabel">A안 — 🎴 배지 탭 → 하단 시트 (추천)</div>
+    <div class="vdesc">헤더의 🎴 7 배지를 탭하면 하단 시트가 올라옴.<br>평소엔 공간 0, 필요할 때만. 같은 종류는 ×N 스택.</div>
+    <div class="phone">
+      <div class="tag">A안</div>
+      <div class="statmini"><span><b>실력</b> 38 · <b>멘탈</b> 49 · <b>평판</b> 24 · <b>유대</b> 45</span><span class="deckbadge">🎴 7 ▲</span></div>
+      <div class="story">스토리 카드 (반쯤 가려짐)…</div>
+      <div class="sheet">
+        <div class="tt">내 카드 <small>7장 · 관문에서 사용</small></div>
+        <div class="sgrid">
+          <div class="mini epic"><span class="ic">🎤</span>보컬<span class="st">★★★</span></div>
+          <div class="mini rare stack"><span class="ic">💃</span>안무<span class="st">★★</span></div>
+          <div class="mini rare"><span class="ic">📸</span>홍보<span class="st">★★</span></div>
+          <div class="mini common"><span class="ic">💰</span>자금<span class="st">★</span></div>
+          <div class="mini rare"><span class="ic">🤝</span>유대<span class="st">★★</span></div>
+          <div class="mini common"><span class="ic">🎯</span>오디션<span class="st">★</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="vlabel">B안 — 상시 하단 트레이</div>
+    <div class="vdesc">화면 하단에 미니 카드가 항상 보임(가로 스크롤).<br>"쌓이는 재미"가 상시 노출, 대신 세로 공간 −96px.</div>
+    <div class="phone">
+      <div class="tag">B안</div>
+      <div class="statmini"><span><b>실력</b> 38 · <b>멘탈</b> 49 · <b>평판</b> 24 · <b>유대</b> 45</span><span class="deckbadge">🎴 7</span></div>
+      <div class="story" style="bottom:110px">스토리 카드…</div>
+      <div class="tray">
+        <div class="tt">내 카드 7</div>
+        <div class="traycards">
+          <div class="tcard epic">🎤<small>★★★</small></div>
+          <div class="tcard rare">💃<small>★★</small></div>
+          <div class="tcard rare">💃<small>★★</small></div>
+          <div class="tcard rare">📸<small>★★</small></div>
+          <div class="tcard common">💰<small>★</small></div>
+          <div class="tcard rare">🤝<small>★★</small></div>
+          <div class="tmore">+1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="vlabel">C안 — 프메식 덱북 (풀스크린)</div>
+    <div class="vdesc">🎴 탭 → 골드 프레임 전용 화면. 종류별 선반 정리 + 컬렉션 느낌.<br>본선의 포토앨범과 톤 통일 가능. 다만 한 화면 전환 무거움.</div>
+    <div class="phone">
+      <div class="tag">C안</div>
+      <div class="statmini"><span><b>실력</b> 38 · <b>멘탈</b> 49 …</span><span class="deckbadge">🎴 7</span></div>
+      <div class="dim-overlay"></div>
+      <div class="deckbook">
+        <div class="tt">🎴 카드 덱</div>
+        <div class="sub2">연습으로 모으고, 관문에서 사용해요 · 회귀해도 일부 계승</div>
+        <div class="shelf">실력 계열</div>
+        <div class="shelfrow">
+          <div class="tcard epic">🎤<small>★★★</small></div>
+          <div class="tcard rare">💃<small>★★</small></div>
+          <div class="tcard rare">💃<small>★★</small></div>
+          <div class="tcard common">🎯<small>★</small></div>
+        </div>
+        <div class="shelf">평판·자원 계열</div>
+        <div class="shelfrow">
+          <div class="tcard rare">📸<small>★★</small></div>
+          <div class="tcard common">💰<small>★</small></div>
+        </div>
+        <div class="shelf">회복 계열</div>
+        <div class="shelfrow">
+          <div class="tcard rare">🤝<small>★★</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ③ 관문 픽커 -->
+<h2><span class="q">③</span> 관문 카드 선택 — 그리드 vs 핸드</h2>
+<div class="row">
+  <div class="variant">
+    <div class="vlabel">P1 — 그리드 픽커 (현재 구현)</div>
+    <div class="vdesc">보유 카드를 그리드로 펼치고 탭 선택.<br>많아도 정리됨, 정보 비교 쉬움. 카드게임 손맛은 약함.</div>
+    <div class="phone">
+      <div class="tag">P1</div>
+      <div class="pickinfo">PERFECT ✨ — 2장까지 선택<small>선택한 카드 효과가 게이지에 적용됩니다</small></div>
+      <div class="gridpick">
+        <div class="tcard epic" style="height:76px;min-width:0;border-color:var(--pink);box-shadow:0 0 0 2px var(--pink)">🎤<small>★★★</small></div>
+        <div class="tcard rare" style="height:76px;min-width:0">💃<small>★★</small></div>
+        <div class="tcard rare" style="height:76px;min-width:0;border-color:var(--pink);box-shadow:0 0 0 2px var(--pink)">🤝<small>★★</small></div>
+        <div class="tcard common" style="height:76px;min-width:0">💰<small>★</small></div>
+        <div class="tcard rare" style="height:76px;min-width:0">📸<small>★★</small></div>
+        <div class="tcard common" style="height:76px;min-width:0">🎯<small>★</small></div>
+      </div>
+      <div class="sumline">적용 효과: 실력 +11 · 멘탈 +9 · 유대 +7</div>
+      <div class="confirm">확인 →</div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="vlabel">P2 — 핸드(부채꼴) 픽커</div>
+    <div class="vdesc">하단에 손패처럼 부채꼴 배열, 선택하면 위로 쏙 올라옴.<br>카드게임 손맛 최고. 카드 많으면(8+) 겹침 처리 필요.</div>
+    <div class="phone">
+      <div class="tag">P2</div>
+      <div class="pickinfo">PERFECT ✨ — 2장까지 선택<small>카드를 탭하면 손패에서 올라와요</small></div>
+      <div class="hand">
+        <div class="hcard rare" style="transform:rotate(-24deg) translateX(-150px)">💃<small>★★</small><b>실력+6</b></div>
+        <div class="hcard common" style="transform:rotate(-12deg) translateX(-80px)">💰<small>★</small><b>자본+6</b></div>
+        <div class="hcard epic sel" style="transform:rotate(0deg) translateX(-43px)">🎤<small>★★★</small><b>실력+11</b></div>
+        <div class="hcard rare" style="transform:rotate(12deg) translateX(0px)">🤝<small>★★</small><b>멘탈+9</b></div>
+        <div class="hcard rare" style="transform:rotate(24deg) translateX(70px)">📸<small>★★</small><b>평판+8</b></div>
+      </div>
+      <div class="sumline">적용 효과: 실력 +11</div>
+      <div class="confirm">확인 →</div>
+    </div>
+  </div>
+</div>
+
+<div class="verdict">
+  <b>제안 조합 (추천)</b><br>
+  ① 아나토미: 등급 테두리+★+수치 직표기 그대로<br>
+  ② 덱 열람: <b>A안(배지 탭→하단 시트)</b> — 공간 0·구현 가벼움. C안 덱북은 본선 포토앨범과 함께 확장<br>
+  ③ 관문 픽커: <b>P2(핸드)</b>로 업그레이드 — 덱빌딩의 "손맛"이 심사 인상에 크게 기여. 8장 초과 시 겹침 스크롤<br>
+  <span style="color:var(--sub)">※ 다른 조합·수정 지시 모두 환영 — 결정되면 그대로 구현합니다.</span>
+</div>

@@ -1,0 +1,279 @@
+<title>스테이지 격자 회피 — 와이어프레임</title>
+<style>
+  :root{
+    --bg0:#150a24; --panel:#1d1030;
+    --gold:#f4c95d; --gold-dim:#a8863a;
+    --pink:#ff5fa2; --lav:#cbb8e8; --lav-dim:#8b7bb0; --dim:#6b5e86;
+    --mint:#7ef0c0; --amber:#ffcf6b; --red:#ff6b81;
+    --ink:#f3ecff;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{
+    margin:0; min-height:100vh; color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:radial-gradient(120% 80% at 50% 0%, #2a1745 0%, var(--bg0) 60%, #0d0618 100%);
+    display:flex; flex-direction:column; align-items:center; gap:18px; padding:30px 16px 58px;
+  }
+  .top{text-align:center; max-width:640px}
+  .eyebrow{font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--pink); font-weight:800}
+  h1{font-size:22px; margin:.35em 0 .2em}
+  .sub{font-size:12.5px; color:var(--lav); line-height:1.65}
+  kbd{background:#2a1c40; border:1px solid #4a2f70; border-radius:5px; padding:1px 6px; font-size:11px; color:var(--lav)}
+
+  .phone{width:352px; max-width:100%; border-radius:26px; padding:16px 14px 18px;
+    background:
+      linear-gradient(180deg,#23123966 0%,#160b2666 45%,#160b26a6 100%),   /* 셰이드 완화 — 배경 선명하게 */
+      url(assets/dodge/bg_stage_min.jpg) center 30%/cover no-repeat #160b26;
+    border:1px solid #3a2757; box-shadow:0 26px 60px -18px #000; position:relative}
+
+  /* 적 (진범의 그림자) */
+  .enemy{display:flex; align-items:center; gap:10px; padding:2px 4px 10px}
+  .enemy .face{width:46px; height:46px; border-radius:12px; background:#0d0618; border:2px solid #4a2f70;
+    display:flex; align-items:center; justify-content:center; font-size:24px; filter:grayscale(.3)}
+  .enemy .info{flex:1}
+  .enemy .nm{font-size:12.5px; font-weight:800; color:var(--lav)}
+  .hearts{display:flex; gap:4px; margin-top:3px}
+  .hearts span{font-size:15px; transition:transform .15s}
+  .hearts span.off{filter:grayscale(1); opacity:.35}
+  .wave{font-size:11px; color:var(--lav); text-align:right; text-shadow:0 1px 4px #000}
+  .wave b{color:var(--amber)}
+
+  .scroll{margin:0 0 10px; padding:8px 10px; border-radius:9px; text-align:center; font-size:11.5px; color:#3a2a20;
+    background:linear-gradient(180deg,#f6ecd7,#eaddc0); border:1px solid #c9b68d; font-weight:700}
+
+  /* 격자 */
+  .grid{position:relative; display:grid; grid-template-columns:repeat(5,1fr); gap:6px; padding:10px;
+    background:linear-gradient(180deg,#2415394d,#1a0e2c66); border:2px solid #3a2757; border-radius:14px; touch-action:none; user-select:none}
+  .cell{aspect-ratio:1; border-radius:9px; background:#ffffff0d; border:1px solid #ffffff10;
+    display:flex; align-items:center; justify-content:center; font-size:26px; position:relative; transition:background .15s}
+  .cell.playerRow{background:#ffffff14}
+  .cell .tile{width:86%; height:86%; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:24px;
+    box-shadow:0 3px 8px #0007; animation:drop .16s ease}
+  @keyframes drop{from{transform:translateY(-8px); opacity:.5}to{transform:none; opacity:1}}
+  .t-bomb {background:linear-gradient(180deg,#3a2020,#241016); border:1.5px solid #7a3040}
+  .t-atk  {background:linear-gradient(180deg,#fff3cf,#ffe08a); border:1.5px solid var(--gold)}   /* 밝은 타일 */
+  .t-heal {background:linear-gradient(180deg,#ffd7e6,#ffb3cf); border:1.5px solid var(--pink)}
+  .t-shield{background:linear-gradient(180deg,#d7ecff,#a9d4ff); border:1.5px solid #6fa8e8}
+  .cell .pc{width:92%; height:92%; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:26px;
+    background:radial-gradient(circle at 34% 30%, #6a5bd0, #4a3c9e 70%, #32286e); border:2px solid #8f80ea; box-shadow:0 0 14px #6a5bd088}
+  .cell .pc.shield::after{content:"🛡"; position:absolute; top:-7px; right:-4px; font-size:14px}
+  .cell.hitFx{animation:shake .3s ease}
+  @keyframes shake{0%,100%{transform:none}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+  .pHearts{display:flex; justify-content:center; gap:6px; padding:10px 0 2px}
+  .pHearts span{font-size:18px}
+  .pHearts span.off{filter:grayscale(1); opacity:.35}
+
+  .ctrl{display:flex; gap:10px; margin-top:10px}
+  .ctrl button{flex:1; padding:13px; border:none; border-radius:12px; cursor:pointer; font-size:14px; font-weight:800;
+    background:#2a1c40; color:var(--lav); border:1px solid #4a2f70}
+  .ctrl button:active{transform:translateY(1px)}
+  .hint{text-align:center; font-size:10.5px; color:var(--lav); margin-top:8px; text-shadow:0 1px 4px #000; opacity:.85}
+
+  .fx{position:absolute; font-size:15px; font-weight:900; pointer-events:none; z-index:6; text-shadow:0 2px 4px #000;
+    animation:pop .55s ease forwards; transform:translate(-50%,-50%)}
+  @keyframes pop{0%{opacity:1; transform:translate(-50%,-50%) scale(.7)}70%{opacity:1; transform:translate(-50%,-100%) scale(1.15)}100%{opacity:0; transform:translate(-50%,-130%)}}
+
+  .startOv,.resultOv{position:absolute; inset:0; z-index:9; background:#0d0618d9; border-radius:26px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center; padding:0 22px}
+  .startOv{cursor:pointer; border:none; color:var(--ink); font-size:16px; font-weight:800; backdrop-filter:blur(2px)}
+  .startOv small{display:block; margin-top:10px; font-weight:600; font-size:12px; color:var(--lav); line-height:1.8}
+  .resultOv .grade{font-size:28px; font-weight:900}
+  .resultOv .cnt{font-size:12.5px; color:var(--lav); line-height:1.8}
+  .resultOv .card{font-size:14px; color:var(--amber); font-weight:800}
+  .resultOv .btns{display:flex; gap:10px; margin-top:12px}
+  .resultOv button{padding:12px 20px; border:none; border-radius:12px; cursor:pointer; font-weight:800; font-size:13.5px}
+  .btn-get{background:linear-gradient(180deg,#9df0cf,var(--mint)); color:#083a2a}
+  .btn-retry{background:#241d4e; color:var(--lav); border:1px solid #4a2f70 !important}
+
+  /* 규칙/결정 카드 */
+  .rules{max-width:640px; width:100%; background:var(--panel); border:1px solid #3a2757; border-radius:16px; padding:16px 20px}
+  .rules h3{margin:0 0 10px; font-size:13px; color:var(--lav); letter-spacing:.14em; text-transform:uppercase}
+  .rules table{width:100%; border-collapse:collapse; font-size:12.5px}
+  .rules td,.rules th{padding:6px 8px; border-bottom:1px solid #2a1c40; text-align:left; color:var(--lav)}
+  .rules th{color:var(--dim); font-size:11px; letter-spacing:.08em; text-transform:uppercase}
+  .grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; max-width:640px; width:100%}
+  .card{background:var(--panel); border:1px solid #3a2757; border-radius:16px; padding:15px 16px}
+  .card.pick{border-color:var(--pink); box-shadow:0 0 0 1px #c9427f}
+  .badge{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--pink); margin-bottom:7px}
+  .badge.rec{color:#2a0d1c; background:var(--pink); padding:2px 8px; border-radius:20px}
+  .card h4{margin:2px 0 7px; font-size:14.5px}
+  .card p{margin:0; font-size:12px; line-height:1.65; color:var(--lav)}
+</style>
+
+<div class="top">
+  <div class="eyebrow">스테이지 게임 ③ · 격자 회피 (Reigns: The Witcher 전투형)</div>
+  <h1>💥 사보타주 저지 — 와이어프레임</h1>
+  <p class="sub">좌우로 움직일 때마다 위에서 한 줄씩 내려옵니다. 💥는 피하고, <b>✨ 밝은 타일에 올라타면 반격!</b><br>
+  적 하트 3개를 깎으면 승리 · 내 하트 잔량으로 등급 → 카드 차등 지급.<br>
+  이동: <b>화면 좌/우 아무 곳이나 터치</b> · <kbd>←</kbd><kbd>→</kbd> (매 턴 반드시 이동 — 원작 방식)</p>
+</div>
+
+<div class="phone">
+  <div class="enemy">
+    <div class="face">🎭</div>
+    <div class="info">
+      <div class="nm">진범의 그림자</div>
+      <div class="hearts" id="eHearts"></div>
+    </div>
+    <div class="wave">WAVE <b id="wave">0</b></div>
+  </div>
+  <div class="scroll" id="scroll">밝은 타일에 올라타 반격하세요!</div>
+  <div class="grid" id="grid"></div>
+  <div class="pHearts" id="pHearts"></div>
+  <div class="ctrl">
+    <button id="mvL">◀ 왼쪽</button>
+    <button id="mvR">오른쪽 ▶</button>
+  </div>
+  <div class="hint">화면 아무 곳이나 좌/우 터치 = 그 방향 1칸 이동(=한 줄 하강) · 💥 피격 −1 · ✨ 반격 · 💖 회복 · 🛡 1회 방어</div>
+
+  <button class="startOv" id="start">▶ 사보타주 저지 시작<small>💥 사보타주 = 피하기<br>✨ 스포트라이트 = 올라타면 적에게 1딜<br>💖 응원 = 하트 +1 · 🛡 매니저 = 다음 피해 무효</small></button>
+  <div class="resultOv" id="res" hidden></div>
+</div>
+
+<div class="rules">
+  <h3>등급 (내 하트 잔량 · 시작 5)</h3>
+  <table>
+    <tr><th>잔량</th><th>등급</th><th>카드</th></tr>
+    <tr><td>5</td><td style="color:var(--mint);font-weight:800">PERFECT</td><td>2장 선택</td></tr>
+    <tr><td>3–4</td><td style="color:var(--amber);font-weight:800">GOOD</td><td>1장 선택</td></tr>
+    <tr><td>1–2</td><td style="color:var(--lav-dim);font-weight:800">CLEAR</td><td>1장 or 재도전(멘탈−1)</td></tr>
+    <tr><td>0</td><td style="color:var(--red);font-weight:800">실패</td><td>재도전(멘탈−1)</td></tr>
+  </table>
+</div>
+
+<div class="grid2">
+  <div class="card pick">
+    <span class="badge rec">구현됨 · 추천</span>
+    <h4>턴제 하강 (원작 방식)</h4>
+    <p>내가 움직여야 한 줄 내려옴. 생각할 시간 무제한 — 퍼즐 감각. 스와이프 문법과 동일, 구현 단순.</p>
+  </div>
+  <div class="card">
+    <span class="badge">대안 (미구현)</span>
+    <h4>박자 자동 하강</h4>
+    <p>0.8초마다 자동으로 한 줄 하강 — 긴장감↑, 리듬게임과 결 겹침. 원하시면 토글로 추가 가능.</p>
+  </div>
+  <div class="card pick">
+    <span class="badge rec">✓ 확정</span>
+    <h4>대기 없음 (원작 방식)</h4>
+    <p>매 턴 반드시 좌/우 이동. 안전 칸에 머무는 소극 플레이 차단 — 강제 이동의 긴장감 유지. 난이도는 스폰 비율로 조절.</p>
+  </div>
+</div>
+
+<script>
+  // ── 설정 ──
+  const COLS=5, ROWS=5;                  // 하단 row = 플레이어 행
+  const P_MAX=5, E_MAX=3;
+  const SPAWN_W=[["bomb",.52],["atk",.28],["heal",.12],["shield",.08]];
+  const TILE_ICON={bomb:"💥",atk:"✨",heal:"💖",shield:"🛡"};
+  const TILE_CLS={bomb:"t-bomb",atk:"t-atk",heal:"t-heal",shield:"t-shield"};
+
+  const E=id=>document.getElementById(id);
+  const gridEl=E("grid"), scroll=E("scroll");
+  let board=[], px=2, pH=P_MAX, eH=E_MAX, wave=0, shield=false, playing=false;
+  let cells=[];
+
+  // 격자 DOM 생성
+  for(let r=0;r<ROWS;r++){ for(let c=0;c<COLS;c++){
+    const d=document.createElement("div"); d.className="cell"+(r===ROWS-1?" playerRow":"");
+    d.dataset.r=r; d.dataset.c=c; gridEl.appendChild(d); cells.push(d);
+  }}
+  const cellAt=(r,c)=>cells[r*COLS+c];
+
+  function drawHearts(el,n,max){ el.innerHTML=""; for(let i=0;i<max;i++){ const s=document.createElement("span"); s.textContent="❤️"; if(i>=n) s.className="off"; el.appendChild(s);} }
+  function render(){
+    for(const d of cells) d.innerHTML="";
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      const t=board[r]?.[c]; if(!t) continue;
+      const el=document.createElement("div"); el.className="tile "+TILE_CLS[t]; el.textContent=TILE_ICON[t];
+      cellAt(r,c).appendChild(el);
+    }
+    const pc=document.createElement("div"); pc.className="pc"+(shield?" shield":""); pc.textContent="👧";
+    cellAt(ROWS-1,px).appendChild(pc);
+    drawHearts(E("pHearts"),pH,P_MAX); drawHearts(E("eHearts"),eH,E_MAX);
+    E("wave").textContent=wave;
+  }
+  function fxAt(r,c,text,color){
+    const cell=cellAt(r,c).getBoundingClientRect(), ph=document.querySelector(".phone").getBoundingClientRect();
+    const f=document.createElement("div"); f.className="fx"; f.textContent=text; f.style.color=color;
+    f.style.left=(cell.left-ph.left+cell.width/2)+"px"; f.style.top=(cell.top-ph.top)+"px";
+    document.querySelector(".phone").appendChild(f); setTimeout(()=>f.remove(),580);
+  }
+
+  function pickTile(){ let r=Math.random(), acc=0; for(const [t,w] of SPAWN_W){ acc+=w; if(r<acc) return t; } return "bomb"; }
+  function spawnRow(){
+    const row=Array(COLS).fill(null);
+    const n=1+(Math.random()<0.45?1:0);              // 턴당 1~2개
+    const cols=[...Array(COLS).keys()].sort(()=>Math.random()-0.5).slice(0,n);
+    for(const c of cols) row[c]=pickTile();
+    return row;
+  }
+
+  function step(dx){
+    if(!playing) return;
+    px=Math.max(0,Math.min(COLS-1,px+dx));
+    wave++;
+    // 하강: 맨 아래 row가 플레이어 행으로 진입
+    const incoming=board[ROWS-2]||Array(COLS).fill(null);
+    for(let r=ROWS-2;r>0;r--) board[r]=board[r-1];
+    board[0]=spawnRow();
+    // 플레이어 칸 충돌 판정
+    const t=incoming[px];
+    if(t==="bomb"){
+      if(shield){ shield=false; fxAt(ROWS-1,px,"방어!","#a9d4ff"); msg("🛡 매니저가 막았다!"); }
+      else { pH--; fxAt(ROWS-1,px,"-1 ❤️","var(--red)"); cellAt(ROWS-1,px).classList.remove("hitFx"); void cellAt(ROWS-1,px).offsetWidth; cellAt(ROWS-1,px).classList.add("hitFx"); msg("💥 사보타주에 당했다!"); }
+    }
+    else if(t==="atk"){ eH--; fxAt(ROWS-1,px,"반격! ⚡","var(--gold)"); msg("✨ 스포트라이트 반격! 적 −1"); }
+    else if(t==="heal"){ if(pH<P_MAX){pH++; fxAt(ROWS-1,px,"+1 ❤️","var(--pink)");} msg("💖 팬들의 응원!"); }
+    else if(t==="shield"){ shield=true; fxAt(ROWS-1,px,"🛡","#a9d4ff"); msg("🛡 매니저 대기 중 (다음 피해 무효)"); }
+    else msg("");
+    render();
+    if(eH<=0){ finish(true); return; }
+    if(pH<=0){ finish(false); return; }
+  }
+  function msg(s){ if(s) scroll.textContent=s; }
+
+  function gradeOf(){
+    if(pH>=5) return {name:"PERFECT",color:"var(--mint)",pick:2,retry:false};
+    if(pH>=3) return {name:"GOOD",color:"var(--amber)",pick:1,retry:false};
+    if(pH>=1) return {name:"CLEAR",color:"var(--lav-dim)",pick:1,retry:true};
+    return {name:"실패",color:"var(--red)",pick:0,retry:true};
+  }
+  function finish(win){
+    playing=false;
+    const g=win?gradeOf():{name:"실패",color:"var(--red)",pick:0,retry:true};
+    const res=E("res");
+    res.innerHTML=`<div class="grade" style="color:${g.color}">${g.name}</div>
+      <div class="cnt">${win?"진범의 그림자를 몰아냈다!":"무대가 무너졌다…"}<br>남은 하트 ${pH}/5 · WAVE ${wave}</div>
+      ${g.pick>0?`<div class="card">→ 카드 ${g.pick}장 선택</div>`:""}`;
+    const btns=document.createElement("div"); btns.className="btns";
+    if(g.pick>0){ const b=document.createElement("button"); b.className="btn-get"; b.textContent="✓ 획득";
+      b.onclick=()=>{ res.innerHTML=`<div class="grade" style="color:var(--mint)">→ 카드 선택 화면으로</div><div class="cnt">(기존 관문 흐름)</div>`; }; btns.appendChild(b); }
+    if(g.retry){ const b=document.createElement("button"); b.className="btn-retry"; b.textContent="🔄 재도전 (멘탈−1)"; b.onclick=start; btns.appendChild(b); }
+    res.appendChild(btns); res.hidden=false;
+  }
+
+  function start(){
+    E("res").hidden=true; E("start").hidden=true;
+    board=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+    board[0]=spawnRow();
+    px=2; pH=P_MAX; eH=E_MAX; wave=0; shield=false; playing=true;
+    msg("밝은 타일에 올라타 반격하세요!");
+    render();
+  }
+
+  E("start").addEventListener("click",start);
+  // 화면 좌우 2분할 터치: 폰 프레임 어디를 눌러도 그 방향으로 이동 (버튼·격자 포함 — 핸들러 하나로 중복 스텝 방지)
+  const phoneEl=document.querySelector(".phone");
+  phoneEl.addEventListener("pointerdown",e=>{
+    if(!playing) return;                       // 시작/결과 오버레이 탭은 무시
+    const r=phoneEl.getBoundingClientRect();
+    step(e.clientX-r.left < r.width/2 ? -1 : 1);
+  });
+  window.addEventListener("keydown",e=>{
+    if(e.code==="ArrowLeft"){ e.preventDefault(); step(-1); }
+    if(e.code==="ArrowRight"){ e.preventDefault(); step(1); }
+  });
+  window.__dodge={ start, step, state:()=>({px,pH,eH,wave,shield,playing}) };
+</script>

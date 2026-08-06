@@ -1,0 +1,245 @@
+<title>스테이지 슬롯 — 레버-풀 목업 (실어셋)</title>
+<style>
+  :root{ --tang:#E7641B; --gold:#F2C86A; --gold-dk:#c99a3e; --cream:#F6F0DE; --ink:#3A2A20; --green:#2F6E5D; --mint:#7ef0c0; }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{ margin:0; min-height:100vh; color:#eafff5;
+    font-family:-apple-system,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:radial-gradient(120% 90% at 50% 8%, #3a856f, var(--green) 55%, #1f4d40);
+    display:flex; flex-direction:column; align-items:center; gap:14px; padding:26px 16px 54px; }
+  .top{text-align:center; max-width:560px}
+  .eyebrow{font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--gold); font-weight:800}
+  h1{font-size:21px; margin:.35em 0 .2em}
+  .sub{font-size:12.5px; color:#bfe6d8; line-height:1.6}
+
+  /* 머신 무대 — 어셋 레이어 합성 */
+  .machine{position:relative; width:344px; height:496px; margin:2px auto}
+  .machine img{position:absolute; -webkit-user-drag:none; user-select:none; pointer-events:none}
+  .lay{position:absolute}
+  #cabinet{left:0; top:0; width:344px; height:496px; z-index:1}
+  #marquee{left:64px; top:44px; width:216px; height:90px; z-index:2}
+  #banner {left:92px; top:150px; width:160px; height:47px; z-index:6}
+  #bezel  {left:44px; top:166px; width:256px; height:222px; z-index:4}  /* 릴 위에서 슬롯 마스크 */
+
+  .marquee-txt{position:absolute; left:64px; top:64px; width:216px; height:60px; z-index:3;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    color:#fff4e6; font-weight:900; font-size:17px; line-height:1.15; text-shadow:0 2px 0 #0003; pointer-events:none}
+  .banner-txt{position:absolute; left:92px; top:150px; width:160px; height:47px; z-index:7;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    color:#fff4e6; font-weight:800; font-size:11px; padding:0 6px; pointer-events:none}
+
+  /* 릴 3개 — 베젤 슬롯 위에 클립 배치 */
+  .reels{position:absolute; z-index:3}
+  .reel{position:absolute; top:187px; width:56px; height:180px; overflow:hidden;
+    background:url(assets/slot/min/05_reel_strip_background.png) center/cover; }
+  #reel0{left:84px} #reel1{left:146px} #reel2{left:211px}
+  .strip{display:flex; flex-direction:column; will-change:transform}
+  .strip .sym{position:static; height:46px; width:56px; object-fit:contain; display:block}
+  .payline{position:absolute; left:84px; right:77px; top:277px; height:3px; z-index:5;
+    background:linear-gradient(90deg,transparent,var(--tang),transparent); opacity:.45; pointer-events:none}
+  .reel-win{position:absolute; top:194px; width:56px; height:166px; z-index:5; border-radius:6px; pointer-events:none;
+    box-shadow:inset 0 0 0 3px var(--tang), 0 0 12px var(--tang); opacity:0; transition:opacity .2s}
+  .reel-win.on{opacity:1}
+  #win0{left:84px} #win1{left:146px} #win2{left:211px}
+
+  /* 레버 (위아래 이동) + 마운트 */
+  #lever{left:298px; top:150px; width:58px; height:112px; z-index:4; transform-origin:50% 100%;
+    cursor:grab; touch-action:none; pointer-events:auto; will-change:transform}
+  #lever.grab{cursor:grabbing}
+  #mount{left:290px; top:246px; width:64px; height:48px; z-index:5}
+  .pull-hint{position:absolute; left:230px; top:108px; width:74px; text-align:center; font-size:10px; color:#eafff5cc; z-index:6; pointer-events:none}
+  .pull-hint .arw{font-size:15px; display:block; animation:bob 1.2s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+  /* HUD */
+  .hud{width:344px; max-width:100%; margin:0 auto}
+  .pips{display:flex; justify-content:center; gap:8px; margin:4px 0 2px}
+  .pip{width:11px; height:11px; border-radius:50%; background:#1f4d40; border:1px solid var(--gold-dk); transition:.2s}
+  .pip.on{background:var(--gold); box-shadow:0 0 8px var(--gold)}
+  .pips-label{text-align:center; font-size:11px; color:#bfe6d8; margin-top:4px}
+  .result{height:26px; text-align:center; margin:8px 0 4px; font-weight:800; font-size:16px}
+  .r-perfect{color:var(--mint)} .r-good{color:var(--gold)} .r-clear{color:#bfe6d8} .r-idle{color:#8fbdb0; font-weight:600; font-size:13px}
+  .commit{display:flex; gap:10px}
+  .commit button{flex:1; padding:12px; border:none; border-radius:12px; cursor:pointer; font-size:13px; font-weight:800}
+  .commit button:active{transform:translateY(1px)}
+  .btn-reroll{background:#215043; color:#eafff5; border:1px solid #3a856f !important}
+  .btn-reroll.ad{background:linear-gradient(180deg,#ff9a5a,var(--tang)); color:#3a1608}
+  .btn-go{background:linear-gradient(180deg,#9df0cf,var(--mint)); color:#083a2a}
+  .hint{text-align:center; font-size:11px; color:#8fbdb0; margin-top:9px}
+  kbd{background:#215043; border:1px solid #3a856f; border-radius:5px; padding:1px 6px; font-size:11px; color:#eafff5}
+
+  .modal-bg{position:absolute; inset:0; background:#0e2b24cc; backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center; z-index:20}
+  .modal{width:290px; max-width:92%; background:linear-gradient(180deg,#f7bccd,#ec9ab6); border:3px solid var(--gold-dk);
+    border-radius:20px; padding:20px 18px; text-align:center; box-shadow:0 20px 50px -10px #000}
+  .modal .ad-emoji{font-size:40px} .modal h3{margin:6px 0 6px; font-size:16px; color:var(--tang)}
+  .modal p{margin:0 0 12px; font-size:12px; color:#7a4a5e; line-height:1.55}
+  .ad-box{height:80px; border:2px dashed #c977a0; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#b3778f; font-size:12px; margin-bottom:14px; background:#fff4}
+  .modal .adok{width:100%; padding:12px; border:none; border-radius:12px; cursor:pointer; font-weight:800; font-size:14px; color:#3a1608; background:linear-gradient(180deg,#ffd884,var(--gold))}
+  .modal .ghost{width:100%; margin-top:8px; padding:9px; border:none; background:none; color:#a76c84; cursor:pointer; font-size:12px}
+  .note{max-width:560px; font-size:11.5px; color:#bfe6d8; line-height:1.7; text-align:center}
+  .note code{background:#215043; padding:1px 6px; border-radius:5px; color:#eafff5}
+</style>
+
+<div class="top">
+  <div class="eyebrow">스테이지 게임 · 레버-풀 (실어셋 합성)</div>
+  <h1>🎰 레버를 아래로 당겨보세요</h1>
+  <p class="sub">디자이너 어셋 8종 레이어 합성 · 레버는 <b>위아래 이동</b>.<br>
+  레버 드래그(또는 탭·<kbd>Space</kbd>) → 3릴 스핀 → 등급 판정.</p>
+</div>
+
+<div class="machine" id="machine">
+  <img id="cabinet" src="assets/slot/min/01_cabinet_body.png" alt="">
+  <img id="marquee" src="assets/slot/min/02_top_marquee.png" alt="">
+  <div class="marquee-txt">0시의<br>무대</div>
+  <img id="bezel" src="assets/slot/min/04_reel_window_bezel.png" alt="">
+
+  <div class="reels">
+    <div class="reel" id="reel0"><div class="strip"></div></div>
+    <div class="reel" id="reel1"><div class="strip"></div></div>
+    <div class="reel" id="reel2"><div class="strip"></div></div>
+  </div>
+  <div class="payline"></div>
+  <div class="reel-win" id="win0"></div><div class="reel-win" id="win1"></div><div class="reel-win" id="win2"></div>
+
+  <img id="banner" src="assets/slot/min/03_banner_plate.png" alt="">
+  <div class="banner-txt">🥇 센터 대결 — 1막</div>
+
+  <img id="lever" src="assets/slot/min/07_lever_arm_knob.png" alt="">
+  <img id="mount" src="assets/slot/min/08_lever_mount.png" alt="">
+  <div class="pull-hint" id="pullHint"><span class="arw">⬇</span>레버 당기기</div>
+
+  <div class="modal-bg" id="adbg" hidden>
+    <div class="modal">
+      <div class="ad-emoji">📺</div>
+      <h3>광고 보고 스핀 3회 더!</h3>
+      <p>스핀을 모두 사용했어요.<br>짧은 광고를 시청하면 3회 더 당길 수 있어요.</p>
+      <div class="ad-box">＿ 광고 영역 (미연동) ＿</div>
+      <button class="adok" id="adok">광고 시청 완료 → +3 스핀</button>
+      <button class="ghost" id="adcancel">그만하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="hud">
+  <div class="pips" id="pips"></div>
+  <div class="pips-label" id="pipsLabel">스핀 3회 남음</div>
+  <div class="result r-idle" id="result">레버를 당겨 릴을 돌리세요</div>
+  <div class="commit" id="commit" hidden>
+    <button class="btn-reroll" id="reroll">🔄 Reload</button>
+    <button class="btn-go" id="go">✓ 획득</button>
+  </div>
+  <div class="hint">개발용: 레버 탭 또는 <kbd>Space</kbd> = 스핀 · 소진 후엔 광고 모달</div>
+</div>
+
+<p class="note">어셋 8종 실합성 · 심볼 🎤🎵👠(마이크/음표/힐) 3종·와일드 없음 → PERFECT 11% / GOOD 67% / 꽝 22%.
+레버 동작 = 위아래 이동(<code>translateY</code>). 다중 프레임 시퀀스 주시면 당김 단계별로 스왑 가능.</p>
+
+<script>
+  const SYMS = [
+    { k:"mic",  src:"assets/slot/min/06a_microphone.png" },
+    { k:"note", src:"assets/slot/min/06b_music_note.png" },
+    { k:"heel", src:"assets/slot/min/06c_dancing_idol.png" },
+  ];
+  function evaluate(res){
+    const [a,b,c]=res;
+    if(a===b && b===c)          return {grade:"PERFECT", cls:"r-perfect", pick:2};
+    if(a===b || b===c || a===c) return {grade:"GOOD",    cls:"r-good",    pick:1};
+    return                             {grade:"CLEAR",   cls:"r-clear",   pick:1};
+  }
+
+  const strips=[...document.querySelectorAll(".strip")];
+  const reels=["reel0","reel1","reel2"].map(id=>document.getElementById(id));
+  const wins =["win0","win1","win2"].map(id=>document.getElementById(id));
+  const H=46, LOOP=7, VIS=180;
+  function fillStrip(strip, finalKey){
+    strip.innerHTML="";
+    const push=(sym)=>{ const im=document.createElement("img"); im.className="sym"; im.src=sym.src; strip.appendChild(im); };
+    for(let i=0;i<LOOP;i++) for(const s of SYMS) push(s);
+    push(SYMS.find(s=>s.k===finalKey));
+    return strip.children.length;
+  }
+  strips.forEach((s,i)=>{ const n=fillStrip(s,SYMS[i%3].k); s.style.transform=`translateY(${-((n-1)*H)+(VIS/2-H/2)}px)`; });
+
+  // HUD
+  const resultEl=document.getElementById("result");
+  const pips=document.getElementById("pips"), pipsLabel=document.getElementById("pipsLabel");
+  const commit=document.getElementById("commit"), rerollBtn=document.getElementById("reroll"), goBtn=document.getElementById("go");
+  const adbg=document.getElementById("adbg"), adok=document.getElementById("adok"), adcancel=document.getElementById("adcancel");
+  const pullHint=document.getElementById("pullHint");
+  const SPINS_PER_SET=3;
+  let spinning=false, spinsLeft=SPINS_PER_SET, committed=false;
+  function renderPips(){
+    pips.innerHTML="";
+    for(let i=0;i<SPINS_PER_SET;i++){ const d=document.createElement("div"); d.className="pip"+(i<spinsLeft?" on":""); pips.appendChild(d); }
+    pipsLabel.textContent = spinsLeft>0 ? `스핀 ${spinsLeft}회 남음` : "스핀 소진 — 광고로 충전";
+  }
+  function setBusy(b){ rerollBtn.disabled=b; goBtn.disabled=b; }
+
+  function doSpin(){
+    if(spinning || committed) return;
+    if(spinsLeft<=0){ openAd(); return; }
+    spinsLeft--; spinning=true; setBusy(true); pullHint.hidden=true;
+    resultEl.className="result r-idle"; resultEl.textContent="…";
+    wins.forEach(w=>w.classList.remove("on"));
+    const finals=reels.map(()=>SYMS[Math.floor(Math.random()*3)].k);
+    reels.forEach((reel,i)=>{
+      const strip=strips[i]; const n=fillStrip(strip, finals[i]);
+      strip.style.transition="none"; strip.style.transform="translateY(0)"; void strip.offsetHeight;
+      const targetY=-((n-1)*H)+(VIS/2-H/2); const dur=1000+i*420;
+      strip.style.transition=`transform ${dur}ms cubic-bezier(.16,.85,.3,1)`;
+      strip.style.transform=`translateY(${targetY}px)`;
+      if(i===reels.length-1) setTimeout(()=>{
+        const res=evaluate(finals);
+        resultEl.className="result "+res.cls;
+        resultEl.textContent=`${res.grade}!  →  진행 시 카드 ${res.pick}장 선택`;
+        if(res.grade!=="CLEAR") wins.forEach(w=>w.classList.add("on"));
+        spinning=false; commit.hidden=false; renderPips();
+        if(spinsLeft<=0){ rerollBtn.textContent="📺 광고 보고 더 당기기"; rerollBtn.classList.add("ad"); }
+        else { rerollBtn.textContent=`🔄 Reload (${spinsLeft})`; rerollBtn.classList.remove("ad"); }
+        setBusy(false);
+      }, dur+60);
+    });
+  }
+  function commitResult(){
+    if(committed) return; committed=true; commit.hidden=true;
+    resultEl.className="result r-perfect"; resultEl.textContent="→ 카드 선택 화면으로 (기존 관문 흐름)";
+    pipsLabel.textContent="확정됨"; lever.style.cursor="default";
+  }
+  function openAd(){ adbg.hidden=false; }
+
+  // 레버 위아래 이동
+  const lever=document.getElementById("lever");
+  const TRAVEL=46, PULL_PX=96, TRIG_T=0.5;
+  let dragging=false, startY=0, pull=0, moved=false, downT=0;
+  function setPull(t){ pull=Math.max(0,Math.min(1,t)); lever.style.transform=`translateY(${pull*TRAVEL}px)`; }
+  function pullOnce(){
+    if(spinning||committed) return;
+    if(spinsLeft<=0){ openAd(); return; }
+    lever.style.transition="transform .16s ease-in"; setPull(1);
+    setTimeout(()=>{ lever.style.transition="transform .5s cubic-bezier(.34,1.56,.64,1)"; setPull(0); doSpin(); },190);
+  }
+  lever.addEventListener("pointerdown", e=>{
+    if(spinning||committed) return;
+    dragging=true; moved=false; startY=e.clientY; downT=e.timeStamp;
+    lever.classList.add("grab"); lever.style.transition="none"; lever.setPointerCapture(e.pointerId);
+  });
+  lever.addEventListener("pointermove", e=>{
+    if(!dragging) return; const dy=e.clientY-startY; if(Math.abs(dy)>4) moved=true; setPull(dy/PULL_PX);
+  });
+  lever.addEventListener("pointerup", e=>{
+    if(!dragging) return; dragging=false; lever.classList.remove("grab");
+    const quickTap = !moved && (e.timeStamp-downT)<300;
+    lever.style.transition="transform .5s cubic-bezier(.34,1.56,.64,1)";
+    if(quickTap){ setPull(0); pullOnce(); return; }
+    const fired = pull>=TRIG_T; setPull(0); if(fired) doSpin();
+  });
+
+  renderPips();
+  rerollBtn.addEventListener("click", pullOnce);
+  goBtn.addEventListener("click", commitResult);
+  adok.addEventListener("click", ()=>{ spinsLeft=SPINS_PER_SET; adbg.hidden=true; rerollBtn.textContent="🔄 Reload"; rerollBtn.classList.remove("ad"); renderPips(); });
+  adcancel.addEventListener("click", ()=>{ adbg.hidden=true; });
+  window.addEventListener("keydown", e=>{ if(e.code==="Space"){ e.preventDefault(); if(adbg.hidden) pullOnce(); }});
+  window.__slot = { state:()=>({spinsLeft,committed,spinning,pull}), setPull, doSpin, pullOnce };
+</script>

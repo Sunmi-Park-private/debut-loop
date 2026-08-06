@@ -1,0 +1,248 @@
+<title>스테이지 리듬게임 — 목업 (B안 낙하식)</title>
+<style>
+  :root{
+    --gold:#f4c95d; --gold-dim:#a8863a;
+    --pink:#ff5fa2; --tang:#ff8a4a;
+    --lav:#cbb8e8; --lav-dim:#8b7bb0; --dim:#6b5e86;
+    --mint:#7ef0c0; --amber:#ffcf6b;
+    --ink:#f3ecff; --navy:#141031;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{
+    margin:0; min-height:100vh; color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:radial-gradient(120% 80% at 50% 0%, #26205a 0%, var(--navy) 55%, #0a0820 100%);
+    display:flex; flex-direction:column; align-items:center; gap:16px; padding:26px 16px 54px;
+  }
+  .top{text-align:center; max-width:560px}
+  .eyebrow{font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--pink); font-weight:800}
+  h1{font-size:21px; margin:.35em 0 .2em}
+  .sub{font-size:12.5px; color:var(--lav); line-height:1.6}
+  kbd{background:#241d4e; border:1px solid #3d3379; border-radius:5px; padding:1px 6px; font-size:11px; color:var(--lav)}
+
+  /* ── 폰 프레임 ── */
+  .phone{
+    width:360px; max-width:100%; border-radius:28px; padding:14px 12px 16px;
+    background:linear-gradient(180deg,#1d1740,#120e2c);
+    border:1px solid #352b66; box-shadow:0 28px 64px -18px #000;
+  }
+  .hudline{display:flex; justify-content:space-between; align-items:baseline; font-size:12px; color:var(--lav-dim); padding:2px 6px 8px}
+  .hudline b{color:var(--amber)}
+  .combo{color:var(--mint); font-weight:800}
+
+  /* ── 플레이 영역: 배경 = 안무연습 스테이지 ── */
+  .play{position:relative; height:520px; border-radius:18px; overflow:hidden;
+    border:2px solid #3d3379; touch-action:none; user-select:none;
+    background:url(assets/rhythm/bg_dance_min.jpg) center 18%/cover no-repeat #141031}
+  /* 노트 가독용 셰이드: 위(진입부) 살짝 + 아래(판정부) 진하게 */
+  .shade{position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(180deg,#0a082066 0%,#0a082014 30%,#0a082022 55%,#0a0820cc 88%,#0a0820e6 100%)}
+
+  .laneV{position:absolute; top:0; bottom:0; width:50%; overflow:hidden}
+  .laneV.l0{left:0}
+  .laneV.l1{left:50%}
+  .laneDiv{position:absolute; left:50%; top:0; bottom:0; width:1px; background:linear-gradient(#fff0,#cbb8e844 30%,#cbb8e844 80%,#fff0); pointer-events:none}
+  .laneGuide{position:absolute; top:0; bottom:64px; left:18%; right:18%; border-left:1px dashed #cbb8e822; border-right:1px dashed #cbb8e822; pointer-events:none}
+
+  .hitBar{position:absolute; left:10%; right:10%; bottom:86px; height:5px; border-radius:3px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent); box-shadow:0 0 14px #f4c95d88}
+  .hitRing{position:absolute; bottom:60px; left:50%; transform:translateX(-50%); width:56px; height:56px; border-radius:50%;
+    border:4px solid var(--gold); opacity:.85; box-shadow:0 0 16px #f4c95d44}
+  .laneLabel{position:absolute; bottom:20px; left:50%; transform:translateX(-50%); font-size:11px; color:var(--lav); text-shadow:0 1px 3px #000}
+
+  .note{position:absolute; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:23px; will-change:transform; left:50%; margin-left:-23px;
+    background:radial-gradient(circle at 34% 30%, #ff9ec4, var(--pink) 62%, #a33268);
+    box-shadow:0 3px 12px #000a, inset -2px -3px 6px #0005}
+  .note.n1{background:radial-gradient(circle at 34% 30%, #ffb98a, var(--tang) 62%, #b4511f)}
+
+  .judge{position:absolute; font-size:16px; font-weight:900; pointer-events:none; animation:pop .5s ease forwards; z-index:5;
+    text-shadow:0 2px 5px #000; transform:translate(-50%,-50%)}
+  @keyframes pop{0%{opacity:1; transform:translate(-50%,-50%) scale(.7)}70%{opacity:1; transform:translate(-50%,-95%) scale(1.15)}100%{opacity:0; transform:translate(-50%,-125%) scale(1)}}
+  .j-p{color:var(--mint)} .j-g{color:var(--amber)} .j-m{color:#ff6b81}
+
+  .tapfx{position:absolute; width:56px; height:56px; border-radius:50%; border:3px solid #fff; opacity:0; pointer-events:none;
+    transform:translate(-50%,-50%); animation:ring .28s ease-out}
+  @keyframes ring{0%{opacity:.8; scale:.7}100%{opacity:0; scale:1.5}}
+
+  .countdown{position:absolute; inset:0; z-index:7; display:flex; align-items:center; justify-content:center;
+    font-size:64px; font-weight:900; color:#fff; text-shadow:0 4px 18px #000c; pointer-events:none}
+
+  .startOv{position:absolute; inset:0; z-index:8; border:none; cursor:pointer;
+    background:#0a0820b3; color:var(--ink); font-size:16px; font-weight:800; backdrop-filter:blur(2px)}
+  .startOv small{display:block; margin-top:10px; font-weight:600; font-size:12px; color:var(--lav); line-height:1.7}
+
+  .resultOv{position:absolute; inset:0; z-index:9; background:#0a0820e6; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:7px; text-align:center; padding:0 20px}
+  .resultOv .grade{font-size:30px; font-weight:900}
+  .resultOv .rate{font-size:13px; color:var(--lav)}
+  .resultOv .cnt{font-size:12px; color:var(--lav-dim)}
+  .resultOv .card{font-size:14px; color:var(--amber); font-weight:800; margin-top:4px}
+  .resultOv .btns{display:flex; gap:10px; margin-top:14px}
+  .resultOv button{padding:12px 20px; border:none; border-radius:12px; cursor:pointer; font-weight:800; font-size:13.5px}
+  .btn-get{background:linear-gradient(180deg,#9df0cf,var(--mint)); color:#083a2a}
+  .btn-retry{background:#241d4e; color:var(--lav); border:1px solid #3d3379 !important}
+  .btn-again{background:none; border:none !important; color:var(--lav-dim); font-size:12px; margin-top:2px; cursor:pointer}
+
+  .note-hint{max-width:560px; font-size:11.5px; color:var(--lav-dim); line-height:1.7; text-align:center}
+  .note-hint code{background:#241d4e; padding:1px 6px; border-radius:5px; color:var(--lav)}
+</style>
+
+<div class="top">
+  <div class="eyebrow">스테이지 게임 · 리듬 (B안 확정 · 낙하식)</div>
+  <h1>🥁 리듬 스테이지 — 목업</h1>
+  <p class="sub">20초 · 노트 24개 · 좌우 2레인. 노트가 판정선에 닿는 순간 해당 레인 탭.<br>
+  왼쪽 🎤 = 왼쪽 탭·<kbd>F</kbd>·<kbd>←</kbd> / 오른쪽 💃 = 오른쪽 탭·<kbd>J</kbd>·<kbd>→</kbd></p>
+</div>
+
+<div class="phone">
+  <div class="hudline">
+    <span>⏱ <b id="time">20.0</b>s</span>
+    <span class="combo" id="combo">COMBO 0</span>
+    <span>P <b id="cp">0</b> · G <b id="cg">0</b> · M <b id="cm">0</b></span>
+  </div>
+  <div class="play" id="play">
+    <div class="shade"></div>
+    <div class="laneDiv"></div>
+    <div class="laneV l0"><div class="laneGuide"></div><div class="hitBar"></div><div class="hitRing"></div><div class="laneLabel">🎤 F / ←</div></div>
+    <div class="laneV l1"><div class="laneGuide"></div><div class="hitBar"></div><div class="hitRing"></div><div class="laneLabel">💃 J / →</div></div>
+    <div class="countdown" id="count" hidden></div>
+    <button class="startOv" id="start">▶ 무대 시작 (20초)<small>판정선(금색 링)에 노트가 겹칠 때 탭!<br>성공률 80%↑ 카드 2장 · 50%↑ 1장</small></button>
+    <div class="resultOv" id="res" hidden></div>
+  </div>
+</div>
+
+<p class="note-hint">배경 = <code>안무연습.png</code> (하루 무대 컷). 판정 = 연습하기 stopZone 시간판(≤80ms P / ≤180ms G).<br>
+등급: 성공률 ≥80% PERFECT(2장) · ≥50% GOOD(1장) · 그외 CLEAR(1장 or 재도전 멘탈−1) — 슬롯과 동일 관문 흐름.</p>
+
+<script>
+  // ── 확정 스펙 (wireframe B안) ──
+  const DUR=20000, NOTE_IV=800, TRAVEL=1600;
+  const P_MS=80, G_MS=180, LATE_MS=200;
+  function judge(dt){ const a=Math.abs(dt); if(a<=P_MS) return "p"; if(a<=G_MS) return "g"; return null; }
+  function gradeOf(p,g,total){
+    const r=(p+g)/total;
+    if(r>=0.8) return {name:"PERFECT",color:"var(--mint)",pick:2,retry:false};
+    if(r>=0.5) return {name:"GOOD",color:"var(--amber)",pick:1,retry:false};
+    return {name:"CLEAR",color:"var(--lav-dim)",pick:1,retry:true};
+  }
+
+  const E=id=>document.getElementById(id);
+  const play=E("play"), startBtn=E("start"), res=E("res"), count=E("count");
+  const tEl=E("time"), cEl=E("combo"), pEl=E("cp"), gEl=E("cg"), mEl=E("cm");
+  const lanes=[...play.querySelectorAll(".laneV")];
+
+  let notes=[], plan=[], t0=0, raf=0, running=false, spawned=0, total=0;
+  let stats={p:0,g:0,m:0}, combo=0, maxCombo=0;
+
+  function hitY(){ return play.getBoundingClientRect().height-89; }  // hitBar 위치
+
+  function spawnPlan(){
+    const out=[]; let t=1000, lane=Math.random()<0.5?0:1;
+    while(t<=DUR-400){
+      // 70% 교대, 30% 같은 레인 연속 — 단조로움 방지
+      lane = Math.random()<0.7 ? 1-lane : lane;
+      out.push({t, lane}); t+=NOTE_IV;
+    }
+    return out;
+  }
+
+  function addNote(n){
+    const el=document.createElement("div");
+    el.className="note"+(n.lane===1?" n1":"");
+    el.textContent=n.lane===0?"🎤":"💃";
+    lanes[n.lane].appendChild(el);
+    n.el=el; notes.push(n);
+  }
+  function posNote(n, now){
+    const prog=(now-(n.t-TRAVEL))/TRAVEL;
+    n.el.style.transform=`translateY(${hitY()*prog-23}px)`;
+  }
+  function fx(lane, kind){
+    const j=document.createElement("div");
+    j.className="judge j-"+kind;
+    j.textContent=kind==="p"?"PERFECT":kind==="g"?"GOOD":"MISS";
+    const lr=lanes[lane].getBoundingClientRect(), pr=play.getBoundingClientRect();
+    j.style.left=(lr.left-pr.left+lr.width/2)+"px"; j.style.top=(hitY()-30)+"px";
+    play.appendChild(j); setTimeout(()=>j.remove(),520);
+  }
+  function tapRing(lane){
+    const r=document.createElement("div"); r.className="tapfx";
+    const lr=lanes[lane].getBoundingClientRect(), pr=play.getBoundingClientRect();
+    r.style.left=(lr.left-pr.left+lr.width/2)+"px"; r.style.top=(hitY()+3)+"px";
+    play.appendChild(r); setTimeout(()=>r.remove(),300);
+  }
+  function record(kind){
+    if(kind==="m"){ stats.m++; combo=0; } else { stats[kind]++; combo++; maxCombo=Math.max(maxCombo,combo); }
+    pEl.textContent=stats.p; gEl.textContent=stats.g; mEl.textContent=stats.m; cEl.textContent="COMBO "+combo;
+  }
+
+  function hit(lane){
+    if(!running) return;
+    tapRing(lane);
+    const now=performance.now()-t0;
+    let best=null, bestDt=1e9;
+    for(const n of notes){ if(n.lane!==lane||n.done) continue; const dt=now-n.t; if(Math.abs(dt)<Math.abs(bestDt)){best=n;bestDt=dt;} }
+    if(!best || Math.abs(bestDt)>G_MS) return;   // 허공 탭 무시
+    const k=judge(bestDt); best.done=true; best.el.remove();
+    record(k); fx(lane,k);
+  }
+
+  function finish(){
+    running=false; cancelAnimationFrame(raf);
+    notes.forEach(n=>n.el&&n.el.remove()); notes=[];
+    const g=gradeOf(stats.p,stats.g,total);
+    const rate=(100*(stats.p+stats.g)/total).toFixed(0);
+    res.innerHTML=`<div class="grade" style="color:${g.color}">${g.name}</div>
+      <div class="rate">성공률 ${rate}% · MAX COMBO ${maxCombo}</div>
+      <div class="cnt">PERFECT ${stats.p} · GOOD ${stats.g} · MISS ${stats.m}</div>
+      <div class="card">→ 카드 ${g.pick}장 선택</div>`;
+    const btns=document.createElement("div"); btns.className="btns";
+    const get=document.createElement("button"); get.className="btn-get"; get.textContent="✓ 획득";
+    get.onclick=()=>{ res.innerHTML=`<div class="grade" style="color:var(--mint)">→ 카드 선택 화면으로</div><div class="cnt">(기존 관문 흐름)</div>`; };
+    btns.appendChild(get);
+    if(g.retry){
+      const rt=document.createElement("button"); rt.className="btn-retry"; rt.textContent="🔄 재도전 (멘탈−1)";
+      rt.onclick=start; btns.appendChild(rt);
+    }
+    res.appendChild(btns);
+    const again=document.createElement("button"); again.className="btn-again"; again.textContent="다시 플레이 (개발용)";
+    again.onclick=start; res.appendChild(again);
+    res.hidden=false;
+  }
+
+  function loop(){
+    const now=performance.now()-t0;
+    tEl.textContent=Math.max(0,(DUR-now)/1000).toFixed(1);
+    while(spawned<plan.length && now>=plan[spawned].t-TRAVEL){ addNote({...plan[spawned]}); spawned++; }
+    for(const n of notes){ if(n.done) continue; posNote(n,now);
+      if(now-n.t>LATE_MS){ n.done=true; n.el.remove(); record("m"); fx(n.lane,"m"); } }
+    notes=notes.filter(n=>!n.done);
+    if(now>=DUR && notes.length===0){ finish(); return; }
+    raf=requestAnimationFrame(loop);
+  }
+
+  function start(){
+    res.hidden=true; startBtn.hidden=true;
+    stats={p:0,g:0,m:0}; combo=0; maxCombo=0; spawned=0; notes=[];
+    plan=spawnPlan(); total=plan.length;
+    pEl.textContent=gEl.textContent=mEl.textContent="0"; cEl.textContent="COMBO 0"; tEl.textContent="20.0";
+    // 3·2·1 카운트다운
+    let c=3; count.hidden=false; count.textContent=c;
+    const iv=setInterval(()=>{
+      c--;
+      if(c>0){ count.textContent=c; return; }
+      clearInterval(iv); count.hidden=true;
+      running=true; t0=performance.now(); raf=requestAnimationFrame(loop);
+    },600);
+  }
+
+  lanes.forEach((el,i)=>el.addEventListener("pointerdown",()=>hit(i)));
+  startBtn.addEventListener("click",start);
+  window.addEventListener("keydown",e=>{
+    if(["KeyF","ArrowLeft"].includes(e.code)){ e.preventDefault(); hit(0); }
+    if(["KeyJ","ArrowRight"].includes(e.code)){ e.preventDefault(); hit(1); }
+  });
+  window.__rhythm={ start, hit, isRunning:()=>running, stats:()=>({...stats,total,maxCombo}) };
+</script>

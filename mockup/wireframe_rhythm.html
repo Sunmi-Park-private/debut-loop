@@ -1,0 +1,274 @@
+<title>스테이지 리듬게임 — 와이어프레임 후보</title>
+<style>
+  :root{
+    --bg0:#150a24; --panel:#1d1030;
+    --gold:#f4c95d; --gold-dim:#a8863a;
+    --pink:#ff5fa2; --pink-dim:#c9427f;
+    --lav:#cbb8e8; --lav-dim:#8b7bb0;
+    --mint:#7ef0c0; --amber:#ffcf6b; --dim:#6b5e86;
+    --tang:#ff8a4a;
+    --ink:#f3ecff;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{
+    margin:0; min-height:100vh; color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:radial-gradient(120% 80% at 50% 0%, #2a1745 0%, var(--bg0) 60%, #0d0618 100%);
+    display:flex; flex-direction:column; align-items:center; gap:24px; padding:32px 16px 60px;
+  }
+  .top{text-align:center; max-width:680px}
+  .eyebrow{font-size:12px; letter-spacing:.28em; text-transform:uppercase; color:var(--pink); font-weight:700}
+  h1{font-size:25px; margin:.35em 0 .2em}
+  .sub{font-size:13px; color:var(--lav); line-height:1.65}
+
+  .row{display:flex; gap:22px; flex-wrap:wrap; justify-content:center; align-items:flex-start}
+
+  .phone{
+    width:340px; border-radius:26px; padding:18px 16px 20px;
+    background:linear-gradient(180deg,#231239,#160b26);
+    border:1px solid #3a2757; box-shadow:0 26px 60px -18px #000;
+    position:relative;
+  }
+  .phone h2{margin:0 0 2px; font-size:16px}
+  .phone .tag{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.1em; color:var(--pink); margin-bottom:6px; text-transform:uppercase}
+  .phone .tag.rec{color:#2a0d1c; background:var(--pink); padding:2px 8px; border-radius:20px}
+  .phone p.desc{margin:4px 0 12px; font-size:11.5px; color:var(--lav); line-height:1.6}
+
+  .hudline{display:flex; justify-content:space-between; font-size:11.5px; color:var(--lav-dim); margin-bottom:6px}
+  .hudline b{color:var(--amber)}
+  .combo{color:var(--mint); font-weight:800}
+
+  .play{position:relative; height:300px; border-radius:14px; overflow:hidden;
+    background:linear-gradient(180deg,#0d0618,#1b0f2e); border:2px solid #3a2757; touch-action:none; user-select:none}
+
+  /* ── A안: 태고식 가로 흐름 (상하 2레인) ── */
+  .laneH{position:absolute; left:0; right:0; height:50%; overflow:hidden}
+  .laneH.l0{top:0; border-bottom:1px dashed #3a2757}
+  .laneH.l1{top:50%}
+  .hitC{position:absolute; left:34px; top:50%; transform:translate(-50%,-50%); width:58px; height:58px; border-radius:50%;
+    border:4px solid var(--gold); opacity:.85; box-shadow:0 0 14px #f4c95d55}
+  .laneLabel{position:absolute; right:8px; top:6px; font-size:10px; color:var(--dim)}
+  .keycap{position:absolute; left:12px; bottom:6px; font-size:10px; color:var(--lav-dim)}
+
+  /* ── B안: 낙하식 (좌우 2레인) ── */
+  .laneV{position:absolute; top:0; bottom:0; width:50%; overflow:hidden}
+  .laneV.l0{left:0; border-right:1px dashed #3a2757}
+  .laneV.l1{left:50%}
+  .hitBar{position:absolute; left:8%; right:8%; bottom:44px; height:6px; border-radius:3px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent); box-shadow:0 0 12px #f4c95d66}
+  .hitRing{position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:54px; height:54px; border-radius:50%;
+    border:4px solid var(--gold); opacity:.75}
+
+  .note{position:absolute; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:22px; will-change:transform;
+    background:radial-gradient(circle at 34% 30%, #ff9ec4, var(--pink) 62%, #a33268); box-shadow:0 3px 10px #0008, inset -2px -3px 6px #0005}
+  .note.n1{background:radial-gradient(circle at 34% 30%, #ffb98a, var(--tang) 62%, #b4511f)}
+
+  .judge{position:absolute; font-size:15px; font-weight:900; pointer-events:none; animation:pop .5s ease forwards; z-index:5; text-shadow:0 2px 4px #000}
+  @keyframes pop{0%{opacity:1; transform:translate(-50%,-50%) scale(.7)}70%{opacity:1; transform:translate(-50%,-90%) scale(1.15)}100%{opacity:0; transform:translate(-50%,-120%) scale(1)}}
+  .j-p{color:var(--mint)} .j-g{color:var(--amber)} .j-m{color:#ff6b81}
+
+  .flash{position:absolute; inset:0; pointer-events:none; opacity:0; background:#ffffff14}
+  .flash.on{animation:fl .12s ease} @keyframes fl{0%{opacity:1}100%{opacity:0}}
+
+  .startBtn{position:absolute; inset:0; z-index:8; border:none; cursor:pointer;
+    background:#0d0618cc; color:var(--ink); font-size:15px; font-weight:800; backdrop-filter:blur(2px)}
+  .startBtn small{display:block; margin-top:8px; font-weight:600; font-size:11.5px; color:var(--lav)}
+
+  .resultOv{position:absolute; inset:0; z-index:9; background:#0d0618e0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:6px; text-align:center}
+  .resultOv .grade{font-size:26px; font-weight:900}
+  .resultOv .cnt{font-size:12px; color:var(--lav); line-height:1.7}
+  .resultOv .card{font-size:13px; color:var(--amber); font-weight:800}
+  .resultOv button{margin-top:10px; padding:10px 22px; border:none; border-radius:11px; cursor:pointer;
+    font-weight:800; background:linear-gradient(180deg,#ffd884,var(--gold)); color:#2a0d1c}
+
+  .meta{margin-top:12px; border-top:1px solid #2a1c40; padding-top:10px; font-size:11px; color:var(--dim); line-height:1.7}
+
+  .rules{max-width:680px; background:var(--panel); border:1px solid #3a2757; border-radius:16px; padding:16px 20px}
+  .rules h3{margin:0 0 8px; font-size:13.5px; color:var(--lav); letter-spacing:.12em; text-transform:uppercase}
+  .rules table{width:100%; border-collapse:collapse; font-size:12.5px}
+  .rules td,.rules th{padding:6px 8px; border-bottom:1px solid #2a1c40; text-align:left; color:var(--lav)}
+  .rules th{color:var(--dim); font-size:11px; letter-spacing:.08em; text-transform:uppercase}
+  .rules .g-p{color:var(--mint); font-weight:800} .rules .g-g{color:var(--amber); font-weight:800} .rules .g-c{color:var(--lav-dim); font-weight:800}
+  kbd{background:#2a1c40; border:1px solid #4a2f70; border-radius:5px; padding:1px 6px; font-size:11px; color:var(--lav)}
+</style>
+
+<div class="top">
+  <div class="eyebrow">스테이지 게임 · 리듬 (태고의 달인 스타일)</div>
+  <h1>🥁 2레인 리듬게임 — 레인 배치 후보</h1>
+  <p class="sub">20초 · 노트 ~24개 · 연습하기 STOP의 <b>stopZone 판정(중심 오차→P/G/Miss)</b>을 시간축으로 재사용.<br>
+  성공률에 따라 <b>카드 차등 지급</b>. 두 후보 모두 실제로 플레이됩니다 — 해보고 골라주세요.</p>
+</div>
+
+<div class="row">
+  <!-- ── A안 ── -->
+  <div class="phone">
+    <span class="tag">A안 · 탈락</span>
+    <h2 style="opacity:.55">상하 2레인 · 태고식 가로 흐름</h2>
+    <p class="desc">노트가 오른쪽→왼쪽으로 흘러와 <b>왼쪽 판정원</b>에 겹칠 때 탭.
+    위 레인 🎤 = 화면 위쪽 탭(<kbd>F</kbd>), 아래 레인 💃 = 아래쪽 탭(<kbd>J</kbd>).</p>
+    <div class="hudline"><span>⏱ <b id="timeA">20.0</b>s</span><span class="combo" id="comboA">COMBO 0</span><span>P <b id="pA">0</b> · G <b id="gA">0</b> · M <b id="mA">0</b></span></div>
+    <div class="play" id="playA">
+      <div class="laneH l0"><div class="hitC"></div><span class="laneLabel">위 레인 🎤</span><span class="keycap">F / 위쪽 탭</span></div>
+      <div class="laneH l1"><div class="hitC"></div><span class="laneLabel">아래 레인 💃</span><span class="keycap">J / 아래쪽 탭</span></div>
+      <div class="flash" id="flashA"></div>
+      <button class="startBtn" id="startA">▶ A안 플레이 (20초)<small>태고식 · 판정원에 겹칠 때 탭</small></button>
+      <div class="resultOv" id="resA" hidden></div>
+    </div>
+    <div class="meta">+ 익숙한 리듬게임 문법(태고·리듬세상) · 판정원 1점 응시라 시선 안정<br>
+    − 가로폭이 좁아 노트 선행표시 시간이 짧음 (속도 튜닝으로 보완)</div>
+  </div>
+
+  <!-- ── B안 ── -->
+  <div class="phone">
+    <span class="tag rec">✓ B안 · 확정</span>
+    <h2>좌우 2레인 · 낙하식</h2>
+    <p class="desc">노트가 위→아래로 떨어져 <b>하단 판정선</b>에 닿을 때 탭.
+    왼쪽 레인 🎤 = 왼쪽 탭(<kbd>F</kbd>/<kbd>←</kbd>), 오른쪽 레인 💃 = 오른쪽 탭(<kbd>J</kbd>/<kbd>→</kbd>).</p>
+    <div class="hudline"><span>⏱ <b id="timeB">20.0</b>s</span><span class="combo" id="comboB">COMBO 0</span><span>P <b id="pB">0</b> · G <b id="gB">0</b> · M <b id="mB">0</b></span></div>
+    <div class="play" id="playB">
+      <div class="laneV l0"><div class="hitBar"></div><div class="hitRing"></div><span class="laneLabel">왼쪽 🎤</span><span class="keycap">F / ←</span></div>
+      <div class="laneV l1"><div class="hitBar"></div><div class="hitRing"></div><span class="laneLabel">오른쪽 💃</span><span class="keycap">J / →</span></div>
+      <div class="flash" id="flashB"></div>
+      <button class="startBtn" id="startB">▶ B안 플레이 (20초)<small>낙하식 · 판정선에 닿을 때 탭</small></button>
+      <div class="resultOv" id="resB" hidden></div>
+    </div>
+    <div class="meta">+ 세로 진행이라 노트 선행표시 김 · 모바일 세로화면과 합이 좋음<br>
+    − 좌우 판정선 2곳을 번갈아 봐야 해 시선 분산</div>
+  </div>
+</div>
+
+<div class="rules">
+  <h3>공통 규칙 (두 후보 동일)</h3>
+  <table>
+    <tr><th>판정</th><th>기준 (stopZone 시간판)</th><th>비고</th></tr>
+    <tr><td class="j-p" style="color:var(--mint);font-weight:800">PERFECT</td><td>오차 ≤ 80ms</td><td>콤보 +1</td></tr>
+    <tr><td style="color:var(--amber);font-weight:800">GOOD</td><td>오차 ≤ 180ms</td><td>콤보 +1</td></tr>
+    <tr><td style="color:#ff6b81;font-weight:800">MISS</td><td>그 외 / 지나침</td><td>콤보 끊김</td></tr>
+  </table>
+  <table style="margin-top:10px">
+    <tr><th>성공률 (P+G)/전체</th><th>등급</th><th>카드 지급</th></tr>
+    <tr><td>≥ 80%</td><td class="g-p">PERFECT</td><td>카드 <b>2장</b> 선택</td></tr>
+    <tr><td>≥ 50%</td><td class="g-g">GOOD</td><td>카드 <b>1장</b> 선택</td></tr>
+    <tr><td>그 외</td><td class="g-c">CLEAR</td><td>카드 1장 or 재도전(멘탈−1)</td></tr>
+  </table>
+</div>
+
+<script>
+  // ── 공통 리듬 엔진 (orientation만 다름) ──
+  const DUR=20000, NOTE_IV=800, TRAVEL=1500;          // 20s · 0.8s 간격(~24노트) · 노트 이동 1.5s
+  const P_MS=80, G_MS=180, LATE_MS=200;               // stopZone 시간판
+  function judge(dt){ const a=Math.abs(dt); if(a<=P_MS) return "p"; if(a<=G_MS) return "g"; return null; }
+  function gradeOf(p,g,total){ const r=(p+g)/total; if(r>=0.8) return ["PERFECT","var(--mint)","카드 2장 선택"]; if(r>=0.5) return ["GOOD","var(--amber)","카드 1장 선택"]; return ["CLEAR","var(--lav-dim)","카드 1장 or 재도전(멘탈−1)"]; }
+
+  let active=null; // 동시 실행 방지 + 키 라우팅
+
+  function makeGame(cfg){
+    // cfg: {id, playEl, horiz, ids:{time,combo,p,g,m,flash,res,start}, laneEls:[l0,l1]}
+    const E=id=>document.getElementById(id);
+    const play=E(cfg.play), res=E(cfg.res), startBtn=E(cfg.start), flash=E(cfg.flash);
+    const tEl=E(cfg.time), cEl=E(cfg.combo), pEl=E(cfg.p), gEl=E(cfg.g), mEl=E(cfg.m);
+    const lanes=[...play.querySelectorAll(cfg.horiz? ".laneH" : ".laneV")];
+    let notes=[], t0=0, raf=0, running=false, stats={p:0,g:0,m:0}, combo=0, total=0, spawned=0;
+
+    function laneSize(){ const r=play.getBoundingClientRect(); return cfg.horiz? {len:r.width, hit:34} : {len:r.height, hit:r.height-47}; }
+
+    function spawnPlan(){
+      // 20초 / 0.8s 간격, 마지막 노트가 DUR 안에 판정되도록
+      const plan=[]; let t=900;
+      while(t<=DUR-400){ plan.push({t, lane: Math.random()<0.5?0:1}); t+=NOTE_IV; }
+      // 가끔 동시가 아닌 엇박 추가(막 스케일은 본 구현에서)
+      return plan;
+    }
+    let plan=[];
+
+    function addNote(n){
+      const el=document.createElement("div");
+      el.className="note"+(n.lane===1?" n1":"");
+      el.textContent=n.lane===0?"🎤":"💃";
+      lanes[n.lane].appendChild(el);
+      n.el=el; notes.push(n);
+    }
+    function posNote(n, now){
+      const {len,hit}=laneSize();
+      const prog=(now-(n.t-TRAVEL))/TRAVEL;            // 0=출현, 1=판정점
+      if(cfg.horiz){ const x=len-(len-hit)*prog; n.el.style.transform=`translate(${x-22}px, ${75-22}px)`; }
+      else { const y=hit*prog; n.el.style.transform=`translate(${(lanes[0].getBoundingClientRect().width/2)-22}px, ${y-22}px)`; }
+    }
+    function judgeFx(lane, kind){
+      const {hit}=laneSize();
+      const j=document.createElement("div");
+      j.className="judge j-"+kind;
+      j.textContent=kind==="p"?"PERFECT":kind==="g"?"GOOD":"MISS";
+      const lr=lanes[lane].getBoundingClientRect(), pr=play.getBoundingClientRect();
+      if(cfg.horiz){ j.style.left=(hit+30)+"px"; j.style.top=(lr.top-pr.top+40)+"px"; }
+      else { j.style.left=(lr.left-pr.left+lr.width/2)+"px"; j.style.top=(hit-26)+"px"; }
+      play.appendChild(j); setTimeout(()=>j.remove(),520);
+    }
+    function record(kind){ stats[kind==="m"?"m":kind]++; if(kind==="m"){combo=0;} else combo++;
+      pEl.textContent=stats.p; gEl.textContent=stats.g; mEl.textContent=stats.m; cEl.textContent="COMBO "+combo; }
+
+    function hit(lane){
+      if(!running) return;
+      flash.classList.remove("on"); void flash.offsetWidth; flash.classList.add("on");
+      const now=performance.now()-t0;
+      // 해당 레인에서 판정창 안 가장 가까운 노트
+      let best=null, bestDt=1e9;
+      for(const n of notes){ if(n.lane!==lane||n.done) continue; const dt=now-n.t; if(Math.abs(dt)<Math.abs(bestDt)){best=n;bestDt=dt;} }
+      if(!best || Math.abs(bestDt)>G_MS) return;        // 허공 탭은 무시(패널티 없음 — 캐주얼)
+      const k=judge(bestDt); best.done=true; best.el.remove();
+      record(k); judgeFx(lane,k);
+    }
+
+    function finish(){
+      running=false; active=null; cancelAnimationFrame(raf);
+      notes.forEach(n=>n.el&&n.el.remove()); notes=[];
+      const [g,color,card]=gradeOf(stats.p,stats.g,total);
+      res.innerHTML=`<div class="grade" style="color:${color}">${g}</div>
+        <div class="cnt">성공률 ${(100*(stats.p+stats.g)/total).toFixed(0)}% · PERFECT ${stats.p} · GOOD ${stats.g} · MISS ${stats.m}</div>
+        <div class="card">→ ${card}</div>`;
+      const again=document.createElement("button"); again.textContent="다시 플레이"; again.onclick=start;
+      res.appendChild(again); res.hidden=false;
+    }
+
+    function loop(){
+      const now=performance.now()-t0;
+      tEl.textContent=Math.max(0,(DUR-now)/1000).toFixed(1);
+      while(spawned<plan.length && now>=plan[spawned].t-TRAVEL){ addNote({...plan[spawned]}); spawned++; }
+      for(const n of notes){ if(n.done) continue; posNote(n,now);
+        if(now-n.t>LATE_MS){ n.done=true; n.el.remove(); record("m"); judgeFx(n.lane,"m"); } }
+      notes=notes.filter(n=>!n.done);
+      if(now>=DUR && notes.length===0){ finish(); return; }
+      raf=requestAnimationFrame(loop);
+    }
+
+    function start(){
+      if(active && active!==api) return;               // 다른 후보 실행 중이면 무시
+      active=api; res.hidden=true; startBtn.hidden=true;
+      stats={p:0,g:0,m:0}; combo=0; spawned=0; notes=[];
+      plan=spawnPlan(); total=plan.length;
+      pEl.textContent=gEl.textContent=mEl.textContent="0"; cEl.textContent="COMBO 0";
+      running=true; t0=performance.now(); raf=requestAnimationFrame(loop);
+    }
+
+    // 입력: 레인 영역 탭
+    lanes.forEach((el,i)=>el.addEventListener("pointerdown",()=>hit(i)));
+    startBtn.addEventListener("click",start);
+    const api={start, hit, isRunning:()=>running, stats:()=>({...stats,total})};
+    return api;
+  }
+
+  const A=makeGame({play:"playA",horiz:true, time:"timeA",combo:"comboA",p:"pA",g:"gA",m:"mA",flash:"flashA",res:"resA",start:"startA"});
+  const B=makeGame({play:"playB",horiz:false,time:"timeB",combo:"comboB",p:"pB",g:"gB",m:"mB",flash:"flashB",res:"resB",start:"startB"});
+
+  // 키보드: F/↑/← = 레인0, J/↓/→ = 레인1 (실행 중인 후보로 라우팅)
+  window.addEventListener("keydown",e=>{
+    if(!active||!active.isRunning()) return;
+    if(["KeyF","ArrowUp","ArrowLeft"].includes(e.code)){ e.preventDefault(); active.hit(0); }
+    if(["KeyJ","ArrowDown","ArrowRight"].includes(e.code)){ e.preventDefault(); active.hit(1); }
+  });
+
+  window.__rhythm={A,B};
+</script>
