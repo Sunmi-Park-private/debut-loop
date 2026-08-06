@@ -16,6 +16,8 @@ graphify-out/
 # OS
 .DS_Store
 
+docs/BUILD_ROADMAP.md
+
 # 마이그레이션 작업 문서 (로컬 전용 — 커밋하지 않음)
 docs/superpowers/specs/2026-08-06-incremental-pr-migration-design.md
 docs/superpowers/plans/2026-08-06-incremental-pr-migration.md
