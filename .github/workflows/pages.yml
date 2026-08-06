@@ -1,10 +1,12 @@
 # GitHub Pages 배포 — 웹 빌드를 정적 호스팅으로 올린다.
-# 사용: Actions 탭 → "GitHub Pages" → Run workflow.
+# main 이 갱신되면 자동 배포. 수동 실행도 가능(Actions 탭 → Run workflow).
 # 사전 준비: Settings → Pages → Source 를 "GitHub Actions" 로 지정.
 # vite.config.ts 의 base 가 './' 라 프로젝트 페이지 경로(/<repo>/)에서 그대로 동작한다.
 name: GitHub Pages
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
