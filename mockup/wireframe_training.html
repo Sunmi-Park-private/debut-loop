@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>연습 메뉴 와이어프레임 — 프메 스타일 2안</title>
+<style>
+  :root{
+    --bg:#f8f5fd; --panel:#fff; --line:#ece4f4; --ink:#5b4a70; --sub:#a99bc0;
+    --pink:#ff7fb0; --lav:#a78be6; --gold:#f0c05a; --mint:#6fd8c4;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:#efe9f8; color:var(--ink);
+    font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    display:flex; flex-wrap:wrap; gap:40px; justify-content:center; padding:30px 16px 60px; }
+  h1{ width:100%; text-align:center; font-size:20px; margin:0 0 4px; }
+  .note{ width:100%; text-align:center; font-size:13px; color:var(--sub); margin-bottom:10px; }
+  .variant{ display:flex; flex-direction:column; gap:10px; align-items:center; }
+  .vlabel{ font-size:15px; font-weight:800; }
+  .vdesc{ font-size:12px; color:var(--sub); max-width:430px; text-align:center; line-height:1.6; }
+  .phone{ width:430px; height:800px; background:var(--bg); border:2px solid #d9cdeb;
+    border-radius:26px; overflow:hidden; position:relative; box-shadow:0 20px 50px rgba(120,100,160,.25); }
+
+  /* 공통: 상단 스탯 요약 */
+  .statmini{ margin:14px 16px 0; background:var(--panel); border:2px solid var(--line); border-radius:14px;
+    padding:8px 12px; font-size:11.5px; color:var(--sub); display:flex; justify-content:space-between; }
+  .statmini b{ color:var(--ink); }
+
+  /* ── A안: 프메 커맨드 보드 (풀스크린 스케줄 화면) ── */
+  .pmframe{ position:absolute; inset:60px 12px 12px; background:var(--panel);
+    border:3px solid var(--gold); border-radius:18px; overflow:hidden;
+    box-shadow:inset 0 0 0 3px #fff, inset 0 0 0 5px #f6e3bb; }
+  .pmhead{ background:linear-gradient(180deg,#ffe9f3,#ffd9e9); padding:12px 18px;
+    border-bottom:2px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+  .pmhead .t{ font-size:16px; font-weight:800; }
+  .pmhead .w{ font-size:12px; color:#c9527f; font-weight:700; }
+  .pmbody{ display:flex; height:calc(100% - 50px); }
+  .pmchar{ flex:1; background:linear-gradient(180deg,#f3ecfb,#e8ddf6); display:flex; flex-direction:column;
+    align-items:center; justify-content:flex-end; position:relative; }
+  .pmchar .figure{ width:120px; height:230px; background:#d9cdeb; border-radius:60px 60px 8px 8px;
+    display:flex; align-items:center; justify-content:center; color:#8a76ad; font-size:12px; margin-bottom:0; }
+  .pmchar .bubble{ position:absolute; top:14px; left:12px; right:12px; background:#fff;
+    border:1.5px solid var(--line); border-radius:12px; padding:8px 10px; font-size:11.5px; line-height:1.5; }
+  .pmmenu{ width:172px; background:#fbf8ff; border-left:2px solid var(--line); padding:10px 8px;
+    display:flex; flex-direction:column; gap:7px; overflow:auto; }
+  .cmd{ background:#fff; border:2px solid var(--line); border-radius:12px; padding:8px 10px; cursor:pointer;
+    display:flex; align-items:center; gap:8px; transition:.12s; }
+  .cmd:hover{ border-color:var(--pink); transform:translateX(-3px); box-shadow:0 4px 10px rgba(255,127,176,.25); }
+  .cmd .ic{ font-size:20px; }
+  .cmd .nm{ font-size:12.5px; font-weight:800; }
+  .cmd .fx{ font-size:9.5px; color:var(--sub); }
+  .cmd.rest{ background:#f2fbf8; }
+  .cmd.skip{ background:none; border:none; color:var(--sub); font-size:11px; justify-content:center; }
+  .cmd .card{ margin-left:auto; font-size:9px; background:#fdf0f6; color:#c9527f; border:1px solid #f6d5e6;
+    padding:1px 5px; border-radius:8px; white-space:nowrap; }
+
+  /* ── B안: 모달 그리드 (현 목업 계열 + 프메 장식) ── */
+  .dimmed{ position:absolute; inset:0; background:rgba(91,74,112,.35); }
+  .bcard{ position:absolute; left:50%; top:52%; transform:translate(-50%,-50%);
+    width:370px; background:var(--panel); border:3px solid var(--gold); border-radius:20px; padding:16px;
+    box-shadow:inset 0 0 0 3px #fff, inset 0 0 0 5px #f6e3bb, 0 18px 44px rgba(0,0,0,.3); }
+  .bhead{ text-align:center; margin-bottom:4px; }
+  .bhead .t{ font-size:17px; font-weight:800; }
+  .bhead .s{ font-size:11.5px; color:var(--sub); margin-top:3px; }
+  .ribbon{ width:60px; height:14px; margin:6px auto 10px; background:var(--pink); border-radius:7px; opacity:.5; }
+  .bgrid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .bitem{ background:#fbf8ff; border:2px solid var(--line); border-radius:14px; padding:10px 8px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:3px; transition:.12s; }
+  .bitem:hover{ border-color:var(--pink); transform:translateY(-2px); box-shadow:0 6px 14px rgba(255,127,176,.3); }
+  .bitem .ic{ font-size:24px; }
+  .bitem .nm{ font-size:12.5px; font-weight:800; }
+  .bitem .fx{ font-size:9.5px; color:var(--sub); }
+  .bitem .card{ font-size:9px; background:#fdf0f6; color:#c9527f; border:1px solid #f6d5e6; padding:1px 6px; border-radius:8px; }
+  .bskip{ text-align:center; margin-top:10px; font-size:11.5px; color:var(--sub); text-decoration:underline; cursor:pointer; }
+
+  /* 결과 화면 (공통 시안) */
+  .result{ position:absolute; left:50%; top:52%; transform:translate(-50%,-50%);
+    width:330px; background:var(--panel); border:3px solid var(--gold); border-radius:20px; padding:22px 16px;
+    text-align:center; box-shadow:inset 0 0 0 3px #fff, inset 0 0 0 5px #f6e3bb, 0 18px 44px rgba(0,0,0,.3); }
+  .result .grade{ font-size:22px; font-weight:800; }
+  .bigcard{ width:110px; height:150px; margin:14px auto; background:linear-gradient(180deg,#efe7fb,#e2d6f6);
+    border:2.5px solid var(--lav); border-radius:14px; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:6px; box-shadow:0 8px 20px rgba(167,139,230,.4); }
+  .bigcard .ic{ font-size:34px; }
+  .bigcard .nm{ font-size:12px; font-weight:800; }
+  .bigcard .stars{ color:var(--gold); font-size:13px; letter-spacing:2px; }
+  .result .drain{ font-size:12px; color:#ff6f91; font-weight:700; }
+  .result .go{ margin-top:14px; display:inline-block; background:var(--pink); color:#fff; font-size:13.5px;
+    font-weight:800; padding:11px 34px; border-radius:14px; cursor:pointer; }
+  .tag{ position:absolute; top:10px; left:14px; font-size:10px; background:#5b4a70; color:#fff;
+    padding:3px 9px; border-radius:10px; opacity:.75; z-index:5; }
+</style>
+</head>
+<body>
+<h1>🎹 연습 메뉴 와이어프레임 — 프린세스 메이커 스타일 2안</h1>
+<div class="note">골드 이중 프레임 = 프메식 장식 창틀 · 회색 실루엣 = 캐릭터 일러 자리(비주얼 담당 에셋) · 카드칩 = 획득 카드</div>
+
+<!-- ── A안 ── -->
+<div class="variant">
+  <div class="vlabel">A안 — 프메 커맨드 보드 (풀스크린)</div>
+  <div class="vdesc">프메2의 스케줄 화면 구조: 좌측 캐릭터 스탠딩 + 말풍선, 우측 세로 커맨드 리스트.<br>연습이 "화면 전환"으로 무게감 있게. 캐릭터 일러가 주인공.</div>
+  <div class="phone">
+    <div class="tag">A안</div>
+    <div class="statmini"><span><b>실력</b> 30 · <b>멘탈</b> 55 · <b>평판</b> 20 · <b>유대</b> 40 · <b>자본</b> 20</span><span>🎴 3</span></div>
+    <div class="pmframe">
+      <div class="pmhead"><span class="t">🎹 연습 시간</span><span class="w">W2 · 1회차</span></div>
+      <div class="pmbody">
+        <div class="pmchar">
+          <div class="bubble">"오늘은 어떤 연습을 할까요? 몸 상태를 봐가면서 정해요!"</div>
+          <div class="figure">캐릭터 일러<br>(하루)</div>
+        </div>
+        <div class="pmmenu">
+          <div class="cmd"><span class="ic">🎤</span><span><div class="nm">보컬 연습</div><div class="fx">멘탈 −3 · STOP</div></span><span class="card">🎴보컬</span></div>
+          <div class="cmd"><span class="ic">💃</span><span><div class="nm">안무 연습</div><div class="fx">멘탈 −3 · STOP</div></span><span class="card">🎴안무</span></div>
+          <div class="cmd"><span class="ic">📸</span><span><div class="nm">SNS 홍보</div><div class="fx">자본 −3 · 짝맞추기</div></span><span class="card">🎴홍보</span></div>
+          <div class="cmd"><span class="ic">💰</span><span><div class="nm">알바</div><div class="fx">멘탈 −2 · STOP</div></span><span class="card">🎴자금</span></div>
+          <div class="cmd"><span class="ic">🎯</span><span><div class="nm">오디션 대비</div><div class="fx">멘탈 −3 · 가위바위포즈</div></span><span class="card">🎴오디션</span></div>
+          <div class="cmd rest"><span class="ic">🤝</span><span><div class="nm">휴식</div><div class="fx">소모 없음 · 즉시</div></span><span class="card">🎴유대</span></div>
+          <div class="cmd skip">← 오늘은 쉬어가기 (건너뛰기)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── B안 ── -->
+<div class="variant">
+  <div class="vlabel">B안 — 모달 그리드 (오버레이)</div>
+  <div class="vdesc">현재 관문 미니게임과 같은 모달 계열 + 프메식 골드 프레임.<br>스와이프 흐름 위에 가볍게 얹힘. 구현·일관성 유리, 캐릭터 일러는 없음.</div>
+  <div class="phone">
+    <div class="tag">B안</div>
+    <div class="statmini"><span><b>실력</b> 30 · <b>멘탈</b> 55 · <b>평판</b> 20 · <b>유대</b> 40 · <b>자본</b> 20</span><span>🎴 3</span></div>
+    <div class="dimmed"></div>
+    <div class="bcard">
+      <div class="bhead">
+        <div class="t">🎹 연습 시간 · W2</div>
+        <div class="s">활동을 고르면 미니게임이 시작돼요 — 성적이 카드 등급!</div>
+      </div>
+      <div class="ribbon"></div>
+      <div class="bgrid">
+        <div class="bitem"><span class="ic">🎤</span><span class="nm">보컬 연습</span><span class="fx">멘탈 −3 · STOP</span><span class="card">🎴 보컬 카드</span></div>
+        <div class="bitem"><span class="ic">💃</span><span class="nm">안무 연습</span><span class="fx">멘탈 −3 · STOP</span><span class="card">🎴 안무 카드</span></div>
+        <div class="bitem"><span class="ic">📸</span><span class="nm">SNS 홍보</span><span class="fx">자본 −3 · 짝맞추기</span><span class="card">🎴 홍보 카드</span></div>
+        <div class="bitem"><span class="ic">💰</span><span class="nm">알바</span><span class="fx">멘탈 −2 · STOP</span><span class="card">🎴 자금 카드</span></div>
+        <div class="bitem"><span class="ic">🎯</span><span class="nm">오디션 대비</span><span class="fx">멘탈 −3 · 가위바위포즈</span><span class="card">🎴 오디션 카드</span></div>
+        <div class="bitem"><span class="ic">🤝</span><span class="nm">휴식</span><span class="fx">소모 없음 · 즉시</span><span class="card">🎴 유대 카드</span></div>
+      </div>
+      <div class="bskip">← 오늘은 쉬어가기 (건너뛰기)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 카드 획득 결과 (공통) ── -->
+<div class="variant">
+  <div class="vlabel">공통 — 카드 획득 결과 화면</div>
+  <div class="vdesc">미니게임 성적 → 카드 등급 (PERFECT=★★★ 에픽 / GOOD=★★ 레어 / CLEAR=카드 없음).<br>게이지 상승 없음 — 소모만 빨간 글씨로 정직하게 표시.</div>
+  <div class="phone">
+    <div class="tag">결과</div>
+    <div class="statmini"><span><b>실력</b> 30 · <b>멘탈</b> 52 · <b>평판</b> 20 · <b>유대</b> 40 · <b>자본</b> 20</span><span>🎴 4</span></div>
+    <div class="dimmed"></div>
+    <div class="result">
+      <div class="grade">PERFECT ✨</div>
+      <div class="bigcard">
+        <span class="ic">🎤</span>
+        <span class="nm">보컬 카드</span>
+        <span class="stars">★★★</span>
+      </div>
+      <div class="drain">멘탈 −3</div>
+      <div class="go">계속 →</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
