@@ -1,0 +1,202 @@
+<title>메인 로비 UI 와이어프레임 — 3안</title>
+<style>
+  :root{
+    --bg:#f8f5fd; --panel:#fff; --line:#ece4f4; --ink:#5b4a70; --sub:#a99bc0;
+    --pink:#ff7fb0; --lav:#a78be6; --gold:#f0c05a; --mint:#6fd8c4;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:#efe9f8; color:var(--ink);
+    font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; padding:30px 16px 70px; }
+  h1{ text-align:center; font-size:21px; margin:0 0 4px; }
+  .note{ text-align:center; font-size:13px; color:var(--sub); margin:0 auto 20px; max-width:760px; line-height:1.7; }
+  .row{ display:flex; flex-wrap:wrap; gap:36px; justify-content:center; }
+  .variant{ display:flex; flex-direction:column; gap:8px; align-items:center; }
+  .vlabel{ font-size:14.5px; font-weight:800; }
+  .vdesc{ font-size:12px; color:var(--sub); max-width:400px; text-align:center; line-height:1.65; }
+  .phone{ width:390px; height:760px; border:2px solid #d9cdeb; border-radius:26px; overflow:hidden;
+    position:relative; box-shadow:0 16px 40px rgba(120,100,160,.22);
+    background:linear-gradient(180deg,#cfc3ec 0%, #e8ddf6 45%, #f3ecfb 100%); }
+  .tag{ position:absolute; top:8px; left:12px; font-size:10px; background:#5b4a70; color:#fff;
+    padding:3px 9px; border-radius:10px; opacity:.8; z-index:20; }
+
+  /* 캐릭터 실루엣 (풀바디 센터 = 하루 스탠딩/idle 자리) */
+  .chara{ position:absolute; left:50%; bottom:120px; transform:translateX(-50%); width:190px; height:430px;
+    z-index:1; opacity:.85; }
+  .chara .head{ width:64px; height:64px; border-radius:50%; background:#b3a3d9; margin:0 auto; }
+  .chara .bodyy{ width:130px; height:350px; border-radius:60px 60px 20px 20px; background:#b3a3d9; margin:8px auto 0; }
+  .chara .lbl{ position:absolute; top:46%; left:50%; transform:translateX(-50%); font-size:10px; color:#fff;
+    background:rgba(91,74,112,.55); padding:3px 9px; border-radius:10px; white-space:nowrap; }
+
+  /* 공통 HUD 부품 */
+  .topbar{ position:absolute; top:10px; left:10px; right:10px; display:flex; gap:8px; align-items:center; z-index:10; }
+  .lv{ width:46px; height:46px; border-radius:50%; background:#fff; border:2px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:9px; font-weight:800; }
+  .lv b{ font-size:15px; }
+  .pill{ background:rgba(255,255,255,.92); border:1.5px solid var(--line); border-radius:16px;
+    padding:5px 12px; font-size:11.5px; font-weight:800; }
+  .pill.plus::after{ content:" +"; color:var(--pink); }
+  .spacer{ flex:1; }
+  .railR, .railL{ position:absolute; display:flex; flex-direction:column; gap:12px; z-index:10; }
+  .railR{ right:12px; top:120px; } .railL{ left:12px; top:120px; }
+  .icoBtn{ width:54px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .icoBtn .c{ width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,.94); border:2px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 4px 10px rgba(120,100,160,.2); position:relative; }
+  .icoBtn small{ font-size:9.5px; font-weight:800; color:#fff; text-shadow:0 1px 3px rgba(91,74,112,.8); }
+  .badge{ position:absolute; top:-3px; right:-3px; width:15px; height:15px; border-radius:50%;
+    background:#ff5c5c; color:#fff; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+
+  /* A안: 곡선 탭바 + 알약 CTA (레퍼런스1) */
+  .ctaPill{ position:absolute; left:50%; bottom:96px; transform:translateX(-50%); z-index:11;
+    background:linear-gradient(180deg,#fff,#ffe9f3); border:3px solid #fff; border-radius:40px;
+    padding:16px 44px; font-size:19px; font-weight:800; color:var(--ink);
+    box-shadow:0 10px 26px rgba(255,127,176,.45); text-align:center; }
+  .ctaPill small{ display:block; font-size:10px; color:#c9527f; font-weight:700; margin-top:2px; }
+  .curveTab{ position:absolute; left:-16px; right:-16px; bottom:-38px; height:120px; z-index:10;
+    background:rgba(255,255,255,.95); border-radius:50% 50% 0 0; border-top:2.5px solid var(--line);
+    display:flex; justify-content:center; gap:26px; padding-top:16px; }
+  .curveTab .t{ display:flex; flex-direction:column; align-items:center; gap:2px; font-size:9.5px; font-weight:800; color:var(--sub); }
+  .curveTab .t.on{ color:var(--pink); }
+  .curveTab .t span{ font-size:19px; }
+  .sideRound{ position:absolute; bottom:120px; z-index:11; width:62px; display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .sideRound .c{ width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.95); border:2.5px solid var(--gold);
+    display:flex; align-items:center; justify-content:center; font-size:23px; box-shadow:0 6px 14px rgba(240,192,90,.4); }
+  .sideRound small{ font-size:9.5px; font-weight:800; color:#fff; text-shadow:0 1px 3px rgba(91,74,112,.8); }
+
+  /* B안: 원형 대형 CTA + 서브 버튼 (레퍼런스2) */
+  .ctaOrb{ position:absolute; left:50%; bottom:110px; transform:translateX(-50%); z-index:11;
+    width:120px; height:120px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #ffd9e9, #ff7fb0);
+    border:4px solid #fff; box-shadow:0 12px 30px rgba(255,127,176,.5);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-weight:800; }
+  .ctaOrb b{ font-size:20px; }
+  .ctaOrb small{ font-size:10px; }
+  .orbSub{ position:absolute; z-index:11; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.94);
+    border:2.5px solid var(--line); display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:9px; font-weight:800; color:var(--ink); }
+  .orbSub span{ font-size:20px; }
+  .flatTab{ position:absolute; left:0; right:0; bottom:0; height:66px; z-index:10; display:flex;
+    background:rgba(255,255,255,.95); border-top:2px solid var(--line); }
+  .flatTab .t{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    font-size:9.5px; font-weight:800; color:var(--sub); border-right:1px solid var(--line); }
+  .flatTab .t:last-child{ border-right:0; }
+  .flatTab .t.on{ color:var(--pink); background:#fff2f9; }
+  .flatTab .t span{ font-size:18px; }
+
+  /* C안: 미니멀 */
+  .ctaWide{ position:absolute; left:26px; right:26px; bottom:92px; z-index:11;
+    background:linear-gradient(180deg,var(--pink),#ff5c9a); border:3px solid #fff; border-radius:22px;
+    padding:16px 20px; color:#fff; box-shadow:0 10px 26px rgba(255,127,176,.5);
+    display:flex; align-items:center; justify-content:space-between; }
+  .ctaWide b{ font-size:18px; }
+  .ctaWide small{ display:block; font-size:10.5px; opacity:.9; margin-top:2px; }
+  .ctaWide .arrow{ font-size:22px; }
+
+  .verdict{ max-width:760px; margin:46px auto 0; background:var(--panel); border:2px solid var(--line);
+    border-radius:16px; padding:18px 22px; font-size:13px; line-height:1.9; }
+  .verdict b{ color:#c9527f; }
+</style>
+
+<h1>🏠 메인 로비 UI 와이어프레임 — 3안</h1>
+<p class="note">레퍼런스 공통 문법: <b>풀바디 캐릭터 센터 + 좌우 아이콘 레일 + 하단 대형 CTA + 탭바</b>.<br>
+보라 실루엣 = 하루 스탠딩/idle 애니 자리 · 회차 버튼 숫자는 회귀마다 증가 · 아이콘들은 기존 메타 메뉴(설정/상점/데일리/앨범)와 연결.</p>
+
+<div class="row">
+
+  <!-- A안 -->
+  <div class="variant">
+    <div class="vlabel">A안 — 아이돌 게임형 (레퍼런스1 충실)</div>
+    <div class="vdesc">곡선 하단 탭바 + 중앙 알약 CTA. 좌우 원형 버튼(데일리·상점)이 CTA를 호위.<br>가장 "아이돌 게임"다운 인상 — 장르 정체성 최강.</div>
+    <div class="phone">
+      <div class="tag">A안</div>
+      <div class="topbar">
+        <div class="lv">회차<b>3</b></div>
+        <span class="pill plus">⭐ 32</span>
+        <span class="pill plus">🎴 7</span>
+        <span class="spacer"></span>
+        <span class="pill">📔 3/12</span>
+      </div>
+      <div class="railR">
+        <div class="icoBtn"><span class="c">🎁<span class="badge">1</span></span><small>데일리</small></div>
+        <div class="icoBtn"><span class="c">📔</span><small>앨범</small></div>
+        <div class="icoBtn"><span class="c">⚙️</span><small>설정</small></div>
+      </div>
+      <div class="chara"><div class="head"></div><div class="bodyy"></div><div class="lbl">하루 스탠딩 idle (에셋)</div></div>
+      <div class="sideRound" style="left:22px"><span class="c">🎹</span><small>연습</small></div>
+      <div class="sideRound" style="right:22px"><span class="c">🛍</span><small>상점</small></div>
+      <div class="ctaPill">3회차 시작<small>이번엔, 지킬 수 있을까</small></div>
+      <div class="curveTab">
+        <div class="t"><span>🎴</span>카드덱</div>
+        <div class="t on"><span>🏠</span>홈</div>
+        <div class="t"><span>📖</span>스토리</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B안 -->
+  <div class="variant">
+    <div class="vlabel">B안 — 수직 레일형 (레퍼런스2 충실)</div>
+    <div class="vdesc">우측 세로 아이콘 스택 + 하단 중앙 <b>원형 대형 회차 버튼</b> + 좌우 서브(덱·연습).<br>원형 CTA에 회차 숫자가 크게 — "숫자가 올라가는" 구조가 가장 잘 보임.</div>
+    <div class="phone">
+      <div class="tag">B안</div>
+      <div class="topbar">
+        <div class="lv">회차<b>3</b></div>
+        <span class="pill">멘탈 게이지 55/100</span>
+        <span class="spacer"></span>
+        <span class="pill plus">⭐ 32</span>
+      </div>
+      <div class="railR">
+        <div class="icoBtn"><span class="c">📢</span><small>공지</small></div>
+        <div class="icoBtn"><span class="c">🎁<span class="badge">1</span></span><small>데일리</small></div>
+        <div class="icoBtn"><span class="c">📔</span><small>앨범</small></div>
+        <div class="icoBtn"><span class="c">🛍</span><small>상점</small></div>
+        <div class="icoBtn"><span class="c">⚙️</span><small>설정</small></div>
+      </div>
+      <div class="chara"><div class="head"></div><div class="bodyy"></div><div class="lbl">하루 스탠딩 idle (에셋)</div></div>
+      <div class="orbSub" style="left:38px; bottom:128px"><span>🎴</span>카드덱</div>
+      <div class="orbSub" style="right:38px; bottom:128px"><span>🎹</span>연습</div>
+      <div class="ctaOrb"><small>START</small><b>3회차</b><small>시작의 밤</small></div>
+      <div class="flatTab">
+        <div class="t on"><span>🏠</span>홈</div>
+        <div class="t"><span>🎴</span>카드</div>
+        <div class="t"><span>📖</span>스토리</div>
+        <div class="t"><span>🛍</span>상점</div>
+        <div class="t"><span>☰</span>메뉴</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C안 -->
+  <div class="variant">
+    <div class="vlabel">C안 — 하이브리드 미니멀 (데모 규모)</div>
+    <div class="vdesc">레퍼런스 문법 유지하되 데모에 실존하는 기능만.<br>와이드 CTA 바(회차+부제) + 우측 레일 3개. 구현 가장 가볍고 화면이 덜 붐빔.</div>
+    <div class="phone">
+      <div class="tag">C안</div>
+      <div class="topbar">
+        <div class="lv">회차<b>3</b></div>
+        <span class="pill plus">⭐ 32</span>
+        <span class="spacer"></span>
+        <span class="pill">🎴 7</span>
+      </div>
+      <div class="railR">
+        <div class="icoBtn"><span class="c">🎁<span class="badge">1</span></span><small>데일리</small></div>
+        <div class="icoBtn"><span class="c">📔</span><small>앨범</small></div>
+        <div class="icoBtn"><span class="c">⚙️</span><small>설정</small></div>
+      </div>
+      <div class="chara"><div class="head"></div><div class="bodyy"></div><div class="lbl">하루 스탠딩 idle (에셋)</div></div>
+      <div class="ctaWide">
+        <span><b>3회차 — 시작의 밤</b><small>작은 기획사에서 다시, 데뷔를 향해</small></span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="flatTab">
+        <div class="t on"><span>🏠</span>홈</div>
+        <div class="t"><span>🎴</span>카드덱</div>
+        <div class="t"><span>🛍</span>상점</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="verdict">
+  <b>공통 요소 (3안 모두)</b>: 풀바디 캐릭터 센터(하루 idle 에셋 자리) · 상단 회차 뱃지+⭐ 재화 · 우측 레일 → 기존 메타 메뉴 탭과 연결 · <b>CTA의 회차 숫자는 회귀마다 +1</b><br><br>
+  <b>추천: B안</b> — ① 원형 대형 버튼 중앙에 "3회차"가 커다랗게 박혀 <b>회차가 올라가는 구조가 시각적으로 가장 강함</b>(회귀물 정체성), ② 레퍼런스2의 세로 레일이 기능 확장(공지·미션 추가)에 유리, ③ 하단 탭바로 카드덱·상점 접근성도 확보.<br>
+  <span style="color:var(--sub)">A안은 아이돌 무드 최강이지만 곡선 탭바 구현 비용이 있고, C안은 가장 싸지만 인상이 약합니다. 조합 지시(예: B안 + A안의 알약 CTA)도 환영!</span>
+</div>
