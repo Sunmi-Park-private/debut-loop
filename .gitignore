@@ -17,6 +17,7 @@ graphify-out/
 .DS_Store
 
 docs/BUILD_ROADMAP.md
+docs/사전과제_최종_제출_체크리스트.md
 
 # 마이그레이션 작업 문서 (로컬 전용 — 커밋하지 않음)
 docs/superpowers/specs/2026-08-06-incremental-pr-migration-design.md
