@@ -5,7 +5,7 @@
   "loading": "assets/bg/loading.png",
   "characters": {
     "haru": {
-      "bust": "assets/char/haru_bust.png",
+      "bust": "assets/char/haru_bust.webp",
       "stand": "assets/char/haru_stand.png",
       "idle": {
         "base": "assets/char/haru_idle_",
