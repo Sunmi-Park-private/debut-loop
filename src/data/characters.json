@@ -1,0 +1,13 @@
+{
+  "_note": "데모2(소형사 안티 미스터리) 캐스팅 풀. 스토리는 캐릭터가 아니라 role로 참조 → 회차마다 캐스팅 변형.",
+  "characters": [
+    { "id": "haru",  "name": "하루", "color": "#4B4BE0", "eligibleRoles": ["protagonist"] },
+    { "id": "yuwol", "name": "유월", "color": "#C0C0C8", "eligibleRoles": ["helper", "rival"], "weight": { "helper": 3 } },
+    { "id": "cyan",  "name": "시안", "color": "#1FB6B6", "eligibleRoles": ["helper2", "fan"] },
+    { "id": "hari",  "name": "하리", "color": "#E6C34D", "eligibleRoles": ["mentor", "helper"], "weight": { "mentor": 3 } },
+    { "id": "bora",  "name": "보라", "color": "#B79CE0", "eligibleRoles": ["helper"] },
+    { "id": "staff_jung", "name": "정 실장", "color": "#8A8F98", "eligibleRoles": ["antiStaff"] },
+    { "id": "rian", "name": "리안", "color": "#7FBFD6", "eligibleRoles": ["helper2", "mentor"], "temp": true },
+    { "id": "daon", "name": "다온", "color": "#D6A57F", "eligibleRoles": ["helper2", "mentor"], "temp": true }
+  ]
+}

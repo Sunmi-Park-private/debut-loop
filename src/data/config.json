@@ -1,0 +1,29 @@
+{
+  "totalWeeks": 24,
+  "debutWeek": 24,
+  "actWeeks": {
+    "0": [0, 0],
+    "1": [1, 4],
+    "2": [5, 10],
+    "3": [11, 18],
+    "4": [19, 23],
+    "5": [24, 24]
+  },
+  "gaugeMin": 0,
+  "gaugeMax": 100,
+  "cluesToBlock": 4,
+  "difficulties": {
+    "small": {
+      "id": "small",
+      "label": "소형 기획사 (고난도)",
+      "startGauges": { "skill": 30, "mental": 55, "reputation": 20, "bond": 40, "capital": 20 },
+      "capitalPressurePerWeek": 3
+    },
+    "big": {
+      "id": "big",
+      "label": "대형 기획사 (저난도)",
+      "startGauges": { "skill": 40, "mental": 60, "reputation": 35, "bond": 45, "capital": 60 },
+      "capitalPressurePerWeek": 1
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "_note": "배경음악 슬롯 매니페스트 — bgm.html 에디터로 업로드. file이 빈 슬롯은 폴백(대부분 main) 재생.",
+  "tracks": [
+    {
+      "id": "lobby",
+      "label": "메인 로비",
+      "file": "assets/audio/lobby.mp3",
+      "base": 0.5,
+      "desc": "로비 화면 (미업로드 시 무음)"
+    },
+    {
+      "id": "prologue-01",
+      "label": "프롤로그 1 · 참사 무대",
+      "file": "",
+      "base": 0.5,
+      "desc": "프롤로그 참사 장면 (배경 프롤로그-01과 같은 비트)"
+    },
+    {
+      "id": "prologue-02",
+      "label": "프롤로그 2 · 회귀 직후",
+      "file": "",
+      "base": 0.5,
+      "desc": "회귀 후 기획사 문 앞 (배경 프롤로그-02와 같은 비트)"
+    },
+    {
+      "id": "main",
+      "label": "메인 스토리",
+      "file": "assets/audio/main.mp3",
+      "base": 0.5,
+      "desc": "본게임 스토리 진행"
+    },
+    {
+      "id": "training",
+      "label": "연습하기",
+      "file": "assets/audio/training.mp3",
+      "base": 0.5,
+      "desc": "주간·자유 연습 보드"
+    },
+    {
+      "id": "rhythm",
+      "label": "리듬 관문 1",
+      "file": "assets/audio/arcade.mp3",
+      "base": 0.5,
+      "desc": "리듬 관문·오디션·가위바위포즈 — 1~3번 중 업로드된 곡을 판마다 로테이션"
+    },
+    {
+      "id": "rhythm-2",
+      "label": "리듬 관문 2",
+      "file": "assets/audio/rhythm-2.mp3",
+      "base": 0.5,
+      "desc": "리듬 로테이션용 (비워두면 건너뜀)"
+    },
+    {
+      "id": "rhythm-3",
+      "label": "리듬 관문 3",
+      "file": "assets/audio/rhythm-3.mp3",
+      "base": 0.5,
+      "desc": "리듬 로테이션용 (비워두면 건너뜀)"
+    },
+    {
+      "id": "slot-bgm",
+      "label": "슬롯 게임 배경음",
+      "file": "",
+      "base": 0.5,
+      "desc": "슬롯 관문 진행 중 루프 재생 (미업로드 시 메인 폴백)"
+    },
+    {
+      "id": "slot",
+      "label": "슬롯 릴 사운드",
+      "file": "assets/audio/slot.wav",
+      "base": 0.5,
+      "desc": "슬롯 스핀 동안 재생, 릴이 멈추면 정지 (2초 내외 효과음)"
+    },
+    {
+      "id": "dodge",
+      "label": "격자 회피 관문",
+      "file": "assets/audio/dodge.mp3",
+      "base": 0.5,
+      "desc": "격자 회피 관문"
+    },
+    {
+      "id": "regress",
+      "label": "회귀 · 미스터리",
+      "file": "assets/audio/regress.mp3",
+      "base": 0.5,
+      "desc": "1회차 종료 → 회귀 화면"
+    },
+    {
+      "id": "true",
+      "label": "트루 엔딩",
+      "file": "assets/audio/true.mp3",
+      "base": 0.5,
+      "desc": "진실 규명 엔딩 화면"
+    },
+    {
+      "id": "dark",
+      "label": "다크 엔딩",
+      "file": "assets/audio/dark.mp3",
+      "base": 0.5,
+      "desc": "붕괴 · 배드 엔딩 화면"
+    }
+  ]
+}

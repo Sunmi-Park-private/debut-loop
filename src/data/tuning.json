@@ -1,0 +1,7 @@
+{
+  "cardCarryOver": 4,
+  "stopSpeedBase": 1.4,
+  "stopSpeedPerAct": 0.2,
+  "rhythmSpeedMult": 1,
+  "rhythmJudge": "normal"
+}
