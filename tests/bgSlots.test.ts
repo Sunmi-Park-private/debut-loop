@@ -25,7 +25,7 @@ describe("pickBgSlot", () => {
 describe("bgManifest / systemBgFile", () => {
   it("실데이터: 슬롯 17개 · title/loading·audition·training 시스템 파일", () => {
     expect(bgManifest.story.length + bgManifest.gates.length + bgManifest.system.length).toBe(17); // +1: W0 프롤로그 공통 (2026-08-03)
-    expect(systemBgFile("title")).toBe("assets/bg/title.png");
+    expect(systemBgFile("title")).toBe("assets/bg/title.webp");
     expect(systemBgFile("none")).toBeNull();
   });
 });
