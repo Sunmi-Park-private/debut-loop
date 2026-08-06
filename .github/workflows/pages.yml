@@ -1,0 +1,50 @@
+# GitHub Pages 배포 — 웹 빌드를 정적 호스팅으로 올린다.
+# 사용: Actions 탭 → "GitHub Pages" → Run workflow.
+# 사전 준비: Settings → Pages → Source 를 "GitHub Actions" 로 지정.
+# vite.config.ts 의 base 가 './' 라 프로젝트 페이지 경로(/<repo>/)에서 그대로 동작한다.
+name: GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포는 한 번에 하나만 — 진행 중인 실행은 취소하지 않고 순서대로 처리
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc # Node 25+ 는 빌드 도구가 지원하지 않음
+          cache: npm
+
+      - name: 웹 빌드
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
