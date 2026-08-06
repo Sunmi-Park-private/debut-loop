@@ -50,3 +50,6 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # 에셋이 커서 Pages 게시 대기가 길어질 때가 있다 — 기본 10분으로는 부족
+          timeout: 900000 # 15분
