@@ -1,0 +1,36 @@
+# APK 빌드 (debug) — 로컬에 Android SDK 없어도 CI에서 빌드해 아티팩트로 받는다.
+# 레포 생성 후: Actions 탭 → "Android APK" → Run workflow → 완료 후 app-debug.apk 다운로드.
+name: Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest # Android SDK 프리인스톨
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21 # Capacitor 7 android가 Java 21 요구
+
+      - name: 웹 빌드 + 캐패시터 동기화
+        run: |
+          npm ci
+          npm run build
+          npx cap sync android
+
+      - name: APK 빌드 (debug)
+        run: cd android && ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debut-loop-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
