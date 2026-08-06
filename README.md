@@ -64,6 +64,11 @@ mockup/        단독 HTML 프로토타입
 
 TypeScript · PixiJS v8 · Vite · Vitest · Capacitor(안드로이드/iOS)
 
+## 에셋 제작
+
+- **이미지·영상** — GPT로 생성한 뒤 After Effects로 편집
+- **배경음악** — Suno로 생성
+
 ## 콘텐츠 에디터
 
 dev 서버에서 브라우저로 콘텐츠를 편집해 `src/data/*.json`에 바로 저장합니다.
