@@ -234,7 +234,11 @@ export function showTitle(app: Application, titleTex: Texture | null): Promise<v
       }
 
       // 타이틀+시작 버튼 통짜 영상 (title-hero · mp4) — 업로드 시 코드 타이틀 텍스트·시작 버튼을 대체.
-      // 표시는 로딩 화면 배경과 동일한 규칙: 화면 전체 cover (폭 맞춤 + 상하 크롭), 탭=시작 (Space도 유지)
+      // 표시 규칙은 배경 슬롯 coverBg()(stage.ts)와 **완전히 동일**하다 — 화면 전체 cover, 중앙 정렬.
+      // 즉 넘치는 축은 잘려나가므로, 아트는 배경과 같이 "잘려도 되는 블리드"를 포함해야 한다.
+      // 캔버스는 폭 430 고정 · 높이는 아무리 넓은 창에서도 800에서 멈추므로(비율 0.5375가 최악),
+      // 콘텐츠가 안 잘리려면 아트 가로 ≥ 세로 × 0.5375 여야 한다. (2500 기준 1344, 권장 1400)
+      // 배율·좌표를 바꾸지 말 것 — 로딩 배경과 다르게 보이면 그건 아트 규격 문제다.
       const heroTex = skinTexTrim("title-hero");
       if (heroTex) {
         const sh = stageHeight();
