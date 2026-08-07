@@ -68,6 +68,7 @@ const SLIDES: Slide[] = [
 ];
 
 const PROLOGUE_SEEN = "debutloop.prologueSeen"; // 1회차 완주 여부 — 치트 '데이터 초기화'가 debutloop.* 를 지우면 다시 1회차
+const PROLOGUE_VOLUME = 0.3; // 영상 원본 대비 −70% — 내레이션이 과하게 크다는 피드백
 
 /** 비디오 텍스처의 원본 <video> — 프롤로그만 음소거 해제·1회 재생으로 다뤄야 해서 꺼낸다.
  *  (공용 로더는 모든 영상을 muted·loop로 만든다 — 배경 루프가 기본 용도라서) */
@@ -93,20 +94,43 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
     root.addChild(bgLayer, slideLayer);
     const firstPlay = localStorage.getItem(PROLOGUE_SEEN) !== "1";
     let hasBg = false;
+    let bgTex: Texture | null = null;
     let videoEl: HTMLVideoElement | null = null;
+    let muteBtn: Text | null = null;
+    let cancelAutoUnmute: (() => void) | null = null;
     let idx = 0;
     let flashTick: (() => void) | null = null;
     let done = false;
+
+    // 화면 전체가 한 덩어리로 축소되므로 작은 기기일수록 버튼의 실제 크기도 같이 줄어든다
+    // (iPhone SE에서 지름 28px — 손가락으로 누르기 빡빡하다).
+    // CSS 스케일의 역수를 곱해 물리 크기를 ~44px로 맞춘다. 큰 화면에서는 1배(보정 없음).
+    const uiScale = (): number => {
+      const s = app.canvas.clientWidth / W;
+      return s > 0 ? Math.min(1.4, Math.max(1, 0.95 / s)) : 1;
+    };
+
+    // 🔊/🔇 두 글리프는 작게 그리면 형태가 비슷해 구분이 어렵다 —
+    // 아이콘을 바꾸는 동시에 음소거일 때 흐리게 해서 한눈에 상태가 읽히게 한다
+    const syncMuteBtn = (): void => {
+      if (!muteBtn) return;
+      const m = videoEl?.muted ?? false;
+      muteBtn.text = m ? "🔇" : "🔊";
+      muteBtn.alpha = m ? 0.5 : 1;
+    };
 
     const finish = (): void => {
       if (done) return;
       done = true;
       if (flashTick) app.ticker.remove(flashTick);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+      cancelAutoUnmute?.();
       if (videoEl) { // 뒤 화면이 이 영상을 배경으로 재사용할 수 있으니 공용 로더 기본값으로 되돌린다
         videoEl.pause();
         videoEl.muted = true;
         videoEl.loop = true;
+        videoEl.volume = 1;
       }
       localStorage.setItem(PROLOGUE_SEEN, "1");
       root.destroy({ children: true });
@@ -115,24 +139,32 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
 
     void bgPromise?.then((tex) => {
       if (!tex || done || root.destroyed || hasBg) return;
+      bgTex = tex;
       bgLayer.addChild(coverBg(tex));
       hasBg = true;
       const el = videoElOf(tex);
       if (el) {
         videoEl = el;
-        el.loop = false;          // 프롤로그는 1회 재생 후 종료
+        el.loop = false;             // 프롤로그는 1회 재생 후 종료
         el.currentTime = 0;
-        el.muted = false;         // 영상에 내레이션 음성이 들어 있다
+        el.muted = false;            // 영상에 내레이션 음성이 들어 있다
+        el.volume = PROLOGUE_VOLUME;
         el.addEventListener("ended", finish, { once: true });
         void el.play().catch(() => {
           // 사용자 제스처 전 '소리 있는' 자동재생은 브라우저가 막는다 —
           // 일단 음소거로 재생하고 첫 입력에서 소리를 켠다 (재생 자체는 끊기지 않게)
           el.muted = true;
+          syncMuteBtn();
           void el.play().catch(() => {});
           const unmute = (): void => {
             el.muted = false;
+            cancelAutoUnmute?.();
+            syncMuteBtn();
+          };
+          cancelAutoUnmute = (): void => {
             window.removeEventListener("pointerdown", unmute);
             window.removeEventListener("keydown", unmute);
+            cancelAutoUnmute = null;
           };
           window.addEventListener("pointerdown", unmute);
           window.addEventListener("keydown", unmute);
@@ -153,20 +185,67 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
     };
     window.addEventListener("keydown", onKey);
 
+    // 프롤로그는 35초라 재생 도중 창 크기·기기 방향이 바뀔 수 있다. 캔버스 높이가 달라지면
+    // stageTop() 기준으로 잡은 오버레이와 cover 배경이 어긋나므로 그 자리에서 다시 배치한다.
+    const onResize = (): void => {
+      if (done || root.destroyed) return;
+      if (hasBg && bgTex) { bgLayer.removeChildren(); bgLayer.addChild(coverBg(bgTex)); }
+      show();
+    };
+    window.addEventListener("resize", onResize);
+
+    // 영상 모드에서는 화면 진짜 모서리(=stageTop) 기준으로 얹는다. 콘텐츠 800 박스 기준으로 두면
+    // 20:9 캔버스에서 78px 안쪽에 떠서 오버레이로 보이지 않는다. 단색 슬라이드는 800 박스 그대로.
+    const topY = (inset: number): number => (hasBg ? stageTop() + inset : inset);
+
     const addSkip = (color: number): void => {
-      const skip = mkText("건너뛰기 ≫", 12, color, true);
-      skip.x = W - skip.width - 20;
-      skip.y = 20;
+      const u = uiScale();
+      const skip = mkText("건너뛰기 ≫", Math.round(15 * u), color, true);
+      skip.x = W - skip.width - 18;
+      skip.y = topY(18);
       skip.eventMode = "static";
       skip.cursor = "pointer";
       skip.on("pointertap", (e) => { e.stopPropagation(); finish(); });
       slideLayer.addChild(skip);
     };
 
+    // 좌상단 음소거 토글 — 영상에 내레이션이 있어 소리를 끌 수단이 필요하다.
+    // 자동재생 정책으로 음소거 시작된 경우에도 이 버튼이 현재 상태를 그대로 보여준다.
+    const addMute = (): void => {
+      const u = uiScale();
+      const D = Math.round(48 * u); // 터치 타깃
+      const zone = new Container();
+      zone.x = 14;
+      zone.y = topY(14);
+      // 영상 위라 배경이 매 프레임 바뀐다 — 반투명 알약을 깔아야 아이콘이 항상 읽힌다
+      zone.addChild(new Graphics().roundRect(0, 0, D, D, D / 2).fill({ color: 0x0d0b26, alpha: 0.45 }));
+      const btn = mkText("🔊", Math.round(24 * u), 0xffffff);
+      btn.anchor.set(0.5);
+      btn.x = D / 2;
+      btn.y = D / 2;
+      zone.addChild(btn);
+      muteBtn = btn;
+      syncMuteBtn(); // 자동재생이 막혀 이미 음소거로 시작했을 수도 있다
+      zone.eventMode = "static";
+      zone.cursor = "pointer";
+      // pointerdown은 캔버스에서 window로 버블링되기 전에 온다 — 여기서 자동 언뮤트 대기를
+      // 먼저 해제해야 사용자가 고른 상태를 곧바로 덮어쓰지 않는다
+      zone.on("pointerdown", () => { cancelAutoUnmute?.(); });
+      zone.on("pointertap", (e) => {
+        e.stopPropagation(); // 탭 스킵과 겹치지 않게
+        if (!videoEl) return;
+        videoEl.muted = !videoEl.muted;
+        syncMuteBtn();
+      });
+      slideLayer.addChild(zone);
+    };
+
     const show = (): void => {
       if (flashTick) { app.ticker.remove(flashTick); flashTick = null; }
       slideLayer.removeChildren();
-      if (hasBg) { // 영상 모드 — 화면 위에 얹는 건 2회차 이후의 건너뛰기뿐
+      muteBtn = null;
+      if (hasBg) { // 영상 모드 — 좌상단 음소거, 2회차부터 우상단 건너뛰기
+        addMute();
         if (!firstPlay) addSkip(0xe8e2f5);
         return;
       }
