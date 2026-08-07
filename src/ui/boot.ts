@@ -731,28 +731,25 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
         new Graphics().circle(0, 0, 64).stroke({ width: 1.5, color: 0xffd9e9 }),
       );
     }
-    if (!ctaSkin) { // START 글씨는 스킨 이미지에 그려져 있음 — 벡터 폴백에서만 표시
-      const c1 = mkText("START", 10, 0xffe4f0, true);
-      c1.x = -c1.width / 2;
-      c1.y = -40;
-      cta.addChild(c1);
-    }
+    // CTA 위 글자들은 아트 중앙 기준(0,0)의 상대 좌표다. 기본값은 가로 중앙 정렬이고,
+    // 레이아웃 에디터에서 각각 따로 옮길 수 있다 — 아트가 바뀌면 문구 위치도 손봐야 해서.
+    const ctaText = (name: string, t: Text, defY: number): void => {
+      const q = pos(name, { x: -t.width / 2, y: defY });
+      t.x = q.x;
+      t.y = q.y;
+      cta.addChild(t);
+      editable(name, t);
+    };
+    // START 글씨는 원형 아트에 그려져 있지 않아 코드가 얹는다 (벡터 폴백도 동일).
+    // 색은 아트 속 별의 크림색(실측 평균 #FFEFD8)에 맞춘다.
+    ctaText("lobby_cta_start", mkText("START", 18, 0xffefd8, true), -62);
     // 회차 숫자가 이 버튼의 주인공 — 원형 아트에 비해 작아 가독성이 떨어져서 키웠다(24→34, 부제 11→14).
-    // y는 글자 블록 높이(=크기×1.7)가 커진 만큼 위로 당겨 아트 중앙 정렬을 유지한다.
-    const c2 = mkText(`${runNumber}회차`, 34, 0xffffff, true);
-    c2.x = -c2.width / 2;
-    c2.y = -31;
-    const c3 = mkText("시작의 밤", 14, 0xffe4f0, true);
-    c3.x = -c3.width / 2;
-    c3.y = 26;
-    cta.addChild(c2, c3);
+    ctaText("lobby_cta_round", mkText(`${runNumber}회차`, 34, 0xffffff, true), -28);
+    ctaText("lobby_cta_sub", mkText("시작의 밤", 14, 0xffe4f0, true), 28);
     // 진행 중인 런이 있으면 어디까지 왔는지 표시 (스토리 중간에 로비로 나온 경우)
     if (runInfo) {
       const label = runInfo.awaitingRegress ? "▶ 회귀 — 진행 방식을 골라요" : `▶ ${runInfo.week}주차 진행 중`;
-      const c4 = mkText(label, 9, 0xfff4c9, true);
-      c4.x = -c4.width / 2;
-      c4.y = 34;
-      cta.addChild(c4);
+      ctaText("lobby_cta_run", mkText(label, 9, 0xfff4c9, true), 36);
     }
     cta.eventMode = "static";
     cta.cursor = "pointer";
