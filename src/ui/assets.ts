@@ -31,10 +31,12 @@ export async function loadLoadingBg(): Promise<Texture[]> {
   return single ? [single] : [];
 }
 
-/** 프롤로그 슬라이드쇼 배경 — 부트 첫 화면이라 본 로딩과 별도로 선로드.
- *  story 슬롯 prologue-01(참사~되감기 전체). 미업로드면 null → 슬라이드 단색 폴백 유지 */
+/** 앱 시작 프롤로그 영상 — 부트 첫 화면이라 본 로딩과 별도로 선로드.
+ *  system 슬롯 prologue-01. 스토리 W0 배경(act0)과는 별개 슬롯이다 —
+ *  story에 두면 W0 비트에서 pickBgSlot이 이 영상을 골라 act0을 덮는다.
+ *  미업로드면 null → 슬라이드 단색 폴백 유지 */
 export async function loadPrologueBg(): Promise<Texture | null> {
-  const slot = bgManifest.story.find((s) => s.id === "prologue-01");
+  const slot = bgManifest.system.find((s) => s.id === "prologue-01");
   return tryLoad(slot?.file || undefined);
 }
 
