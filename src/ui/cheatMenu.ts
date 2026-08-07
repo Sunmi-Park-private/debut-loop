@@ -5,6 +5,7 @@ import { pairSpace } from "./keys";
 import { tuning, cardTemplates } from "../data";
 import { RHYTHM_TRAVEL_MS, RHYTHM_NOTE_IV, RHYTHM_JUDGE_PRESETS } from "../engine/minigames";
 import { DEFAULT_TUNING } from "../engine/state";
+import { makeCards } from "../engine/cards";
 import type { Tuning, RhythmJudgeLevel, CardTemplateId, CardGrade, Card } from "../engine/types";
 
 export interface Cheat {
@@ -60,7 +61,7 @@ const notifyDeck = (): void => { deckListeners.forEach((f) => f()); };
 const effOps: CardOps = {
   add: (id, grade) => {
     if (cardOps) cardOps.add(id, grade);
-    else pendingCards.push({ templateId: id, grade });
+    else pendingCards.push(...makeCards(id, grade, cardTemplates)); // 실제 획득과 같은 규칙 — 게이지마다 한 장
     notifyDeck(); // 로비 덱 시트 실시간 갱신 (런 덱·버퍼 공통)
   },
   remove: (id, grade) => {

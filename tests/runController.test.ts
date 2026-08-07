@@ -101,7 +101,7 @@ describe("RunController v4 (연습 배선)", () => {
     const m0 = c.state.gauges.mental;
     const s0 = c.state.gauges.skill;
     c.finishTraining("vocal", "perfect");
-    expect(c.state.cards).toEqual([{ templateId: "vocal", grade: "epic" }]);
+    expect(c.state.cards).toEqual([{ templateId: "vocal", grade: "epic", gauge: "skill" }]);
     expect(c.state.gauges.mental).toBe(m0 - 3); // drain
     expect(c.state.gauges.skill).toBe(s0);      // 상승 없음
     expect(c.current?.id).toBe("n1");           // 진행
@@ -128,7 +128,11 @@ describe("RunController v4 (연습 배선)", () => {
     c.skipTraining(); // n1 카드 상태에서
     const cur = c.current?.id;
     c.trainFree("bond", "good");
-    expect(c.state.cards).toEqual([{ templateId: "bond", grade: "rare" }]);
+    // 유대 원형은 유대 8 · 멘탈 5 → 게이지마다 한 장씩 두 장 (효과 큰 순)
+    expect(c.state.cards).toEqual([
+      { templateId: "bond", grade: "rare", gauge: "bond" },
+      { templateId: "bond", grade: "rare", gauge: "mental" },
+    ]);
     expect(c.current?.id).toBe(cur); // 비트 그대로
   });
 
@@ -177,8 +181,8 @@ describe("RunController v3 (관문 배선)", () => {
 
   it("resolveGate(등급, 선택카드) → 카드 효과 적용·소모 + 티켓·포인트 + 진행 재개", () => {
     const c = createRunController(gateBeats, cfg, "small", gateDefs);
-    c.trainFree("vocal", "good");           // 레어 보컬(skill+8)
-    c.trainFree("bond", "perfect");         // 에픽 유대(mental+9, bond+7)
+    c.trainFree("vocal", "good");           // 레어 보컬 1장(skill+8)
+    c.trainFree("bond", "perfect");         // 에픽 유대 2장 — 유대(bond+14) · 멘탈(mental+9)
     c.state.gauges.mental = 55;             // trainFree 소모 리셋(테스트 단순화)
     c.choose("left");                       // act2 관문
     const skill0 = c.state.gauges.skill;
@@ -187,7 +191,7 @@ describe("RunController v3 (관문 배선)", () => {
     expect(c.pendingGate).toBeNull();
     expect(c.state.gauges.skill).toBe(skill0 + 8);  // 보컬 rare 6×1.4=8.4→8
     expect(c.state.gauges.bond).toBe(bond0 + 14);   // 유대 epic 8×1.8=14.4→14
-    expect(c.state.cards.length).toBe(0);           // 선택 카드 소모
+    expect(c.state.cards.length).toBe(1);           // 3장 중 선택한 2장 소모, 멘탈 카드가 남음
     expect(c.state.deck).toContain("audition_pass");
     expect(c.state.points).toBe(3);
     c.choose("left");                       // a2 → k (비트 관문)
@@ -262,14 +266,14 @@ describe("RunController v5 (관문 광고 보너스 라운드)", () => {
   it("settleGateRound — 라운드 즉시 정산: 게이지·⭐ 즉시 적용 + 카드 즉시 소모, 티켓은 finishGate 전까지 없음", () => {
     const c = createRunController(gateBeats, cfg, "small", gateDefs);
     c.trainFree("vocal", "good");           // [0] 레어 보컬 (skill+8)
-    c.trainFree("bond", "perfect");         // [1] 에픽 유대 (mental+9, bond+7)
+    c.trainFree("bond", "perfect");         // [1] 유대(bond+14) · [2] 멘탈(mental+9)
     c.state.gauges.mental = 55;
     c.choose("left");                        // act2 관문
     const skill0 = c.state.gauges.skill;
     const delta = c.settleGateRound("good", [0]);
     expect(delta.skill).toBe(8);
     expect(c.state.gauges.skill).toBe(skill0 + 8); // 라운드 종료 즉시 반영
-    expect(c.state.cards.length).toBe(1);          // 사용 카드 즉시 소모
+    expect(c.state.cards.length).toBe(2);          // 3장 중 사용 카드 1장 즉시 소모
     expect(c.state.points).toBe(2);                // good ⭐도 즉시
     expect(c.state.deck).not.toContain("audition_pass"); // 티켓은 아직
     expect(c.pendingGate).not.toBeNull();          // 관문은 아직 진행 중 (보너스 라운드 가능)
@@ -278,7 +282,7 @@ describe("RunController v5 (관문 광고 보너스 라운드)", () => {
   it("2라운드(광고 보너스) — 라운드별 정산 누적 + finishGate에서 티켓 1회", () => {
     const c = createRunController(gateBeats, cfg, "small", gateDefs);
     c.trainFree("vocal", "good");           // [0] skill+8
-    c.trainFree("bond", "perfect");         // [1] mental+9, bond+7
+    c.trainFree("bond", "perfect");         // [1] bond+14, [2] mental+9
     c.state.gauges.mental = 55;
     c.choose("left");
     const skill0 = c.state.gauges.skill;
@@ -288,7 +292,7 @@ describe("RunController v5 (관문 광고 보너스 라운드)", () => {
     c.finishGate();
     expect(c.state.gauges.skill).toBe(skill0 + 8);
     expect(c.state.gauges.bond).toBe(bond0 + 14);
-    expect(c.state.cards.length).toBe(0);
+    expect(c.state.cards.length).toBe(1);    // 3장 중 2장 사용, 멘탈 카드가 남음
     expect(c.state.deck.filter((t) => t === "audition_pass").length).toBe(1); // 티켓은 1회만
     expect(c.state.points).toBe(4);                                           // good 2 + good 2
     expect(c.pendingGate).toBeNull();

@@ -1,8 +1,7 @@
 // ui/boot.ts — 부트 플로우: ① 프롤로그(회귀 배경) → ② 로딩 → ③ 타이틀 → ④ 메인 로비.
 // 프롤로그는 경량(텍스트 연출)이라 즉시 재생, 무거운 에셋은 그 뒤에서 백그라운드 로딩.
-import { AnimatedSprite, Application, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
+import { AnimatedSprite, Application, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
 import type { GameAssets } from "./assets";
-import type { Card, CardGrade } from "../engine/types";
 import { openMetaMenu } from "./metaMenu";
 import { pos } from "./layout";
 import { fullRect, coverBg, stageTop, stageHeight } from "./stage";
@@ -13,7 +12,8 @@ import { currentRunCards, currentRunInfo } from "./app";
 import { renderLobbyStatusBar } from "./lobbyStatusBar";
 import { attachSeamlessLoop } from "./loopVideo";
 import { skinNode, skinNatural, skinFit, skinTexTrim, skinScale } from "./uiSkin";
-import { cardTemplates, config } from "../data";
+import { renderCardDeckSheet } from "./cardDeckSheet";
+import { config } from "../data";
 import { playBgm } from "./audio";
 
 const W = 430;
@@ -543,180 +543,16 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
     ico("lobby_shop", "🛍", "상점", W - 64, 290, () => openMetaMenu("shop"));
     ico("lobby_settings", "⚙️", "설정", W - 64, 370, () => openMetaMenu("settings"));
 
-    // 하단 곡선 탭바 (A안) = 카드덱 시트의 핸들 — 상하 스와이프로 반쯤 올라옴 (레퍼런스: 카드덱UI)
-    const sheet = new Container(); // y offset 0=닫힘, -OPEN_DY=열림
-    // 배너 아트 — 스킨 전용 (빈 슬롯은 곡선 장식 없이 몸통만)
-    // 폭은 화면 전체 고정, 높이는 업로드 아트 비율에서 도출 → 눌리지 않음 (배율은 에디터에서)
-    const bannerTex = skinTexTrim("lobby-deck-banner");
-    const bannerH = bannerTex ? Math.round(W * (bannerTex.height / bannerTex.width)) : 230;
-    // 개폐 스트로크는 배너 높이 비율로 — 닫힘=상단 30%만 노출, 열림=상단 70%까지(하단 30%는 화면 밑)
-    const BANNER_TOP = H - Math.round(bannerH * 0.3); // 배너 상단 = 덱 조각들의 기준선
-    const OPEN_DY = bannerTex ? Math.round(bannerH * 0.4) : 240; // 아트 미업로드(벡터 폴백)만 고정값
-    const bannerSkin = skinNode("lobby-deck-banner", W, bannerH);
-    if (bannerSkin) bannerSkin.y = BANNER_TOP;
-    // 개폐 핸들 = 배너 상단 제목 띠(카드 내용이 시작되기 전까지). 배너 전체를 판정 영역으로 두면
-    // 카드 위를 눌러도 시트가 끌려와, 카드를 눌러 상세를 보는 동작과 충돌한다.
-    const HANDLE_H = 98; // content 오프셋과 같은 값 — 제목 아래·첫 카드 줄 위
-    const bodyRect = new Graphics().rect(0, BANNER_TOP, W, HANDLE_H).fill({ color: 0xffffff, alpha: 0 });
-    sheet.addChild(bodyRect);
-    sheet.hitArea = new Rectangle(0, BANNER_TOP, W, HANDLE_H); // 자식(배너 아트·카드)이 아니라 이 띠만 반응
-    // 시트 내부 조각별 오프셋 그룹 — 시트 개폐(sheet.y)와 분리돼 열린 상태에서 위치 미세조정 가능
-    const dgrp = (name: string, child: Container): Container => {
-      const g = new Container();
-      const q = pos(name, { x: 0, y: 0 });
-      g.x = q.x;
-      g.y = q.y;
-      g.addChild(child);
-      sheet.addChild(g);
-      editable(name, g);
-      return g;
-    };
-    if (bannerSkin) dgrp("lobby_deck_banner", bannerSkin);
-
-    // 핸들 바·🎴 아이콘 제거 — 배너 이미지 자체를 잡고 끌어 올리고 내린다 (히트영역=bodyRect)
-
-    // 덱 제목 — 시트 직속(내용물 밖)이라 닫혀 있어도 보이고, 개폐하면 시트와 함께 움직인다
-    const cTitle = mkText("CARD DECK", 30, 0x5b4a70, true);
-    cTitle.x = (W - cTitle.width) / 2;
-    cTitle.y = BANNER_TOP + 6; // 배너 안쪽 상단
-    dgrp("lobby_deck_title", cTitle);
-
-    // 시트 내용 — 대기 버퍼(카드 에디터로 추가한 카드)를 실시간 표시, 비면 "?" 슬롯
-    const content = new Container();
-    content.y = BANNER_TOP + 98; // 배너 기준 아래쪽 — 닫힘 상태에선 화면 밖
-    dgrp("lobby_deck_content", content);
-    const GRADE_COLOR: Record<CardGrade, number> = { epic: 0xf0c05a, rare: 0xa78be6, common: 0xc4b8d6 };
-    const STARS: Record<CardGrade, string> = { epic: "★★★", rare: "★★", common: "★" };
-    const cols = 4;
-    const cw = 82;
-    const gap = 10;
-    const gx = (W - cols * cw - (cols - 1) * gap) / 2;
-    // content 내부 조각 그룹 — 재빌드마다 다시 등록되지만 좌표는 layout.json에서 승계된다
-    const cgrp = (name: string, child: Container): void => {
-      const g = new Container();
-      const q = pos(name, { x: 0, y: 0 });
-      g.x = q.x;
-      g.y = q.y;
-      g.addChild(child);
-      content.addChild(g);
-      editable(name, g);
-    };
-    // 카드 타일 — 업로드된 결과 카드 프레임 아트를 원본 비율로, 빈 슬롯이면 벡터 폴백
-    const tile = (x0: number, y0: number, accent: number | null): void => {
-      const art = skinFit("train-result-card", cw, cw * 1.3);
-      if (art) {
-        art.x = x0;
-        art.y = y0;
-        content.addChild(art);
-        return;
-      }
-      content.addChild(new Graphics().roundRect(x0, y0, cw, cw * 1.3, 12)
-        .fill(accent === null ? 0xf8f4fc : 0xf6f0fc)
-        .stroke({ width: accent === null ? 2 : 2.5, color: accent ?? 0xece4f4 }));
-    };
-
-    const buildContent = (): void => {
-      content.removeChildren();
-      const cSub = mkText("연습으로 모으고, 관문에서 사용해요", 11, 0xa99bc0);
-      cSub.x = (W - cSub.width) / 2;
-      cSub.y = 26;
-      cgrp("lobby_deck_sub", cSub);
-
-      // 같은 종류·등급 = ×N 스택 — 진행 중 런의 덱 + 대기 버퍼(카드 에디터) 합산
-      const groups = new Map<string, { card: Card; count: number }>();
-      for (const card of [...currentRunCards(), ...getPendingCards()]) {
-        const key = `${card.templateId}:${card.grade}`;
-        const g = groups.get(key);
-        if (g) g.count++;
-        else groups.set(key, { card, count: 1 });
-      }
-
-      if (groups.size === 0) {
-        for (let i = 0; i < 8; i++) {
-          const x0 = gx + (i % cols) * (cw + gap);
-          const y0 = 52 + Math.floor(i / cols) * (cw * 1.3 + gap);
-          tile(x0, y0, null);
-          const q = mkText("?", 20, 0xd9cdeb, true);
-          q.x = x0 + cw / 2 - q.width / 2;
-          q.y = y0 + cw * 0.5;
-          content.addChild(q);
-        }
-        const cHint = mkText("런을 시작하면 여기에 카드가 쌓여요", 10.5, 0xc4b8d6);
-        cHint.x = (W - cHint.width) / 2;
-        cHint.y = 52 + 2 * (cw * 1.3 + gap) + 6;
-        cgrp("lobby_deck_hint", cHint);
-        return;
-      }
-
-      let i = 0;
-      for (const { card, count } of groups.values()) {
-        if (i >= 8) break;
-        const t = cardTemplates.find((x) => x.id === card.templateId);
-        const x0 = gx + (i % cols) * (cw + gap);
-        const y0 = 52 + Math.floor(i / cols) * (cw * 1.3 + gap);
-        tile(x0, y0, GRADE_COLOR[card.grade]);
-        const ic = mkText(t?.icon ?? "🎴", 22, 0x5b4a70);
-        ic.x = x0 + (cw - ic.width) / 2;
-        ic.y = y0 + 12;
-        const st = mkText(STARS[card.grade], 10, 0xf0a93a, true);
-        st.x = x0 + (cw - st.width) / 2;
-        st.y = y0 + 48;
-        const nm = mkText(t?.name?.replace(" 카드", "") ?? "", 10, 0x5b4a70, true);
-        nm.x = x0 + (cw - nm.width) / 2;
-        nm.y = y0 + 68;
-        content.addChild(ic, st, nm);
-        if (count > 1) {
-          const bd = mkText(`×${count}`, 10, 0xc9527f, true);
-          bd.x = x0 + cw - bd.width - 6;
-          bd.y = y0 + 5;
-          content.addChild(bd);
-        }
-        i++;
-      }
-      const cHint = mkText("런 시작 시 이 카드들을 갖고 출발해요 (개발 버퍼)", 10.5, 0xc4b8d6);
-      cHint.x = (W - cHint.width) / 2;
-      cHint.y = 52 + 2 * (cw * 1.3 + gap) + 6;
-      cgrp("lobby_deck_hint", cHint);
-    };
-    buildContent();
-    refreshDeck = buildContent;
-    // 레이아웃 에디터 오프셋 래퍼 — 개폐(sheet.y 스냅)와 분리, 위치 미세조정은 래퍼가 담당
-    const deckWrap = new Container();
-    const dOff = pos("lobby_deck", { x: 0, y: 0 });
-    deckWrap.x = dOff.x;
-    deckWrap.y = dOff.y;
-    deckWrap.addChild(sheet);
-    root.addChild(deckWrap);
-    editable("lobby_deck", deckWrap);
-
-    // 상하 스와이프/탭 개폐 (인게임 덱 시트와 동일 제스처)
-    let sheetOpen = deckSheetOpen;
-    if (sheetOpen) sheet.y = -OPEN_DY; // 리드로우 전 열려 있었으면 열린 채로 복원
-    let dragging = false;
-    let startY = 0;
-    let baseY = 0;
-    let moved = 0;
-    sheet.eventMode = "static";
-    sheet.cursor = "grab";
-    sheet.on("pointerdown", (e) => { dragging = true; startY = e.globalY; baseY = sheet.y; moved = 0; });
-    const smove = (e: { globalY: number }): void => {
-      if (!dragging) return;
-      const dy = e.globalY - startY;
-      moved = Math.max(moved, Math.abs(dy));
-      sheet.y = Math.max(-OPEN_DY, Math.min(0, baseY + dy));
-    };
-    sheet.on("globalpointermove", smove);
-    sheet.on("pointermove", smove);
-    const sfinish = (): void => {
-      if (!dragging) return;
-      dragging = false;
-      if (moved < 8) sheetOpen = !sheetOpen;            // 탭 = 토글
-      else sheetOpen = sheet.y < -OPEN_DY / 2;          // 스와이프 = 가까운 쪽 스냅
-      deckSheetOpen = sheetOpen;                        // build 재실행에도 유지
-      sheet.y = sheetOpen ? -OPEN_DY : 0;
-    };
-    sheet.on("pointerup", sfinish);
-    sheet.on("pointerupoutside", sfinish);
+    // 하단 카드덱 시트 — 로비·스토리 공용 컴포넌트 (배너를 끌거나 탭해서 개폐)
+    const deck = renderCardDeckSheet(root, {
+      cards: () => [...currentRunCards(), ...getPendingCards()], // 진행 중 런의 덱 + 대기 버퍼(카드 에디터)
+      open: deckSheetOpen,
+      onToggle: (o) => { deckSheetOpen = o; }, // build 재실행에도 유지
+      tapMode: "flip", // 뒷면으로 깔아두고, 누르면 뒤집어 확인 (앱 재실행 전까지 유지)
+      emptyHint: "런을 시작하면 여기에 카드가 쌓여요",
+      filledHint: "런 시작 시 이 카드들을 갖고 출발해요 (개발 버퍼)",
+    });
+    refreshDeck = deck.rebuild;
 
     // 원형 대형 CTA (B안) — 회차 숫자가 주인공
     const cta = new Container();
@@ -759,7 +595,7 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
     cta.on("pointertap", start);
     root.addChild(cta);
     editable("lobby_cta", cta);
-    root.addChild(deckWrap); // 시트를 CTA 위 레이어로 — 열리면 CTA를 덮음 (에디터 오프셋 래퍼째)
+    root.addChild(deck.view); // 시트를 CTA 위 레이어로 — 열리면 CTA를 덮음 (에디터 오프셋 래퍼째)
 
     } // ── build() 끝 ──
     build();

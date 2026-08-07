@@ -3,7 +3,8 @@
 import { Application, Assets, BlurFilter, ColorMatrixFilter, Container, Graphics, Sprite, Text, type Texture } from "pixi.js";
 import type { GameAssets } from "./assets";
 import { createRunController, type RunController } from "./runController";
-import { beats, config, casting, gates, tuning, characters } from "../data";
+import { beats, config, casting, gates, tuning, characters, cardTemplates } from "../data";
+import { makeCards } from "../engine/cards";
 import { renderTrainingBoard } from "./training";
 import { renderMemberBoard } from "./memberBoard";
 import { renderGauges } from "./gaugeBar";
@@ -17,7 +18,7 @@ import { initCheatMenu, registerCheat, registerCardOps, drainPendingCards, setIn
 import { addCard, removeCards } from "../engine/deck";
 import { isDevMode } from "./devMode";
 import { toast } from "./metaMenu";
-import { renderDeckSheet } from "./deckSheet";
+import { renderCardDeckSheet } from "./cardDeckSheet";
 import { playBgm, setBgmVolume, setBgmMuted, DEFAULT_VOLUME } from "./audio";
 import { guide, guideSeq, resetTutorial } from "./tutorial";
 import { pickBgSlot, bgManifest } from "./bgSlots";
@@ -103,7 +104,7 @@ export function initGameCheats(): void {
   }, true);
   registerCheat("🎹 연습 메뉴", needGame(() => { freeTraining = true; }), true);
   registerCheat("🎤 오디션 재료 (카드3+진행권)", needGame((c) => {
-    for (let i = 0; i < 3; i++) c.state.cards = addCard(c.state.cards, { templateId: "audition", grade: "common" });
+    for (let i = 0; i < 3; i++) for (const card of makeCards("audition", "common", cardTemplates)) c.state.cards = addCard(c.state.cards, card);
     c.state.deck.push("audition");
     toast("오디션 카드 3장 + 진행권 1장 지급");
   }), true);
@@ -421,8 +422,14 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
         onPreview: (dir, t) => panel.showPreview(c.current?.[dir]?.effects, t),
         onPreviewClear: () => panel.clearPreview(),
       });
-      // 하단 덱 시트 — 스토리 진행 중 수시 열람 (상하 스와이프/탭)
-      renderDeckSheet(root, c.state, { open: deckOpen, onToggle: (o) => { deckOpen = o; } });
+      // 하단 카드덱 시트 — 로비와 같은 컴포넌트, 스토리 진행 중 수시 열람 (상하 스와이프/탭)
+      renderCardDeckSheet(root, {
+        cards: () => c.state.cards,
+        open: deckOpen,
+        onToggle: (o) => { deckOpen = o; },
+        tapMode: "lift", // 진행 중엔 앞면이 보여야 하므로 뒤집지 않고 살짝 떠오르기만
+        emptyHint: "연습으로 카드를 모아보세요",
+      });
       return;
     }
     if (c.ended) {
@@ -448,7 +455,8 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
     registerCardOps({
       add: (templateId, grade) => {
         if (!ctrl) return;
-        ctrl.state.cards = addCard(ctrl.state.cards, { templateId, grade });
+        // 실제 획득과 같은 규칙 — 게이지마다 한 장
+        for (const card of makeCards(templateId, grade, cardTemplates)) ctrl.state.cards = addCard(ctrl.state.cards, card);
         currentDraw();
       },
       remove: (templateId, grade) => {
