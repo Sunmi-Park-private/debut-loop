@@ -67,21 +67,82 @@ const SLIDES: Slide[] = [
   },
 ];
 
-export function playPrologue(app: Application): Promise<void> {
+const PROLOGUE_SEEN = "debutloop.prologueSeen"; // 1회차 완주 여부 — 치트 '데이터 초기화'가 debutloop.* 를 지우면 다시 1회차
+
+/** 비디오 텍스처의 원본 <video> — 프롤로그만 음소거 해제·1회 재생으로 다뤄야 해서 꺼낸다.
+ *  (공용 로더는 모든 영상을 muted·loop로 만든다 — 배경 루프가 기본 용도라서) */
+function videoElOf(tex: Texture): HTMLVideoElement | null {
+  const res = (tex.source as unknown as { resource?: unknown }).resource;
+  return res instanceof HTMLVideoElement ? res : null;
+}
+
+/** 프롤로그. bgPromise(backgrounds.json prologue-01)가 도착하면 **영상 모드**로 전환한다.
+ *  영상에 내레이션 자막과 소리가 모두 들어 있으므로 코드 텍스트·틴트는 그리지 않는다.
+ *
+ *  1회차 — 끝까지 재생하고 `ended`에서 자동으로 로딩 화면으로 넘어간다. 건너뛰기 없음.
+ *  2회차 이후 — 건너뛰기 버튼과 탭 스킵이 열린다.
+ *
+ *  영상이 없거나 로드 실패면 기존 단색 슬라이드쇼로 폴백(문구는 여기 SLIDES가 SSOT).
+ *  프롤로그는 즉시 시작이 원칙이라 영상을 기다리지 않고, 도착한 시점에 전환한다. */
+export function playPrologue(app: Application, bgPromise?: Promise<Texture | null>): Promise<void> {
   return new Promise((resolve) => {
     const root = new Container();
     app.stage.addChild(root);
+    const bgLayer = new Container();   // 영상 — 한 번 붙으면 유지
+    const slideLayer = new Container(); // 단색 슬라이드·건너뛰기 — 갈아끼움
+    root.addChild(bgLayer, slideLayer);
+    const firstPlay = localStorage.getItem(PROLOGUE_SEEN) !== "1";
+    let hasBg = false;
+    let videoEl: HTMLVideoElement | null = null;
     let idx = 0;
     let flashTick: (() => void) | null = null;
+    let done = false;
 
     const finish = (): void => {
+      if (done) return;
+      done = true;
       if (flashTick) app.ticker.remove(flashTick);
       window.removeEventListener("keydown", onKey);
+      if (videoEl) { // 뒤 화면이 이 영상을 배경으로 재사용할 수 있으니 공용 로더 기본값으로 되돌린다
+        videoEl.pause();
+        videoEl.muted = true;
+        videoEl.loop = true;
+      }
+      localStorage.setItem(PROLOGUE_SEEN, "1");
       root.destroy({ children: true });
       resolve();
     };
 
+    void bgPromise?.then((tex) => {
+      if (!tex || done || root.destroyed || hasBg) return;
+      bgLayer.addChild(coverBg(tex));
+      hasBg = true;
+      const el = videoElOf(tex);
+      if (el) {
+        videoEl = el;
+        el.loop = false;          // 프롤로그는 1회 재생 후 종료
+        el.currentTime = 0;
+        el.muted = false;         // 영상에 내레이션 음성이 들어 있다
+        el.addEventListener("ended", finish, { once: true });
+        void el.play().catch(() => {
+          // 사용자 제스처 전 '소리 있는' 자동재생은 브라우저가 막는다 —
+          // 일단 음소거로 재생하고 첫 입력에서 소리를 켠다 (재생 자체는 끊기지 않게)
+          el.muted = true;
+          void el.play().catch(() => {});
+          const unmute = (): void => {
+            el.muted = false;
+            window.removeEventListener("pointerdown", unmute);
+            window.removeEventListener("keydown", unmute);
+          };
+          window.addEventListener("pointerdown", unmute);
+          window.addEventListener("keydown", unmute);
+        });
+      }
+      show();
+    });
+
     const next = (): void => {
+      if (hasBg) { if (!firstPlay) finish(); return; } // 영상 모드: 1회차는 스킵 불가
       idx++;
       if (idx >= SLIDES.length) finish();
       else show();
@@ -92,21 +153,34 @@ export function playPrologue(app: Application): Promise<void> {
     };
     window.addEventListener("keydown", onKey);
 
+    const addSkip = (color: number): void => {
+      const skip = mkText("건너뛰기 ≫", 12, color, true);
+      skip.x = W - skip.width - 20;
+      skip.y = 20;
+      skip.eventMode = "static";
+      skip.cursor = "pointer";
+      skip.on("pointertap", (e) => { e.stopPropagation(); finish(); });
+      slideLayer.addChild(skip);
+    };
+
     const show = (): void => {
       if (flashTick) { app.ticker.remove(flashTick); flashTick = null; }
-      root.removeChildren();
+      slideLayer.removeChildren();
+      if (hasBg) { // 영상 모드 — 화면 위에 얹는 건 2회차 이후의 건너뛰기뿐
+        if (!firstPlay) addSkip(0xe8e2f5);
+        return;
+      }
       const s = SLIDES[idx];
       if (!s) { finish(); return; }
-      const bg = fullRect(s.bg);
-      root.addChild(bg);
+      slideLayer.addChild(fullRect(s.bg));
       let y = 340;
       for (const [text, size, color] of s.lines) {
-        root.addChild(center(mkText(text, size, color, size > 17), y));
+        slideLayer.addChild(center(mkText(text, size, color, size > 17), y));
         y += size * 2.2;
       }
       if (s.flash) { // 붉은 섬광 펄스
         const flash = fullRect(0xff2b2b, 0);
-        root.addChild(flash);
+        slideLayer.addChild(flash);
         let el = 0;
         flashTick = () => {
           el += app.ticker.deltaMS / 1000;
@@ -115,15 +189,8 @@ export function playPrologue(app: Application): Promise<void> {
         };
         app.ticker.add(flashTick);
       }
-      const hint = center(mkText("탭 또는 Space로 계속", 11, 0x6a628a), H - 70);
-      root.addChild(hint);
-      const skip = mkText("건너뛰기 ≫", 12, 0x8a82aa, true);
-      skip.x = W - skip.width - 20;
-      skip.y = 20;
-      skip.eventMode = "static";
-      skip.cursor = "pointer";
-      skip.on("pointertap", (e) => { e.stopPropagation(); finish(); });
-      root.addChild(skip);
+      slideLayer.addChild(center(mkText("탭 또는 Space로 계속", 11, 0x6a628a), H - 70));
+      addSkip(0x8a82aa);
     };
 
     root.eventMode = "static";

@@ -14,7 +14,7 @@ const byId = new Map(bgmTracks.map((t) => [t.id, t]));
 const FALLBACK: Record<string, string | null> = {
   lobby: null, training: "main", rhythm: "main", "rhythm-2": "main", "rhythm-3": "main",
   "slot-bgm": "main", dodge: "main", regress: "main", true: "main", dark: "main",
-  "prologue-01": "main", "prologue-02": "main",
+  "prologue-01": "main",
 };
 
 // 리듬 트랙 로테이션 — 업로드된 곡(1~3번) 사이를 판마다 순환 (질림 방지)

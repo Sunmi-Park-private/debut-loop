@@ -3,21 +3,13 @@
   "story": [
     {
       "id": "prologue-01",
-      "label": "프롤로그-01 · 참사 무대",
+      "label": "프롤로그 · 배경 (참사 무대 ~ 되감기 전체)",
       "beatIds": [
-        "d2_w0_disaster"
-      ],
-      "file": "",
-      "vid": true
-    },
-    {
-      "id": "prologue-02",
-      "label": "프롤로그-02 · 기획사 문 앞",
-      "beatIds": [
+        "d2_w0_disaster",
         "d2_w0_rewind",
         "d2_w0_rewind2"
       ],
-      "file": "assets/bg/prologue-02.png",
+      "file": "assets/bg/prologue-01.mp4",
       "vid": true
     },
     {
