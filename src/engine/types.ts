@@ -167,6 +167,9 @@ export interface CardTemplate {
 export interface Card {
   templateId: CardTemplateId;
   grade: CardGrade;
+  /** 이 카드가 담당하는 게이지 — 원형이 여러 게이지를 올리면 게이지마다 한 장씩 쪼개 준다.
+   *  미지정이면 원형의 모든 게이지를 그대로 갖는 통짜 카드 (구버전 저장 데이터 호환) */
+  gauge?: GaugeId;
 }
 
 export type CardDeck = Card[]; // 보유 카드(티켓 deck: string[] 과 별개)

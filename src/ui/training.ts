@@ -3,7 +3,8 @@
 // 판정은 engine, 카드·소모 반영은 컨트롤러 — 여긴 렌더+입력만.
 import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Sprite, type Texture, type Ticker } from "pixi.js";
 import type { MiniGameGrade, TrainingId, CardGrade } from "../engine/types";
-import { TRAIN_DRAIN, TRAIN_GRADE_TO_CARD } from "../engine/training";
+import { starNode, gaugeSymbol } from "./cardArt";
+import { TRAIN_DRAIN, TRAIN_GRADE_TO_CARD, resolveTraining } from "../engine/training";
 import { MATCH_CARDS } from "../engine/minigames";
 import { mountEngine, txt, btn, fxConfetti, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
 import { skinNode, skinFit, skinNatural, skinTexTrim, skinScale } from "./uiSkin";
@@ -20,9 +21,6 @@ import type { CharAssets } from "./assets";
 const W = MG_W;
 const H = 610;
 const GLBL: Record<string, string> = { skill: "실력", mental: "멘탈", reputation: "평판", bond: "유대", capital: "자본" };
-const STARS: Record<CardGrade, string> = { epic: "★★★", rare: "★★", common: "★" };
-/** 등급별 별 아트 슬롯 (미업로드 시 STARS 텍스트 폴백) */
-const STAR_SLOT: Record<CardGrade, string> = { common: "train-star-1", rare: "train-star-2", epic: "train-star-3" };
 
 interface Activity {
   id: TrainingId;
@@ -420,26 +418,60 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     const t = cardTemplates.find((c) => c.id === a.id);
     if (grade !== "clear") {
       const cardGrade = TRAIN_GRADE_TO_CARD[grade];
-      const big = new Container();
-      big.x = (W - 120) / 2;
-      big.y = 100;
-      const cbg = skinFit("train-result-card", 120, 160); // 카드 배경 — 원본 비율 유지 (빈 슬롯은 텍스트만)
-      const ic = txt(t?.icon ?? "🎴", 36, INK);
-      ic.x = (120 - ic.width) / 2;
-      ic.y = 30;
-      const nm = txt(t?.name ?? "카드", 12, INK, true);
-      nm.x = (120 - nm.width) / 2;
-      nm.y = 86;
-      // 판정등급 — 등급별 별 아트(train-star-N) 업로드 시 그걸로, 없으면 기존 ★ 텍스트
-      const starArt = skinFit(STAR_SLOT[cardGrade], 90, 28);
-      const st: Container = starArt ?? txt(STARS[cardGrade], 14, 0xf0a93a, true);
-      st.x = (120 - (starArt ? 90 : st.width)) / 2;
-      st.y = starArt ? 106 : 112;
-      grp("train_res_card", big); // 카드 전체 (아래 조각들은 카드 안쪽 그룹이라 카드를 옮기면 같이 움직임)
-      if (cbg) grpIn(big, "train_res_card_bg", cbg);
-      grpIn(big, "train_res_card_icon", ic);
-      grpIn(big, "train_res_card_name", nm);
-      grpIn(big, "train_res_card_star", st);
+      // 원형이 올리는 게이지마다 한 장 — 오디션(평판 5 · 실력 1)이면 두 장을 나란히
+      const gained = resolveTraining(a.id, grade, cardTemplates).cards;
+      const CW2 = 120;
+      const CGAP = 14;
+      const rowW = gained.length * CW2 + (gained.length - 1) * CGAP;
+      const row = new Container();
+      row.x = (W - rowW) / 2;
+      row.y = 100;
+      grp("train_res_card", row); // 카드 묶음 전체 (조각들은 안쪽 그룹이라 함께 움직임)
+      gained.forEach((card, idx) => {
+        const big = new Container();
+        big.x = idx * (CW2 + CGAP);
+        row.addChild(big);
+        const cbg = skinFit("train-result-card", CW2, 160); // 카드 배경 — 원본 비율 유지 (빈 슬롯은 텍스트만)
+        // 게이지 심볼 — 이 카드가 담당하는 게이지 아트, 없으면 카드 이모지로 폴백
+        const sym = gaugeSymbol(card, CW2, 38);
+        let ic: Container;
+        if (sym) {
+          ic = sym;
+          ic.y = 28;
+        } else {
+          const e = txt(t?.icon ?? "🎴", 36, INK);
+          e.x = (CW2 - e.width) / 2;
+          e.y = 30;
+          ic = e;
+        }
+        const nm = txt(t?.name ?? "카드", 12, INK, true);
+        nm.x = (CW2 - nm.width) / 2;
+        nm.y = 86;
+        // 판정등급 — 등급별 별 아트, 없으면 ★ 텍스트 (같은 박스에 중앙 정렬)
+        const st = starNode(cardGrade, 90, 28, 14);
+        st.x = (CW2 - 90) / 2;
+        st.y = 106;
+        // 조각 오프셋은 카드 공통 — 에디터 핸들은 첫 장에만 (둘째 장은 리드로우 때 따라온다)
+        if (idx === 0) {
+          if (cbg) grpIn(big, "train_res_card_bg", cbg);
+          grpIn(big, "train_res_card_icon", ic);
+          grpIn(big, "train_res_card_name", nm);
+          grpIn(big, "train_res_card_star", st);
+        } else {
+          const off = (name: string, child: Container): void => {
+            const q = pos(name, { x: 0, y: 0 });
+            const g2 = new Container();
+            g2.x = q.x;
+            g2.y = q.y;
+            g2.addChild(child);
+            big.addChild(g2);
+          };
+          if (cbg) off("train_res_card_bg", cbg);
+          off("train_res_card_icon", ic);
+          off("train_res_card_name", nm);
+          off("train_res_card_star", st);
+        }
+      });
     } else {
       const none = txt("카드 없음 (등급 부족)", 13, SUB, true);
       none.x = (W - none.width) / 2;

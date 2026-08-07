@@ -1,5 +1,6 @@
 // engine/training.ts — 연습 결과 해석(카드 획득 + 멘탈 등 소모). 순수 TS.
-import type { TrainingId, MiniGameGrade, CardGrade, Card, Gauges } from "./types";
+import type { TrainingId, MiniGameGrade, CardGrade, Card, CardTemplate, Gauges } from "./types";
+import { makeCards } from "./cards";
 
 /** 연습 미니게임 성적 → 획득 카드 등급 */
 export const TRAIN_GRADE_TO_CARD: Record<MiniGameGrade, CardGrade> = {
@@ -19,19 +20,24 @@ export const TRAIN_DRAIN: Record<TrainingId, Partial<Gauges>> = {
 };
 
 export interface TrainingResult {
-  card: Card;
+  cards: Card[];
   drain: Partial<Gauges>;
 }
 
 /**
  * 연습 수행 결과:
- * - 카드 획득(등급 = 성적) → 덱 적립 대상
+ * - 카드 획득(등급 = 성적) → 덱 적립 대상. 원형이 올리는 게이지마다 한 장씩이라
+ *   "평판 5 · 실력 1"인 오디션은 평판 카드와 실력 카드 두 장이 된다 (효과 큰 순).
  * - drain(고정 소모) → 게이지 적용 대상
  * ※ 게이지 상승은 없음(상승은 관문에서 카드 사용 시).
  */
-export function resolveTraining(activity: TrainingId, grade: MiniGameGrade): TrainingResult {
+export function resolveTraining(
+  activity: TrainingId,
+  grade: MiniGameGrade,
+  templates: CardTemplate[],
+): TrainingResult {
   return {
-    card: { templateId: activity, grade: TRAIN_GRADE_TO_CARD[grade] },
+    cards: makeCards(activity, TRAIN_GRADE_TO_CARD[grade], templates),
     drain: TRAIN_DRAIN[activity],
   };
 }

@@ -8,8 +8,8 @@
     "y": 147
   },
   "card": {
-    "x": 18,
-    "y": 472
+    "x": 19,
+    "y": 434
   },
   "endScreen": {
     "x": 18,
@@ -28,8 +28,8 @@
     "y": 109
   },
   "backBtn": {
-    "x": 21,
-    "y": 122
+    "x": 23,
+    "y": 108
   },
   "lobby_star": {
     "x": 66,
@@ -63,13 +63,9 @@
     "x": 14,
     "y": 12
   },
-  "lobby_deck": {
+  "card_deck": {
     "x": 0,
     "y": -22
-  },
-  "deck": {
-    "x": 0,
-    "y": -30
   },
   "lobby_daily": {
     "x": 336,
@@ -140,8 +136,8 @@
     "y": 15
   },
   "card_portrait": {
-    "x": -31,
-    "y": 173
+    "x": -26,
+    "y": 139
   },
   "rhythm3_lane1": {
     "x": 83,
@@ -236,8 +232,8 @@
     "y": 17
   },
   "memberBtn": {
-    "x": 316,
-    "y": 124
+    "x": 317,
+    "y": 110
   },
   "gate_exit": {
     "x": 4,
@@ -567,11 +563,7 @@
     "x": -3,
     "y": -37
   },
-  "lobby_deck_tab": {
-    "x": -147,
-    "y": -134
-  },
-  "lobby_deck_content": {
+  "card_deck_content": {
     "x": -3,
     "y": 7
   },
@@ -651,7 +643,7 @@
     "x": 0,
     "y": -41
   },
-  "lobby_deck_banner": {
+  "card_deck_banner": {
     "x": 0,
     "y": 33
   },
@@ -699,15 +691,15 @@
     "x": 200,
     "y": 71
   },
-  "lobby_deck_hint": {
-    "x": 2,
-    "y": -285
+  "card_deck_hint": {
+    "x": 1,
+    "y": -277
   },
-  "lobby_deck_title": {
+  "card_deck_title": {
     "x": -2,
     "y": 42
   },
-  "lobby_deck_sub": {
+  "card_deck_sub": {
     "x": 4,
     "y": -1
   },
@@ -726,5 +718,21 @@
   "lobby_cta_sub": {
     "x": -26,
     "y": 24
+  },
+  "card_deck_item_name": {
+    "x": -1,
+    "y": -11
+  },
+  "card_deck_item_star": {
+    "x": 0,
+    "y": 25
+  },
+  "card_btn_left": {
+    "x": 9,
+    "y": 121
+  },
+  "card_deck_item_sym": {
+    "x": 13,
+    "y": 15
   }
 }

@@ -12,6 +12,7 @@ import {
 } from "../engine/minigames";
 import { gatePickCount, resolveGate as sumCardEffects } from "../engine/gate";
 import { cardEffect } from "../engine/cards";
+import { starNode, gaugeSymbol } from "./cardArt";
 import { cardTemplates, tuning, beatmaps, tickets } from "../data";
 import { skinNode, skinTex, skinTexTrim, skinFit, skinNatural, skinCover, skinScale } from "./uiSkin";
 import { pos } from "./layout";
@@ -1762,7 +1763,6 @@ export function renderGate(
   // 관문 보상 티켓 표기 — tickets.json 정의 이름 우선, 스토리 전용(정의 없는) 티켓은 보조 라벨 (id 노출 방지)
   const STORY_TICKET: Record<string, string> = { audition_pass: "센터 대결 통과증", clue_piece: "단서 조각", true_gate: "진실 무대 입장권" };
   const ticketName = (id: string): string => tickets.find((t) => t.id === id)?.name ?? STORY_TICKET[id] ?? id;
-  const STARS: Record<CardGrade, string> = { epic: "★★★", rare: "★★", common: "★" };
 
   const showCardPick = (grade: MiniGameGrade, onPicked: (picked: number[]) => void): void => {
     setRedrawHook(() => showCardPick(grade, onPicked)); // 배율 변경 시 이 화면만 재렌더
@@ -1860,12 +1860,23 @@ export function renderGate(
         const bg2 = new Graphics().roundRect(-CW / 2, -CH, CW, CH, 11)
           .fill(on ? 0xffe4f0 : 0xf6f0fc)
           .stroke({ width: on ? 3 : 2.5, color: on ? PINK : GRADE_COLOR[card.grade] });
-        const ic = txt(t?.icon ?? "🎴", 22, INK);
-        ic.x = -ic.width / 2;
-        ic.y = -CH + 12;
-        const st = txt(STARS[card.grade], 10, 0xf0a93a, true);
-        st.x = -st.width / 2;
-        st.y = -CH + 46;
+        // 게이지 심볼 — 카드가 올려주는 게이지 아트, 하나도 없으면 이모지로 폴백
+        const symRow = gaugeSymbol(card, CW, 24);
+        let ic: Container;
+        if (symRow) {
+          ic = symRow;
+          ic.x = -CW / 2;
+          ic.y = -CH + 8;
+        } else {
+          const e = txt(t?.icon ?? "🎴", 22, INK);
+          e.x = -e.width / 2;
+          e.y = -CH + 12;
+          ic = e;
+        }
+        // 판정등급 — 등급별 별 아트, 없으면 ★ 텍스트 (같은 박스에 중앙 정렬)
+        const st = starNode(card.grade, 54, 15);
+        st.x = -54 / 2;
+        st.y = -CH + 44;
         const eff = cardEffect(card, cardTemplates);
         const first = Object.entries(eff)[0];
         const fx = txt(first ? `${GLBL[first[0]] ?? first[0]}+${first[1]}` : "", 9.5, INK, true);

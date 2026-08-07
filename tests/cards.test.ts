@@ -1,6 +1,6 @@
 // tests/cards.test.ts — 카드 덱빌딩 엔진 코어 유닛 (Lv.6)
 import { describe, it, expect } from "vitest";
-import { cardEffect, GRADE_MULT } from "../src/engine/cards";
+import { cardEffect, makeCards, GRADE_MULT } from "../src/engine/cards";
 import { addCard, removeCards } from "../src/engine/deck";
 import { resolveTraining, TRAIN_DRAIN } from "../src/engine/training";
 import { gatePickCount, resolveGate } from "../src/engine/gate";
@@ -24,8 +24,36 @@ describe("cardEffect (등급 배율)", () => {
     // skill 4×1.8=7.2→7, reputation 3×1.8=5.4→5
     expect(cardEffect({ templateId: "audition", grade: "epic" }, templates)).toEqual({ skill: 7, reputation: 5 });
   });
+  it("gauge 지정 = 그 게이지 몫만 (쪼갠 카드)", () => {
+    expect(cardEffect({ templateId: "audition", grade: "epic", gauge: "skill" }, templates)).toEqual({ skill: 7 });
+    expect(cardEffect({ templateId: "audition", grade: "epic", gauge: "reputation" }, templates)).toEqual({ reputation: 5 });
+  });
+  it("원형에 없는 게이지를 지정하면 효과 없음", () => {
+    expect(cardEffect({ templateId: "vocal", grade: "epic", gauge: "capital" }, templates)).toEqual({});
+  });
   it("배율 상수", () => {
     expect(GRADE_MULT).toEqual({ common: 1.0, rare: 1.4, epic: 1.8 });
+  });
+});
+
+describe("makeCards (게이지마다 한 장)", () => {
+  it("게이지 둘 = 두 장, 효과 큰 순", () => {
+    expect(makeCards("audition", "epic", templates)).toEqual([
+      { templateId: "audition", grade: "epic", gauge: "skill" },      // 4
+      { templateId: "audition", grade: "epic", gauge: "reputation" }, // 3
+    ]);
+  });
+  it("게이지 하나 = 한 장", () => {
+    expect(makeCards("vocal", "common", templates)).toEqual([
+      { templateId: "vocal", grade: "common", gauge: "skill" },
+    ]);
+  });
+  it("쪼갠 카드들의 효과 합 = 통짜 카드의 효과", () => {
+    const split = makeCards("bond", "rare", templates);
+    expect(resolveGate(split, templates)).toEqual(cardEffect({ templateId: "bond", grade: "rare" }, templates));
+  });
+  it("없는 원형 = 빈 배열", () => {
+    expect(makeCards("promo", "epic", templates)).toEqual([]);
   });
 });
 
@@ -49,18 +77,24 @@ describe("deck (불변 add/remove)", () => {
 
 describe("resolveTraining (카드 획득 + 소모, 상승 없음)", () => {
   it("성적 → 카드 등급", () => {
-    expect(resolveTraining("vocal", "perfect").card).toEqual({ templateId: "vocal", grade: "epic" });
-    expect(resolveTraining("vocal", "good").card).toEqual({ templateId: "vocal", grade: "rare" });
-    expect(resolveTraining("vocal", "clear").card).toEqual({ templateId: "vocal", grade: "common" });
+    expect(resolveTraining("vocal", "perfect", templates).cards).toEqual([{ templateId: "vocal", grade: "epic", gauge: "skill" }]);
+    expect(resolveTraining("vocal", "good", templates).cards).toEqual([{ templateId: "vocal", grade: "rare", gauge: "skill" }]);
+    expect(resolveTraining("vocal", "clear", templates).cards).toEqual([{ templateId: "vocal", grade: "common", gauge: "skill" }]);
+  });
+  it("게이지가 둘인 원형 = 카드 두 장", () => {
+    expect(resolveTraining("audition", "perfect", templates).cards).toEqual([
+      { templateId: "audition", grade: "epic", gauge: "skill" },
+      { templateId: "audition", grade: "epic", gauge: "reputation" },
+    ]);
   });
   it("연습별 소모(견제) — 게이지 상승 항목 없음, 음수 소모만", () => {
-    expect(resolveTraining("vocal", "good").drain).toEqual({ mental: -3 });
-    expect(resolveTraining("promo", "good").drain).toEqual({ capital: -3 });
-    expect(resolveTraining("bond", "good").drain).toEqual({}); // 휴식=소모 없음
+    expect(resolveTraining("vocal", "good", templates).drain).toEqual({ mental: -3 });
+    expect(resolveTraining("promo", "good", templates).drain).toEqual({ capital: -3 });
+    expect(resolveTraining("bond", "good", templates).drain).toEqual({}); // 휴식=소모 없음
   });
   it("결과에 게이지 '상승'은 포함되지 않음(카드로만)", () => {
-    const r = resolveTraining("vocal", "perfect");
-    // drain은 음수만, 상승은 card로 분리됨
+    const r = resolveTraining("vocal", "perfect", templates);
+    // drain은 음수만, 상승은 cards로 분리됨
     expect(Object.values(r.drain).every((v) => v <= 0)).toBe(true);
   });
 });

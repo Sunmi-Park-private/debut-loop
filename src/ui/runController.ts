@@ -233,8 +233,9 @@ export function createRunController(
 
   /** 연습 결과 반영: 카드(클리어 제외) + 고정 소모. 게이지 상승 없음. */
   function applyTraining(activity: TrainingId, grade: MiniGameGrade): void {
-    const r = resolveTraining(activity, grade);
-    if (grade !== "clear") state.cards = addCard(state.cards, r.card);
+    const r = resolveTraining(activity, grade, cardTemplates);
+    // 원형이 올리는 게이지 수만큼 여러 장 (오디션 = 평판 카드 + 실력 카드)
+    if (grade !== "clear") for (const card of r.cards) state.cards = addCard(state.cards, card);
     applyEffect(state, { gauges: r.drain }, config);
     applyTrainingStat(state, grade); // perfect → 전원 기량 +1
     checkCollapse();

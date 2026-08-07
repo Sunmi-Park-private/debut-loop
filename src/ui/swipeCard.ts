@@ -13,6 +13,11 @@ const sub = (t: string, casting: Record<string, string>): string =>
 const CARD_W = 394;
 const DRAG_TH = 140; // 커밋 임계 — 100에서 상향: 실수로 놓쳐도 덜 민감, 커밋 기울기 5.2°→7.2° (회전 강도 0.0009는 유지)
 const TILT_SCRUB_SPEED = 0.8; // 갸웃 시퀀스 진행 속도 — 드래그 거리당 프레임 진행 배율 (1=임계에서 마지막 프레임)
+const ROT_PER_PX = 0.0009; // 드래그 1px당 기울기 (rad) — 임계 140px에서 7.2°
+// 기울기의 회전축 = 카드 가로 중앙. 카드 원점(좌상단)을 축으로 쓰면 축에서 가로로 떨어진 만큼
+// 회전이 세로 이동으로 새어 나온다(Δy = 축거리·sin θ). 캐릭터는 축에서 195px 떨어져 있어
+// 임계에서 약 25px씩 — 왼쪽으로 끌면 정수리가 올라가고 오른쪽으로 끌면 내려가, 좌우 차가 50px에 달했다.
+const PIVOT_X = CARD_W / 2;
 
 export interface CardOpts {
   seen?: boolean; // 회귀 가속: 축약 카드로 표시
@@ -250,17 +255,24 @@ export function renderCard(
     let dx = 0;
 
     const apply = (): void => {
-      card.x = base.x + dx;
-      card.rotation = dx * 0.0009;
+      const rot = dx * ROT_PER_PX;
+      const cos = Math.cos(rot);
+      const sin = Math.sin(rot);
+      // 회전축의 현재 위치 (드래그 이동분 포함)
+      const ax = base.x + PIVOT_X + dx;
+      const ay = base.y;
+      // 카드 원점(좌상단)은 축에서 왼쪽으로 PIVOT_X 떨어진 점 — 그 점을 축 둘레로 돌린 자리
+      card.x = ax - PIVOT_X * cos;
+      card.y = ay - PIVOT_X * sin;
+      card.rotation = rot;
       // 임계 접근 피드백: 카드 살짝 기울고 투명도 변화
       card.alpha = 1 - Math.min(0.25, (Math.abs(dx) / DRAG_TH) * 0.15);
-      // 캐릭터를 카드에 강체로 부착 — 카드와 같은 회전축(카드 원점) 기준으로 이동·회전 (패널 가운데 유지)
+      // 캐릭터를 카드에 강체로 부착 — 카드와 같은 축을 공유해 좌우가 대칭으로 기운다
       if (portraitSpr && portraitHome) {
-        const rot = card.rotation;
-        const offX = portraitHome.x - base.x;
-        const offY = portraitHome.y - base.y;
-        portraitSpr.x = card.x + offX * Math.cos(rot) - offY * Math.sin(rot);
-        portraitSpr.y = card.y + offX * Math.sin(rot) + offY * Math.cos(rot);
+        const offX = portraitHome.x - ax + dx; // 축 기준 가로 오프셋 (드래그와 무관한 고정값)
+        const offY = portraitHome.y - ay;
+        portraitSpr.x = ax + offX * cos - offY * sin;
+        portraitSpr.y = ay + offX * sin + offY * cos;
         portraitSpr.rotation = rot;
         portraitSpr.alpha = card.alpha;
       }
@@ -283,6 +295,7 @@ export function renderCard(
       dragging = false;
       dx = 0;
       card.x = base.x;
+      card.y = base.y; // apply()가 회전축 보정으로 y도 건드리므로 함께 원위치
       card.rotation = 0;
       card.alpha = 1;
       if (portraitSpr && portraitHome) {

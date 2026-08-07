@@ -437,8 +437,19 @@
         },
         {
           "id": "train-result-card",
-          "label": "공통 · 연습 결과 카드 프레임 — 원본 비율 유지",
+          "label": "공통 · 연습 결과 카드 프레임 · 앞면 — 원본 비율 유지",
           "file": "assets/ui/train-result-card.webp",
+          "size": [
+            120,
+            160
+          ],
+          "mode": "stretch",
+          "scale": 1
+        },
+        {
+          "id": "train-result-card-back",
+          "label": "공통 · 연습 결과 카드 프레임 · 뒷면 — 원본 비율 유지",
+          "file": "assets/ui/train-result-card-back.webp",
           "size": [
             120,
             160
@@ -1315,43 +1326,6 @@
           "mode": "stretch",
           "small": true,
           "scale": 0.7
-        }
-      ]
-    },
-    {
-      "id": "deck",
-      "label": "카드덱",
-      "slots": [
-        {
-          "id": "deck-sheet",
-          "label": "덱 시트 헤더(핸들 포함)",
-          "file": "assets/ui/deck-sheet.png",
-          "size": [
-            430,
-            60
-          ],
-          "mode": "9slice",
-          "slice": 18
-        },
-        {
-          "id": "deck-card",
-          "label": "카드 아이템 프레임 · 앞면 — 원본 비율 유지",
-          "file": "assets/ui/deck-card.png",
-          "size": [
-            82,
-            138
-          ],
-          "mode": "stretch"
-        },
-        {
-          "id": "deck-card-back",
-          "label": "카드 아이템 프레임 · 뒷면 — 원본 비율 유지",
-          "file": "assets/ui/deck-card-back.png",
-          "size": [
-            82,
-            138
-          ],
-          "mode": "stretch"
         }
       ]
     },
