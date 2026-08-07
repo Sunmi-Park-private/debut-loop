@@ -16,6 +16,9 @@ graphify-out/
 # OS
 .DS_Store
 
+# 세션별 git worktree (로컬 작업 공간)
+.claude/worktrees/
+
 docs/BUILD_ROADMAP.md
 docs/사전과제_최종_제출_체크리스트.md
 

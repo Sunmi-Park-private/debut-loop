@@ -8,8 +8,8 @@ const KEY_PREFIX = "debutloop.tut.";
 
 interface Speaker { name: string; img: string; skin?: string; emoji: string; tint: string }
 const SPEAKERS: Record<string, Speaker> = {
-  haru:  { name: "하루",   img: "assets/char/haru_bust.png",  skin: "assets/char/skin/haru-bust.png",  emoji: "👧", tint: "#8f80ea" },
-  yuwol: { name: "유월",   img: "assets/char/yuwol_bust.png", skin: "assets/char/skin/yuwol-bust.png", emoji: "🎤", tint: "#ff7fb0" },
+  haru:  { name: "하루",   img: "assets/char/haru_bust.webp",  skin: "assets/char/skin/haru-bust.webp",  emoji: "👧", tint: "#8f80ea" },
+  yuwol: { name: "유월",   img: "assets/char/yuwol_bust.png", skin: "assets/char/skin/yuwol-bust.webp", emoji: "🎤", tint: "#ff7fb0" },
   staff: { name: "스태프", img: "assets/char/staff_bust.png", skin: "assets/char/skin/staff_jung-bust.png", emoji: "🧑‍💼", tint: "#f0c05a" },
 };
 

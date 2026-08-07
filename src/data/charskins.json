@@ -12,7 +12,7 @@
           "kind": "daily",
           "label": "전신 · 일상복",
           "shape": "full",
-          "file": "assets/char/skin/haru-daily.png",
+          "file": "assets/char/skin/haru-daily.webp",
           "scale": 1.4
         },
         {
@@ -29,7 +29,7 @@
           "kind": "practice",
           "label": "전신 · 연습복",
           "shape": "full",
-          "file": "assets/char/skin/haru-practice.png",
+          "file": "assets/char/skin/haru-practice.webp",
           "scale": 1.2
         },
         {
@@ -46,7 +46,7 @@
           "kind": "stage",
           "label": "전신 · 무대의상",
           "shape": "full",
-          "file": "assets/char/skin/haru-stage.png"
+          "file": "assets/char/skin/haru-stage.webp"
         },
         {
           "id": "haru-stage-idle",
@@ -62,7 +62,7 @@
           "kind": "bust",
           "label": "반신 · 카드 초상 (기본 표정)",
           "shape": "bust",
-          "file": "assets/char/skin/haru-bust.png",
+          "file": "assets/char/skin/haru-bust.webp",
           "scale": 1.4
         },
         {
@@ -70,7 +70,7 @@
           "kind": "exp-base-org",
           "label": "표정 · 기본 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/haru-exp-base-org.png"
+          "file": "assets/char/skin/haru-exp-base-org.webp"
         },
         {
           "id": "haru-exp-base-idle",
@@ -78,101 +78,101 @@
           "label": "표정 · 기본 (idle)",
           "shape": "exp",
           "seq": true,
-          "file": "assets/char/skin/haru-exp-base-idle_f000.png",
+          "file": "assets/char/skin/haru-exp-base-idle_f000.webp",
           "frames": [
-            "assets/char/skin/haru-exp-base-idle_f000.png",
-            "assets/char/skin/haru-exp-base-idle_f001.png",
-            "assets/char/skin/haru-exp-base-idle_f002.png",
-            "assets/char/skin/haru-exp-base-idle_f003.png",
-            "assets/char/skin/haru-exp-base-idle_f004.png",
-            "assets/char/skin/haru-exp-base-idle_f005.png",
-            "assets/char/skin/haru-exp-base-idle_f006.png",
-            "assets/char/skin/haru-exp-base-idle_f007.png",
-            "assets/char/skin/haru-exp-base-idle_f008.png",
-            "assets/char/skin/haru-exp-base-idle_f009.png",
-            "assets/char/skin/haru-exp-base-idle_f010.png",
-            "assets/char/skin/haru-exp-base-idle_f011.png",
-            "assets/char/skin/haru-exp-base-idle_f012.png",
-            "assets/char/skin/haru-exp-base-idle_f013.png",
-            "assets/char/skin/haru-exp-base-idle_f014.png",
-            "assets/char/skin/haru-exp-base-idle_f015.png",
-            "assets/char/skin/haru-exp-base-idle_f016.png",
-            "assets/char/skin/haru-exp-base-idle_f017.png",
-            "assets/char/skin/haru-exp-base-idle_f018.png",
-            "assets/char/skin/haru-exp-base-idle_f019.png",
-            "assets/char/skin/haru-exp-base-idle_f020.png",
-            "assets/char/skin/haru-exp-base-idle_f021.png",
-            "assets/char/skin/haru-exp-base-idle_f022.png",
-            "assets/char/skin/haru-exp-base-idle_f023.png",
-            "assets/char/skin/haru-exp-base-idle_f024.png",
-            "assets/char/skin/haru-exp-base-idle_f025.png",
-            "assets/char/skin/haru-exp-base-idle_f026.png",
-            "assets/char/skin/haru-exp-base-idle_f027.png",
-            "assets/char/skin/haru-exp-base-idle_f028.png",
-            "assets/char/skin/haru-exp-base-idle_f029.png",
-            "assets/char/skin/haru-exp-base-idle_f030.png",
-            "assets/char/skin/haru-exp-base-idle_f031.png",
-            "assets/char/skin/haru-exp-base-idle_f032.png",
-            "assets/char/skin/haru-exp-base-idle_f033.png",
-            "assets/char/skin/haru-exp-base-idle_f034.png",
-            "assets/char/skin/haru-exp-base-idle_f035.png",
-            "assets/char/skin/haru-exp-base-idle_f036.png",
-            "assets/char/skin/haru-exp-base-idle_f037.png",
-            "assets/char/skin/haru-exp-base-idle_f038.png",
-            "assets/char/skin/haru-exp-base-idle_f039.png",
-            "assets/char/skin/haru-exp-base-idle_f040.png",
-            "assets/char/skin/haru-exp-base-idle_f041.png",
-            "assets/char/skin/haru-exp-base-idle_f042.png",
-            "assets/char/skin/haru-exp-base-idle_f043.png",
-            "assets/char/skin/haru-exp-base-idle_f044.png",
-            "assets/char/skin/haru-exp-base-idle_f045.png",
-            "assets/char/skin/haru-exp-base-idle_f046.png",
-            "assets/char/skin/haru-exp-base-idle_f047.png",
-            "assets/char/skin/haru-exp-base-idle_f048.png",
-            "assets/char/skin/haru-exp-base-idle_f049.png",
-            "assets/char/skin/haru-exp-base-idle_f050.png",
-            "assets/char/skin/haru-exp-base-idle_f051.png",
-            "assets/char/skin/haru-exp-base-idle_f052.png",
-            "assets/char/skin/haru-exp-base-idle_f053.png",
-            "assets/char/skin/haru-exp-base-idle_f054.png",
-            "assets/char/skin/haru-exp-base-idle_f055.png",
-            "assets/char/skin/haru-exp-base-idle_f056.png",
-            "assets/char/skin/haru-exp-base-idle_f057.png",
-            "assets/char/skin/haru-exp-base-idle_f058.png",
-            "assets/char/skin/haru-exp-base-idle_f059.png",
-            "assets/char/skin/haru-exp-base-idle_f060.png",
-            "assets/char/skin/haru-exp-base-idle_f061.png",
-            "assets/char/skin/haru-exp-base-idle_f062.png",
-            "assets/char/skin/haru-exp-base-idle_f063.png",
-            "assets/char/skin/haru-exp-base-idle_f064.png",
-            "assets/char/skin/haru-exp-base-idle_f065.png",
-            "assets/char/skin/haru-exp-base-idle_f066.png",
-            "assets/char/skin/haru-exp-base-idle_f067.png",
-            "assets/char/skin/haru-exp-base-idle_f068.png",
-            "assets/char/skin/haru-exp-base-idle_f069.png",
-            "assets/char/skin/haru-exp-base-idle_f070.png",
-            "assets/char/skin/haru-exp-base-idle_f071.png",
-            "assets/char/skin/haru-exp-base-idle_f072.png",
-            "assets/char/skin/haru-exp-base-idle_f073.png",
-            "assets/char/skin/haru-exp-base-idle_f074.png",
-            "assets/char/skin/haru-exp-base-idle_f075.png",
-            "assets/char/skin/haru-exp-base-idle_f076.png",
-            "assets/char/skin/haru-exp-base-idle_f077.png",
-            "assets/char/skin/haru-exp-base-idle_f078.png",
-            "assets/char/skin/haru-exp-base-idle_f079.png",
-            "assets/char/skin/haru-exp-base-idle_f080.png",
-            "assets/char/skin/haru-exp-base-idle_f081.png",
-            "assets/char/skin/haru-exp-base-idle_f082.png",
-            "assets/char/skin/haru-exp-base-idle_f083.png",
-            "assets/char/skin/haru-exp-base-idle_f084.png",
-            "assets/char/skin/haru-exp-base-idle_f085.png",
-            "assets/char/skin/haru-exp-base-idle_f086.png",
-            "assets/char/skin/haru-exp-base-idle_f087.png",
-            "assets/char/skin/haru-exp-base-idle_f088.png",
-            "assets/char/skin/haru-exp-base-idle_f089.png",
-            "assets/char/skin/haru-exp-base-idle_f090.png",
-            "assets/char/skin/haru-exp-base-idle_f091.png",
-            "assets/char/skin/haru-exp-base-idle_f092.png"
+            "assets/char/skin/haru-exp-base-idle_f000.webp",
+            "assets/char/skin/haru-exp-base-idle_f001.webp",
+            "assets/char/skin/haru-exp-base-idle_f002.webp",
+            "assets/char/skin/haru-exp-base-idle_f003.webp",
+            "assets/char/skin/haru-exp-base-idle_f004.webp",
+            "assets/char/skin/haru-exp-base-idle_f005.webp",
+            "assets/char/skin/haru-exp-base-idle_f006.webp",
+            "assets/char/skin/haru-exp-base-idle_f007.webp",
+            "assets/char/skin/haru-exp-base-idle_f008.webp",
+            "assets/char/skin/haru-exp-base-idle_f009.webp",
+            "assets/char/skin/haru-exp-base-idle_f010.webp",
+            "assets/char/skin/haru-exp-base-idle_f011.webp",
+            "assets/char/skin/haru-exp-base-idle_f012.webp",
+            "assets/char/skin/haru-exp-base-idle_f013.webp",
+            "assets/char/skin/haru-exp-base-idle_f014.webp",
+            "assets/char/skin/haru-exp-base-idle_f015.webp",
+            "assets/char/skin/haru-exp-base-idle_f016.webp",
+            "assets/char/skin/haru-exp-base-idle_f017.webp",
+            "assets/char/skin/haru-exp-base-idle_f018.webp",
+            "assets/char/skin/haru-exp-base-idle_f019.webp",
+            "assets/char/skin/haru-exp-base-idle_f020.webp",
+            "assets/char/skin/haru-exp-base-idle_f021.webp",
+            "assets/char/skin/haru-exp-base-idle_f022.webp",
+            "assets/char/skin/haru-exp-base-idle_f023.webp",
+            "assets/char/skin/haru-exp-base-idle_f024.webp",
+            "assets/char/skin/haru-exp-base-idle_f025.webp",
+            "assets/char/skin/haru-exp-base-idle_f026.webp",
+            "assets/char/skin/haru-exp-base-idle_f027.webp",
+            "assets/char/skin/haru-exp-base-idle_f028.webp",
+            "assets/char/skin/haru-exp-base-idle_f029.webp",
+            "assets/char/skin/haru-exp-base-idle_f030.webp",
+            "assets/char/skin/haru-exp-base-idle_f031.webp",
+            "assets/char/skin/haru-exp-base-idle_f032.webp",
+            "assets/char/skin/haru-exp-base-idle_f033.webp",
+            "assets/char/skin/haru-exp-base-idle_f034.webp",
+            "assets/char/skin/haru-exp-base-idle_f035.webp",
+            "assets/char/skin/haru-exp-base-idle_f036.webp",
+            "assets/char/skin/haru-exp-base-idle_f037.webp",
+            "assets/char/skin/haru-exp-base-idle_f038.webp",
+            "assets/char/skin/haru-exp-base-idle_f039.webp",
+            "assets/char/skin/haru-exp-base-idle_f040.webp",
+            "assets/char/skin/haru-exp-base-idle_f041.webp",
+            "assets/char/skin/haru-exp-base-idle_f042.webp",
+            "assets/char/skin/haru-exp-base-idle_f043.webp",
+            "assets/char/skin/haru-exp-base-idle_f044.webp",
+            "assets/char/skin/haru-exp-base-idle_f045.webp",
+            "assets/char/skin/haru-exp-base-idle_f046.webp",
+            "assets/char/skin/haru-exp-base-idle_f047.webp",
+            "assets/char/skin/haru-exp-base-idle_f048.webp",
+            "assets/char/skin/haru-exp-base-idle_f049.webp",
+            "assets/char/skin/haru-exp-base-idle_f050.webp",
+            "assets/char/skin/haru-exp-base-idle_f051.webp",
+            "assets/char/skin/haru-exp-base-idle_f052.webp",
+            "assets/char/skin/haru-exp-base-idle_f053.webp",
+            "assets/char/skin/haru-exp-base-idle_f054.webp",
+            "assets/char/skin/haru-exp-base-idle_f055.webp",
+            "assets/char/skin/haru-exp-base-idle_f056.webp",
+            "assets/char/skin/haru-exp-base-idle_f057.webp",
+            "assets/char/skin/haru-exp-base-idle_f058.webp",
+            "assets/char/skin/haru-exp-base-idle_f059.webp",
+            "assets/char/skin/haru-exp-base-idle_f060.webp",
+            "assets/char/skin/haru-exp-base-idle_f061.webp",
+            "assets/char/skin/haru-exp-base-idle_f062.webp",
+            "assets/char/skin/haru-exp-base-idle_f063.webp",
+            "assets/char/skin/haru-exp-base-idle_f064.webp",
+            "assets/char/skin/haru-exp-base-idle_f065.webp",
+            "assets/char/skin/haru-exp-base-idle_f066.webp",
+            "assets/char/skin/haru-exp-base-idle_f067.webp",
+            "assets/char/skin/haru-exp-base-idle_f068.webp",
+            "assets/char/skin/haru-exp-base-idle_f069.webp",
+            "assets/char/skin/haru-exp-base-idle_f070.webp",
+            "assets/char/skin/haru-exp-base-idle_f071.webp",
+            "assets/char/skin/haru-exp-base-idle_f072.webp",
+            "assets/char/skin/haru-exp-base-idle_f073.webp",
+            "assets/char/skin/haru-exp-base-idle_f074.webp",
+            "assets/char/skin/haru-exp-base-idle_f075.webp",
+            "assets/char/skin/haru-exp-base-idle_f076.webp",
+            "assets/char/skin/haru-exp-base-idle_f077.webp",
+            "assets/char/skin/haru-exp-base-idle_f078.webp",
+            "assets/char/skin/haru-exp-base-idle_f079.webp",
+            "assets/char/skin/haru-exp-base-idle_f080.webp",
+            "assets/char/skin/haru-exp-base-idle_f081.webp",
+            "assets/char/skin/haru-exp-base-idle_f082.webp",
+            "assets/char/skin/haru-exp-base-idle_f083.webp",
+            "assets/char/skin/haru-exp-base-idle_f084.webp",
+            "assets/char/skin/haru-exp-base-idle_f085.webp",
+            "assets/char/skin/haru-exp-base-idle_f086.webp",
+            "assets/char/skin/haru-exp-base-idle_f087.webp",
+            "assets/char/skin/haru-exp-base-idle_f088.webp",
+            "assets/char/skin/haru-exp-base-idle_f089.webp",
+            "assets/char/skin/haru-exp-base-idle_f090.webp",
+            "assets/char/skin/haru-exp-base-idle_f091.webp",
+            "assets/char/skin/haru-exp-base-idle_f092.webp"
           ],
           "scale": 1.6
         },
@@ -181,7 +181,7 @@
           "kind": "exp-joy-org",
           "label": "표정 · 기쁨 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/haru-exp-joy-org.png"
+          "file": "assets/char/skin/haru-exp-joy-org.webp"
         },
         {
           "id": "haru-exp-joy-idle",
@@ -196,7 +196,7 @@
           "kind": "exp-sad-org",
           "label": "표정 · 슬픔 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/haru-exp-sad-org.png"
+          "file": "assets/char/skin/haru-exp-sad-org.webp"
         },
         {
           "id": "haru-exp-sad-idle",
@@ -211,7 +211,7 @@
           "kind": "exp-anxious-org",
           "label": "표정 · 불안 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/haru-exp-anxious-org.png"
+          "file": "assets/char/skin/haru-exp-anxious-org.webp"
         },
         {
           "id": "haru-exp-anxious-idle",
@@ -226,7 +226,7 @@
           "kind": "exp-resolve-org",
           "label": "표정 · 결의 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/haru-exp-resolve-org.png"
+          "file": "assets/char/skin/haru-exp-resolve-org.webp"
         },
         {
           "id": "haru-exp-resolve-idle",
@@ -249,26 +249,26 @@
           "label": "고개짓 · 왼쪽 (idle)",
           "shape": "bust",
           "seq": true,
-          "file": "assets/char/skin/haru-tilt-left-idle_f000.png",
+          "file": "assets/char/skin/haru-tilt-left-idle_f000.webp",
           "frames": [
-            "assets/char/skin/haru-tilt-left-idle_f000.png",
-            "assets/char/skin/haru-tilt-left-idle_f001.png",
-            "assets/char/skin/haru-tilt-left-idle_f002.png",
-            "assets/char/skin/haru-tilt-left-idle_f003.png",
-            "assets/char/skin/haru-tilt-left-idle_f004.png",
-            "assets/char/skin/haru-tilt-left-idle_f005.png",
-            "assets/char/skin/haru-tilt-left-idle_f006.png",
-            "assets/char/skin/haru-tilt-left-idle_f007.png",
-            "assets/char/skin/haru-tilt-left-idle_f008.png",
-            "assets/char/skin/haru-tilt-left-idle_f009.png",
-            "assets/char/skin/haru-tilt-left-idle_f010.png",
-            "assets/char/skin/haru-tilt-left-idle_f011.png",
-            "assets/char/skin/haru-tilt-left-idle_f012.png",
-            "assets/char/skin/haru-tilt-left-idle_f013.png",
-            "assets/char/skin/haru-tilt-left-idle_f014.png",
-            "assets/char/skin/haru-tilt-left-idle_f015.png",
-            "assets/char/skin/haru-tilt-left-idle_f016.png",
-            "assets/char/skin/haru-tilt-left-idle_f017.png"
+            "assets/char/skin/haru-tilt-left-idle_f000.webp",
+            "assets/char/skin/haru-tilt-left-idle_f001.webp",
+            "assets/char/skin/haru-tilt-left-idle_f002.webp",
+            "assets/char/skin/haru-tilt-left-idle_f003.webp",
+            "assets/char/skin/haru-tilt-left-idle_f004.webp",
+            "assets/char/skin/haru-tilt-left-idle_f005.webp",
+            "assets/char/skin/haru-tilt-left-idle_f006.webp",
+            "assets/char/skin/haru-tilt-left-idle_f007.webp",
+            "assets/char/skin/haru-tilt-left-idle_f008.webp",
+            "assets/char/skin/haru-tilt-left-idle_f009.webp",
+            "assets/char/skin/haru-tilt-left-idle_f010.webp",
+            "assets/char/skin/haru-tilt-left-idle_f011.webp",
+            "assets/char/skin/haru-tilt-left-idle_f012.webp",
+            "assets/char/skin/haru-tilt-left-idle_f013.webp",
+            "assets/char/skin/haru-tilt-left-idle_f014.webp",
+            "assets/char/skin/haru-tilt-left-idle_f015.webp",
+            "assets/char/skin/haru-tilt-left-idle_f016.webp",
+            "assets/char/skin/haru-tilt-left-idle_f017.webp"
           ],
           "scale": 1.6
         },
@@ -285,26 +285,26 @@
           "label": "고개짓 · 오른쪽 (idle)",
           "shape": "bust",
           "seq": true,
-          "file": "assets/char/skin/haru-tilt-right-idle_f000.png",
+          "file": "assets/char/skin/haru-tilt-right-idle_f000.webp",
           "frames": [
-            "assets/char/skin/haru-tilt-right-idle_f000.png",
-            "assets/char/skin/haru-tilt-right-idle_f001.png",
-            "assets/char/skin/haru-tilt-right-idle_f002.png",
-            "assets/char/skin/haru-tilt-right-idle_f003.png",
-            "assets/char/skin/haru-tilt-right-idle_f004.png",
-            "assets/char/skin/haru-tilt-right-idle_f005.png",
-            "assets/char/skin/haru-tilt-right-idle_f006.png",
-            "assets/char/skin/haru-tilt-right-idle_f007.png",
-            "assets/char/skin/haru-tilt-right-idle_f008.png",
-            "assets/char/skin/haru-tilt-right-idle_f009.png",
-            "assets/char/skin/haru-tilt-right-idle_f010.png",
-            "assets/char/skin/haru-tilt-right-idle_f011.png",
-            "assets/char/skin/haru-tilt-right-idle_f012.png",
-            "assets/char/skin/haru-tilt-right-idle_f013.png",
-            "assets/char/skin/haru-tilt-right-idle_f014.png",
-            "assets/char/skin/haru-tilt-right-idle_f015.png",
-            "assets/char/skin/haru-tilt-right-idle_f016.png",
-            "assets/char/skin/haru-tilt-right-idle_f017.png"
+            "assets/char/skin/haru-tilt-right-idle_f000.webp",
+            "assets/char/skin/haru-tilt-right-idle_f001.webp",
+            "assets/char/skin/haru-tilt-right-idle_f002.webp",
+            "assets/char/skin/haru-tilt-right-idle_f003.webp",
+            "assets/char/skin/haru-tilt-right-idle_f004.webp",
+            "assets/char/skin/haru-tilt-right-idle_f005.webp",
+            "assets/char/skin/haru-tilt-right-idle_f006.webp",
+            "assets/char/skin/haru-tilt-right-idle_f007.webp",
+            "assets/char/skin/haru-tilt-right-idle_f008.webp",
+            "assets/char/skin/haru-tilt-right-idle_f009.webp",
+            "assets/char/skin/haru-tilt-right-idle_f010.webp",
+            "assets/char/skin/haru-tilt-right-idle_f011.webp",
+            "assets/char/skin/haru-tilt-right-idle_f012.webp",
+            "assets/char/skin/haru-tilt-right-idle_f013.webp",
+            "assets/char/skin/haru-tilt-right-idle_f014.webp",
+            "assets/char/skin/haru-tilt-right-idle_f015.webp",
+            "assets/char/skin/haru-tilt-right-idle_f016.webp",
+            "assets/char/skin/haru-tilt-right-idle_f017.webp"
           ],
           "scale": 1.6
         }
@@ -321,35 +321,35 @@
           "kind": "daily",
           "label": "전신 · 일상복",
           "shape": "full",
-          "file": "assets/char/skin/yuwol-daily.png"
+          "file": "assets/char/skin/yuwol-daily.webp"
         },
         {
           "id": "yuwol-practice",
           "kind": "practice",
           "label": "전신 · 연습복",
           "shape": "full",
-          "file": "assets/char/skin/yuwol-practice.png"
+          "file": "assets/char/skin/yuwol-practice.webp"
         },
         {
           "id": "yuwol-stage",
           "kind": "stage",
           "label": "전신 · 무대의상",
           "shape": "full",
-          "file": "assets/char/skin/yuwol-stage.png"
+          "file": "assets/char/skin/yuwol-stage.webp"
         },
         {
           "id": "yuwol-bust",
           "kind": "bust",
           "label": "반신 · 카드 초상 (기본 표정)",
           "shape": "bust",
-          "file": "assets/char/skin/yuwol-bust.png"
+          "file": "assets/char/skin/yuwol-bust.webp"
         },
         {
           "id": "yuwol-exp-base-org",
           "kind": "exp-base-org",
           "label": "표정 · 기본 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/yuwol-exp-base-org.png"
+          "file": "assets/char/skin/yuwol-exp-base-org.webp"
         },
         {
           "id": "yuwol-exp-base-idle",
@@ -364,7 +364,7 @@
           "kind": "exp-smile-org",
           "label": "표정 · 미소 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/yuwol-exp-smile-org.png"
+          "file": "assets/char/skin/yuwol-exp-smile-org.webp"
         },
         {
           "id": "yuwol-exp-smile-idle",
@@ -379,7 +379,7 @@
           "kind": "exp-wary-org",
           "label": "표정 · 경계 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/yuwol-exp-wary-org.png"
+          "file": "assets/char/skin/yuwol-exp-wary-org.webp"
         },
         {
           "id": "yuwol-exp-wary-idle",
@@ -394,7 +394,7 @@
           "kind": "exp-cynic-org",
           "label": "표정 · 냉소 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/yuwol-exp-cynic-org.png"
+          "file": "assets/char/skin/yuwol-exp-cynic-org.webp"
         },
         {
           "id": "yuwol-exp-cynic-idle",
@@ -417,35 +417,35 @@
           "kind": "daily",
           "label": "전신 · 일상복",
           "shape": "full",
-          "file": "assets/char/skin/cyan-daily.png"
+          "file": "assets/char/skin/cyan-daily.webp"
         },
         {
           "id": "cyan-practice",
           "kind": "practice",
           "label": "전신 · 연습복",
           "shape": "full",
-          "file": "assets/char/skin/cyan-practice.png"
+          "file": "assets/char/skin/cyan-practice.webp"
         },
         {
           "id": "cyan-stage",
           "kind": "stage",
           "label": "전신 · 무대의상",
           "shape": "full",
-          "file": "assets/char/skin/cyan-stage.png"
+          "file": "assets/char/skin/cyan-stage.webp"
         },
         {
           "id": "cyan-bust",
           "kind": "bust",
           "label": "반신 · 카드 초상 (기본 표정)",
           "shape": "bust",
-          "file": "assets/char/skin/cyan-bust.png"
+          "file": "assets/char/skin/cyan-bust.webp"
         },
         {
           "id": "cyan-exp-base-org",
           "kind": "exp-base-org",
           "label": "표정 · 기본 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/cyan-exp-base-org.png"
+          "file": "assets/char/skin/cyan-exp-base-org.webp"
         },
         {
           "id": "cyan-exp-base-idle",
@@ -460,7 +460,7 @@
           "kind": "exp-bright-org",
           "label": "표정 · 밝음 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/cyan-exp-bright-org.png"
+          "file": "assets/char/skin/cyan-exp-bright-org.webp"
         },
         {
           "id": "cyan-exp-bright-idle",
@@ -475,7 +475,7 @@
           "kind": "exp-guilt-org",
           "label": "표정 · 찔림 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/cyan-exp-guilt-org.png"
+          "file": "assets/char/skin/cyan-exp-guilt-org.webp"
         },
         {
           "id": "cyan-exp-guilt-idle",
@@ -490,7 +490,7 @@
           "kind": "exp-resolve-org",
           "label": "표정 · 결연각오 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/cyan-exp-resolve-org.png"
+          "file": "assets/char/skin/cyan-exp-resolve-org.webp"
         },
         {
           "id": "cyan-exp-resolve-idle",
@@ -513,35 +513,35 @@
           "kind": "daily",
           "label": "전신 · 일상복",
           "shape": "full",
-          "file": "assets/char/skin/hari-daily.png"
+          "file": "assets/char/skin/hari-daily.webp"
         },
         {
           "id": "hari-practice",
           "kind": "practice",
           "label": "전신 · 연습복",
           "shape": "full",
-          "file": "assets/char/skin/hari-practice.png"
+          "file": "assets/char/skin/hari-practice.webp"
         },
         {
           "id": "hari-stage",
           "kind": "stage",
           "label": "전신 · 무대의상",
           "shape": "full",
-          "file": "assets/char/skin/hari-stage.png"
+          "file": "assets/char/skin/hari-stage.webp"
         },
         {
           "id": "hari-bust",
           "kind": "bust",
           "label": "반신 · 카드 초상 (기본 표정)",
           "shape": "bust",
-          "file": "assets/char/skin/hari-bust.png"
+          "file": "assets/char/skin/hari-bust.webp"
         },
         {
           "id": "hari-exp-base-org",
           "kind": "exp-base-org",
           "label": "표정 · 기본 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/hari-exp-base-org.png"
+          "file": "assets/char/skin/hari-exp-base-org.webp"
         },
         {
           "id": "hari-exp-base-idle",
@@ -556,7 +556,7 @@
           "kind": "exp-sly-org",
           "label": "표정 · 능글미소 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/hari-exp-sly-org.png"
+          "file": "assets/char/skin/hari-exp-sly-org.webp"
         },
         {
           "id": "hari-exp-sly-idle",
@@ -571,7 +571,7 @@
           "kind": "exp-serious-org",
           "label": "표정 · 진지 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/hari-exp-serious-org.png"
+          "file": "assets/char/skin/hari-exp-serious-org.webp"
         },
         {
           "id": "hari-exp-serious-idle",
@@ -586,7 +586,7 @@
           "kind": "exp-smug-org",
           "label": "표정 · 의기양양 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/hari-exp-smug-org.png"
+          "file": "assets/char/skin/hari-exp-smug-org.webp"
         },
         {
           "id": "hari-exp-smug-idle",
@@ -609,35 +609,35 @@
           "kind": "daily",
           "label": "전신 · 일상복",
           "shape": "full",
-          "file": "assets/char/skin/bora-daily.png"
+          "file": "assets/char/skin/bora-daily.webp"
         },
         {
           "id": "bora-practice",
           "kind": "practice",
           "label": "전신 · 연습복",
           "shape": "full",
-          "file": "assets/char/skin/bora-practice.png"
+          "file": "assets/char/skin/bora-practice.webp"
         },
         {
           "id": "bora-stage",
           "kind": "stage",
           "label": "전신 · 무대의상",
           "shape": "full",
-          "file": "assets/char/skin/bora-stage.png"
+          "file": "assets/char/skin/bora-stage.webp"
         },
         {
           "id": "bora-bust",
           "kind": "bust",
           "label": "반신 · 카드 초상 (기본 표정)",
           "shape": "bust",
-          "file": "assets/char/skin/bora-bust.png"
+          "file": "assets/char/skin/bora-bust.webp"
         },
         {
           "id": "bora-exp-base-org",
           "kind": "exp-base-org",
           "label": "표정 · 기본 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/bora-exp-base-org.png"
+          "file": "assets/char/skin/bora-exp-base-org.webp"
         },
         {
           "id": "bora-exp-base-idle",
@@ -652,7 +652,7 @@
           "kind": "exp-tears-org",
           "label": "표정 · 눈물 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/bora-exp-tears-org.png"
+          "file": "assets/char/skin/bora-exp-tears-org.webp"
         },
         {
           "id": "bora-exp-tears-idle",
@@ -667,7 +667,7 @@
           "kind": "exp-surprise-org",
           "label": "표정 · 놀람 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/bora-exp-surprise-org.png"
+          "file": "assets/char/skin/bora-exp-surprise-org.webp"
         },
         {
           "id": "bora-exp-surprise-idle",
@@ -682,7 +682,7 @@
           "kind": "exp-cower-org",
           "label": "표정 · 움츠림 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/bora-exp-cower-org.png"
+          "file": "assets/char/skin/bora-exp-cower-org.webp"
         },
         {
           "id": "bora-exp-cower-idle",
@@ -697,7 +697,7 @@
           "kind": "exp-awaken-org",
           "label": "표정 · 각성 (org)",
           "shape": "exp",
-          "file": "assets/char/skin/bora-exp-awaken-org.png"
+          "file": "assets/char/skin/bora-exp-awaken-org.webp"
         },
         {
           "id": "bora-exp-awaken-idle",

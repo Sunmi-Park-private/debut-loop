@@ -10,7 +10,7 @@ import { assetUrl } from "./hotAssets";
 
 const IDLE_URL = "assets/char/char_gate_idle.png";
 const LEVELUP_URL = "assets/char/char_gate_levelup.png";
-const FALLBACK_URL = "assets/char/haru_bust.png";
+const FALLBACK_URL = "assets/char/haru_bust.webp";
 
 const tex = async (url: string): Promise<Texture | null> => {
   if (!url) return null;
