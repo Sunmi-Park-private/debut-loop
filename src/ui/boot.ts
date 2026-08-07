@@ -658,12 +658,14 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
       c1.y = -40;
       cta.addChild(c1);
     }
-    const c2 = mkText(`${runNumber}회차`, 24, 0xffffff, true);
+    // 회차 숫자가 이 버튼의 주인공 — 원형 아트에 비해 작아 가독성이 떨어져서 키웠다(24→34, 부제 11→14).
+    // y는 글자 블록 높이(=크기×1.7)가 커진 만큼 위로 당겨 아트 중앙 정렬을 유지한다.
+    const c2 = mkText(`${runNumber}회차`, 34, 0xffffff, true);
     c2.x = -c2.width / 2;
-    c2.y = -18;
-    const c3 = mkText("시작의 밤", 11, 0xffe4f0, true);
+    c2.y = -31;
+    const c3 = mkText("시작의 밤", 14, 0xffe4f0, true);
     c3.x = -c3.width / 2;
-    c3.y = 16;
+    c3.y = 26;
     cta.addChild(c2, c3);
     // 진행 중인 런이 있으면 어디까지 왔는지 표시 (스토리 중간에 로비로 나온 경우)
     if (runInfo) {
