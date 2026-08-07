@@ -1,6 +1,6 @@
 // ui/boot.ts — 부트 플로우: ① 프롤로그(회귀 배경) → ② 로딩 → ③ 타이틀 → ④ 메인 로비.
 // 프롤로그는 경량(텍스트 연출)이라 즉시 재생, 무거운 에셋은 그 뒤에서 백그라운드 로딩.
-import { AnimatedSprite, Application, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
+import { AnimatedSprite, Application, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
 import type { GameAssets } from "./assets";
 import type { Card, CardGrade } from "../engine/types";
 import { openMetaMenu } from "./metaMenu";
@@ -554,9 +554,12 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
     const OPEN_DY = bannerTex ? Math.round(bannerH * 0.4) : 240; // 아트 미업로드(벡터 폴백)만 고정값
     const bannerSkin = skinNode("lobby-deck-banner", W, bannerH);
     if (bannerSkin) bannerSkin.y = BANNER_TOP;
-    // 투명 히트영역 — 배너 전체가 스와이프/탭 판정 대상
-    const bodyRect = new Graphics().rect(0, BANNER_TOP, W, bannerH).fill({ color: 0xffffff, alpha: 0 });
+    // 개폐 핸들 = 배너 상단 제목 띠(카드 내용이 시작되기 전까지). 배너 전체를 판정 영역으로 두면
+    // 카드 위를 눌러도 시트가 끌려와, 카드를 눌러 상세를 보는 동작과 충돌한다.
+    const HANDLE_H = 98; // content 오프셋과 같은 값 — 제목 아래·첫 카드 줄 위
+    const bodyRect = new Graphics().rect(0, BANNER_TOP, W, HANDLE_H).fill({ color: 0xffffff, alpha: 0 });
     sheet.addChild(bodyRect);
+    sheet.hitArea = new Rectangle(0, BANNER_TOP, W, HANDLE_H); // 자식(배너 아트·카드)이 아니라 이 띠만 반응
     // 시트 내부 조각별 오프셋 그룹 — 시트 개폐(sheet.y)와 분리돼 열린 상태에서 위치 미세조정 가능
     const dgrp = (name: string, child: Container): Container => {
       const g = new Container();
