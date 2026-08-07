@@ -38,12 +38,13 @@ const upload = async (slot: UiSkinSlot, file: File, cell: HTMLElement): Promise<
   if (!isVid && !["png", "jpg", "webp"].includes(ext)) { alert(slot.vid ? "png/jpg/webp 또는 mov/webm만 가능합니다" : "png/jpg/webp만 가능합니다"); return; }
   if (!isVid && file.size > 10 * 1024 * 1024) { alert("10MB 이하만 가능합니다"); return; }
   cell.style.opacity = "0.5";
-  const r = await fetch(`/__skinupload?slot=${slot.id}&ext=${ext}`, { method: "POST", body: file }); // mov는 서버가 webm으로 변환 (수십 초 소요)
+  const r = await fetch(`/__skinupload?slot=${slot.id}&ext=${ext}`, { method: "POST", body: file }); // mov→webm, png/jpg→webp 변환은 서버가 한다 (mov는 수십 초 소요)
   if (!r.ok) { alert(`업로드 실패: ${await r.text()}`); cell.style.opacity = "1"; return; }
+  // 서버가 최종 경로를 돌려준다 — 후처리로 확장자가 바뀌므로 클라이언트가 추측하면 어긋난다
+  slot.file = (await r.text()).trim() || `assets/ui/${slot.id}.${ext}`;
   // 리로드 대신 제자리 갱신 — 업로드 직후 vite 리로드와 겹치면 이미지 요청이 중단돼 '미업로드' 오탐
   cell.style.opacity = "1";
   if (isVid) {
-    slot.file = `assets/ui/${slot.id}.${ext === "mov" ? "webm" : ext}`; // mov는 서버가 webm으로 변환, webm/mp4는 그대로
     showVideo(cell, `/${slot.file}?v=${Date.now()}`);
     return;
   }
@@ -52,7 +53,7 @@ const upload = async (slot: UiSkinSlot, file: File, cell: HTMLElement): Promise<
   const empty = cell.querySelector("span") as HTMLElement;
   img.style.display = "";
   empty.style.display = "none";
-  img.dataset["src"] = `/assets/ui/${slot.id}.${ext}`; // 확장자 변경 대응 + 재시도 URL
+  img.dataset["src"] = `/${slot.file}`; // 확장자 변경 대응 + 재시도 URL
   img.dataset["retries"] = "6"; // 업로드 성공 = 파일 존재 보장 → 폴링으로 반드시 표시
   img.src = `${img.dataset["src"]}?v=${Date.now()}`;
 };

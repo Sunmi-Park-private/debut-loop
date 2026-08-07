@@ -111,7 +111,8 @@ const upload = async (slot: BgSlot, file: File, cell: HTMLElement): Promise<void
   if (!r.ok) { alert(`업로드 실패: ${await r.text()}`); cell.style.opacity = "1"; return; }
   // 리로드 대신 제자리 갱신 — 업로드 직후 vite 리로드와 겹치면 이미지 요청이 중단돼 '미업로드' 오탐
   cell.style.opacity = "1";
-  slot.file = `assets/bg/${slot.id}.${norm}`;
+  // 서버가 최종 경로를 돌려준다 — 이미지는 webp로 변환되므로 클라이언트가 확장자를 추측하면 어긋난다
+  slot.file = (await r.text()).trim() || `assets/bg/${slot.id}.${norm}`;
   delete slot.frames; // 단일 업로드 = 시퀀스 대체 (서버도 동일하게 정리)
   if (isMp4) { showVideo(cell, `/${slot.file}?v=${Date.now()}`); return; }
   cell.querySelector("video")?.remove();
