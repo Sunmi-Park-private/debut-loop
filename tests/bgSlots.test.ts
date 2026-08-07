@@ -23,9 +23,10 @@ describe("pickBgSlot", () => {
 });
 
 describe("bgManifest / systemBgFile", () => {
-  it("실데이터: 슬롯 17개 · title/loading·audition·training 시스템 파일", () => {
-    expect(bgManifest.story.length + bgManifest.gates.length + bgManifest.system.length).toBe(17); // +1: W0 프롤로그 공통 (2026-08-03)
-    expect(systemBgFile("title")).toBe("assets/bg/title.webp");
+  it("실데이터: 슬롯 16개 · title/loading·audition·training 시스템 파일", () => {
+    // +1: W0 프롤로그 공통 (2026-08-03) / −1: prologue-02를 prologue-01로 통합 (2026-08-07)
+    expect(bgManifest.story.length + bgManifest.gates.length + bgManifest.system.length).toBe(16);
+    expect(systemBgFile("title")).toBe("assets/bg/title.webp"); // WebP 전환 (2026-08-07)
     expect(systemBgFile("none")).toBeNull();
   });
 });

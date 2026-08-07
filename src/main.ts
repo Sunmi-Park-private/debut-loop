@@ -1,7 +1,7 @@
 // main.ts — Pixi 부트스트랩 + 부트 플로우(프롤로그 → 로딩 → 메인 → 게임).
 import { Application, VideoSource } from "pixi.js";
 import { startApp, initGameCheats } from "./ui/app";
-import { loadGameAssets, loadLoadingBg } from "./ui/assets";
+import { loadGameAssets, loadLoadingBg, loadPrologueBg } from "./ui/assets";
 import { playPrologue, showLoading, showTitle, showLobby } from "./ui/boot";
 import { isDevMode } from "./ui/devMode";
 import { initCheatMenu } from "./ui/cheatMenu";
@@ -22,10 +22,14 @@ VideoSource.defaultOptions = {
 async function main(): Promise<void> {
   // 기기 화면에 맞춰 비율 유지 스케일 — 폭 430 고정, 세로가 더 긴 기기(20:9 등)는
   // 캔버스 높이를 늘려 배경이 블리드(검은 상하단 띠 제거). 콘텐츠는 800 박스 중앙 고정.
-  const logicalH = (): number => {
-    const s = Math.min(window.innerWidth / 430, window.innerHeight / 800);
-    return Math.round(window.innerHeight / s);
-  };
+  //
+  // 캔버스 최소 높이는 아트 제작 기준인 20:9(1080×2400 → 430×956)다. 이보다 짧고 넓은 화면
+  // (PC 브라우저·주소창 있는 모바일 브라우저·구형 16:9 폰)에서도 캔버스 비율을 20:9로 유지하고
+  // 남는 자리는 CSS가 레터박스로 처리한다. 이렇게 하지 않으면 캔버스가 아트보다 넓어져
+  // cover가 아트 상하를 잘라낸다(430×800일 때 상하 각 78px — 타이틀 로고가 날아감).
+  const ART_H = 956; // 430 × 2400/1080
+  const fitScale = (): number => Math.min(window.innerWidth / 430, window.innerHeight / ART_H);
+  const logicalH = (): number => Math.max(ART_H, Math.round(window.innerHeight / fitScale()));
   const app = new Application();
   await app.init({
     width: 430,
@@ -40,7 +44,7 @@ async function main(): Promise<void> {
   el.appendChild(app.canvas);
   el.style.cssText = "display:flex;align-items:center;justify-content:center;width:100vw;height:100vh;overflow:hidden";
   const fit = (): void => {
-    const s = Math.min(window.innerWidth / 430, window.innerHeight / 800);
+    const s = fitScale();
     const lh = logicalH();
     app.renderer.resize(430, lh);
     setStageExtra(lh - 800);
@@ -57,12 +61,13 @@ async function main(): Promise<void> {
   // 무거운 에셋은 프롤로그 뒤에서 백그라운드 로딩 시작 (로딩 화면 배경은 별도 선로드)
   const progress = { done: 0, total: 1 };
   const loadingBgPromise = loadLoadingBg();
+  const prologueBgPromise = loadPrologueBg(); // 프롤로그 배경 — 기다리지 않고 도착 시 반영
   const assetsPromise = loadGameAssets((d, t) => { progress.done = d; progress.total = t; }, app.renderer);
 
   // E2E 테스트용 씬 마커 — 현재 부트 단계 노출 (게임 로직에선 미사용)
   const mark = (s: string): void => { (window as unknown as { __scene?: string }).__scene = s; };
   mark("prologue");
-  await playPrologue(app);                              // ① 프롤로그 (경량, 즉시)
+  await playPrologue(app, prologueBgPromise);           // ① 프롤로그 (경량, 즉시)
   mark("loading");
   await showLoading(app, progress, assetsPromise, loadingBgPromise); // ② 로딩 (남은 진행률)
   const assets = await assetsPromise;

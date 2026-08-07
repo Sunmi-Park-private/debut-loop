@@ -18,6 +18,30 @@ function movToAlphaWebm(abs: string): string | void {
   return out
 }
 
+// 이미지 업로드 → webp 통일. 에디터로 png를 올려도 배포 최적화(WebP 전환)가 되돌아가지 않게 한다.
+// 기존 자산과 같은 무손실(VP8L) + 알파 보존 설정. -exact는 투명 픽셀의 RGB를 유지해 가장자리 얼룩을 막는다.
+// 변환본이 더 크면(이미 압축된 사진 계열) 원본을 남긴다 — 최적화가 목적이라 커지면 의미가 없다.
+function toWebp(abs: string): string | void {
+  const ext = path.extname(abs).slice(1).toLowerCase()
+  if (!IMG_EXTS.includes(ext) || ext === 'webp') return
+  const out = abs.slice(0, abs.lastIndexOf('.')) + '.webp'
+  try {
+    execFileSync('cwebp', ['-quiet', '-lossless', '-exact', abs, '-o', out])
+    if (fs.statSync(out).size >= fs.statSync(abs).size) { fs.unlinkSync(out); return }
+    fs.unlinkSync(abs)
+    return out
+  } catch {
+    if (fs.existsSync(out)) fs.unlinkSync(out)
+    return // cwebp 부재·실패 → 원본 유지 (업로드 자체는 성공)
+  }
+}
+
+// 영상이면 알파 webm 파이프라인, 이미지면 webp 변환 — 업로드 후처리 한 곳에서 분기
+function mediaPostProcess(abs: string): string | void {
+  const v = movToAlphaWebm(abs)
+  return typeof v === 'string' ? v : toWebp(abs)
+}
+
 // HEVC 알파(hvc1) .mov 생성/교체 — macOS videotoolbox 사용. 실패해도 webm 파이프라인은 유지
 function alphaMovSibling(src: string, decodeArgs: string[] = []): boolean {
   const out = src.slice(0, src.lastIndexOf('.')) + '.mov'
@@ -300,7 +324,7 @@ function assetUploadPlugin(route: string, manifestFile: string, dir: string,
           if (entry.file !== rel || hadFrames) { entry.file = rel; fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n') }
           invalidate(manifestPath)
           notify(slot, entry.file)
-          res.end('ok')
+          res.end(rel) // 최종 경로를 돌려준다 — 후처리로 확장자가 바뀔 수 있어 에디터가 추측하면 안 된다
         })
       })
       // watch 제외 매니페스트(bgm.json)의 모듈 캐시 무효화 — 다음 수동 새로고침 때 새 값 로드
@@ -437,15 +461,15 @@ export default defineConfig({
       (m) => (m as UiManifest).screens.flatMap((s) => s.slots), 'ui-opacity-updated'),
     assetUploadPlugin('/__bgupload', 'src/data/backgrounds.json', 'assets/bg',
       (m) => { const b = m as BgManifest; return [...b.story, ...b.gates, ...b.system] },
-      [...IMG_EXTS, 'mp4'], 4096, fitBgSize), // vid 슬롯(프롤로그·로딩·리듬 배경) = mp4 무한루프 — 영상 용량 제한 없음(이미지 10MB는 에디터에서 검증)
+      [...IMG_EXTS, 'mp4'], 4096, (abs) => { fitBgSize(abs); return toWebp(abs) }), // vid 슬롯(프롤로그·로딩·리듬 배경) = mp4 무한루프 — 영상 용량 제한 없음(이미지 10MB는 에디터에서 검증)
     assetUploadPlugin('/__skinupload', 'src/data/uiskins.json', 'assets/ui',
       (m) => (m as UiManifest).screens.flatMap((s) => s.slots),
-      [...IMG_EXTS, 'mov', 'webm', 'mp4'], 4096, movToAlphaWebm), // vid 슬롯 = 영상 (mov는 자동 webm 변환, mp4/webm은 그대로. 이미지 10MB는 에디터에서 검증)
+      [...IMG_EXTS, 'mov', 'webm', 'mp4'], 4096, mediaPostProcess), // vid 슬롯 = 영상 (mov는 자동 webm 변환, mp4/webm은 그대로). 이미지는 webp로 변환
     assetUploadPlugin('/__bgmupload', 'src/data/bgm.json', 'assets/audio',
       (m) => (m as BgmManifest).tracks, AUDIO_EXTS, 25, stripArtistTag),
     assetUploadPlugin('/__charupload', 'src/data/charskins.json', 'assets/char/skin',
       (m) => (m as CharSkinManifest).chars.flatMap((c) => c.slots),
-      [...IMG_EXTS, 'mov', 'webm'], 4096, movToAlphaWebm), // vid 슬롯 = 알파 영상 (mov는 자동 변환)
+      [...IMG_EXTS, 'mov', 'webm'], 4096, mediaPostProcess), // vid 슬롯 = 알파 영상 (mov는 자동 변환). 이미지는 webp로 변환
     seqUploadPlugin('/__bgseq', 'src/data/backgrounds.json', 'assets/bg',
       (m) => { const b = m as { story: SeqSlot[]; system: SeqSlot[] }; return [...b.story, ...b.system] }), // system=로딩 화면 시퀀스
     seqUploadPlugin('/__charseq', 'src/data/charskins.json', 'assets/char/skin',

@@ -2,25 +2,6 @@
   "_note": "배경 슬롯 SSOT — bg.html 에디터가 읽고, 게임이 트리거로 전환. file이 없거나 미업로드면 기존 기본 배경 폴백.",
   "story": [
     {
-      "id": "prologue-01",
-      "label": "프롤로그-01 · 참사 무대",
-      "beatIds": [
-        "d2_w0_disaster"
-      ],
-      "file": "",
-      "vid": true
-    },
-    {
-      "id": "prologue-02",
-      "label": "프롤로그-02 · 기획사 문 앞",
-      "beatIds": [
-        "d2_w0_rewind",
-        "d2_w0_rewind2"
-      ],
-      "file": "assets/bg/prologue-02.png",
-      "vid": true
-    },
-    {
       "id": "act0",
       "label": "W0 · 프롤로그 공통 (참사·되감기 비트 슬롯이 우선)",
       "act": 0,
@@ -93,6 +74,12 @@
     }
   ],
   "system": [
+    {
+      "id": "prologue-01",
+      "label": "앱 시작 프롤로그 (🎬 영상 · 스토리 W0 배경과 별개)",
+      "file": "assets/bg/prologue-01.mp4",
+      "vid": true
+    },
     {
       "id": "training",
       "label": "연습하기 화면",

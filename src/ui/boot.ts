@@ -1,6 +1,6 @@
 // ui/boot.ts — 부트 플로우: ① 프롤로그(회귀 배경) → ② 로딩 → ③ 타이틀 → ④ 메인 로비.
 // 프롤로그는 경량(텍스트 연출)이라 즉시 재생, 무거운 에셋은 그 뒤에서 백그라운드 로딩.
-import { AnimatedSprite, Application, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
+import { AnimatedSprite, Application, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
 import type { GameAssets } from "./assets";
 import type { Card, CardGrade } from "../engine/types";
 import { openMetaMenu } from "./metaMenu";
@@ -67,21 +67,114 @@ const SLIDES: Slide[] = [
   },
 ];
 
-export function playPrologue(app: Application): Promise<void> {
+const PROLOGUE_SEEN = "debutloop.prologueSeen"; // 1회차 완주 여부 — 치트 '데이터 초기화'가 debutloop.* 를 지우면 다시 1회차
+const PROLOGUE_VOLUME = 0.3; // 영상 원본 대비 −70% — 내레이션이 과하게 크다는 피드백
+
+/** 비디오 텍스처의 원본 <video> — 프롤로그만 음소거 해제·1회 재생으로 다뤄야 해서 꺼낸다.
+ *  (공용 로더는 모든 영상을 muted·loop로 만든다 — 배경 루프가 기본 용도라서) */
+function videoElOf(tex: Texture): HTMLVideoElement | null {
+  const res = (tex.source as unknown as { resource?: unknown }).resource;
+  return res instanceof HTMLVideoElement ? res : null;
+}
+
+/** 프롤로그. bgPromise(backgrounds.json prologue-01)가 도착하면 **영상 모드**로 전환한다.
+ *  영상에 내레이션 자막과 소리가 모두 들어 있으므로 코드 텍스트·틴트는 그리지 않는다.
+ *
+ *  1회차 — 끝까지 재생하고 `ended`에서 자동으로 로딩 화면으로 넘어간다. 건너뛰기 없음.
+ *  2회차 이후 — 건너뛰기 버튼과 탭 스킵이 열린다.
+ *
+ *  영상이 없거나 로드 실패면 기존 단색 슬라이드쇼로 폴백(문구는 여기 SLIDES가 SSOT).
+ *  프롤로그는 즉시 시작이 원칙이라 영상을 기다리지 않고, 도착한 시점에 전환한다. */
+export function playPrologue(app: Application, bgPromise?: Promise<Texture | null>): Promise<void> {
   return new Promise((resolve) => {
     const root = new Container();
     app.stage.addChild(root);
+    const bgLayer = new Container();   // 영상 — 한 번 붙으면 유지
+    const slideLayer = new Container(); // 단색 슬라이드·건너뛰기 — 갈아끼움
+    root.addChild(bgLayer, slideLayer);
+    const firstPlay = localStorage.getItem(PROLOGUE_SEEN) !== "1";
+    let hasBg = false;
+    let bgTex: Texture | null = null;
+    let videoEl: HTMLVideoElement | null = null;
+    let muteBtn: Text | null = null;
+    let cancelAutoUnmute: (() => void) | null = null;
     let idx = 0;
     let flashTick: (() => void) | null = null;
+    let done = false;
+
+    // 화면 전체가 한 덩어리로 축소되므로 작은 기기일수록 버튼의 실제 크기도 같이 줄어든다
+    // (iPhone SE에서 지름 28px — 손가락으로 누르기 빡빡하다).
+    // CSS 스케일의 역수를 곱해 물리 크기를 ~44px로 맞춘다. 큰 화면에서는 1배(보정 없음).
+    const uiScale = (): number => {
+      const s = app.canvas.clientWidth / W;
+      return s > 0 ? Math.min(1.4, Math.max(1, 0.95 / s)) : 1;
+    };
+
+    // 🔊/🔇 두 글리프는 작게 그리면 형태가 비슷해 구분이 어렵다 —
+    // 아이콘을 바꾸는 동시에 음소거일 때 흐리게 해서 한눈에 상태가 읽히게 한다
+    const syncMuteBtn = (): void => {
+      if (!muteBtn) return;
+      const m = videoEl?.muted ?? false;
+      muteBtn.text = m ? "🔇" : "🔊";
+      muteBtn.alpha = m ? 0.5 : 1;
+    };
 
     const finish = (): void => {
+      if (done) return;
+      done = true;
       if (flashTick) app.ticker.remove(flashTick);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+      cancelAutoUnmute?.();
+      if (videoEl) { // 뒤 화면이 이 영상을 배경으로 재사용할 수 있으니 공용 로더 기본값으로 되돌린다
+        videoEl.pause();
+        videoEl.muted = true;
+        videoEl.loop = true;
+        videoEl.volume = 1;
+      }
+      localStorage.setItem(PROLOGUE_SEEN, "1");
       root.destroy({ children: true });
       resolve();
     };
 
+    void bgPromise?.then((tex) => {
+      if (!tex || done || root.destroyed || hasBg) return;
+      bgTex = tex;
+      bgLayer.addChild(coverBg(tex));
+      hasBg = true;
+      const el = videoElOf(tex);
+      if (el) {
+        videoEl = el;
+        el.loop = false;             // 프롤로그는 1회 재생 후 종료
+        el.currentTime = 0;
+        el.muted = false;            // 영상에 내레이션 음성이 들어 있다
+        el.volume = PROLOGUE_VOLUME;
+        el.addEventListener("ended", finish, { once: true });
+        void el.play().catch(() => {
+          // 사용자 제스처 전 '소리 있는' 자동재생은 브라우저가 막는다 —
+          // 일단 음소거로 재생하고 첫 입력에서 소리를 켠다 (재생 자체는 끊기지 않게)
+          el.muted = true;
+          syncMuteBtn();
+          void el.play().catch(() => {});
+          const unmute = (): void => {
+            el.muted = false;
+            cancelAutoUnmute?.();
+            syncMuteBtn();
+          };
+          cancelAutoUnmute = (): void => {
+            window.removeEventListener("pointerdown", unmute);
+            window.removeEventListener("keydown", unmute);
+            cancelAutoUnmute = null;
+          };
+          window.addEventListener("pointerdown", unmute);
+          window.addEventListener("keydown", unmute);
+        });
+      }
+      show();
+    });
+
     const next = (): void => {
+      if (hasBg) { if (!firstPlay) finish(); return; } // 영상 모드: 1회차는 스킵 불가
       idx++;
       if (idx >= SLIDES.length) finish();
       else show();
@@ -92,21 +185,81 @@ export function playPrologue(app: Application): Promise<void> {
     };
     window.addEventListener("keydown", onKey);
 
+    // 프롤로그는 35초라 재생 도중 창 크기·기기 방향이 바뀔 수 있다. 캔버스 높이가 달라지면
+    // stageTop() 기준으로 잡은 오버레이와 cover 배경이 어긋나므로 그 자리에서 다시 배치한다.
+    const onResize = (): void => {
+      if (done || root.destroyed) return;
+      if (hasBg && bgTex) { bgLayer.removeChildren(); bgLayer.addChild(coverBg(bgTex)); }
+      show();
+    };
+    window.addEventListener("resize", onResize);
+
+    // 영상 모드에서는 화면 진짜 모서리(=stageTop) 기준으로 얹는다. 콘텐츠 800 박스 기준으로 두면
+    // 20:9 캔버스에서 78px 안쪽에 떠서 오버레이로 보이지 않는다. 단색 슬라이드는 800 박스 그대로.
+    const topY = (inset: number): number => (hasBg ? stageTop() + inset : inset);
+
+    const addSkip = (color: number): void => {
+      const u = uiScale();
+      const skip = mkText("건너뛰기 ≫", Math.round(15 * u), color, true);
+      skip.x = W - skip.width - 18;
+      skip.y = topY(18);
+      skip.eventMode = "static";
+      skip.cursor = "pointer";
+      skip.on("pointertap", (e) => { e.stopPropagation(); finish(); });
+      slideLayer.addChild(skip);
+    };
+
+    // 좌상단 음소거 토글 — 영상에 내레이션이 있어 소리를 끌 수단이 필요하다.
+    // 자동재생 정책으로 음소거 시작된 경우에도 이 버튼이 현재 상태를 그대로 보여준다.
+    const addMute = (): void => {
+      const u = uiScale();
+      const D = Math.round(48 * u); // 터치 타깃
+      const zone = new Container();
+      zone.x = 14;
+      zone.y = topY(14);
+      // 영상 위라 배경이 매 프레임 바뀐다 — 반투명 알약을 깔아야 아이콘이 항상 읽힌다
+      zone.addChild(new Graphics().roundRect(0, 0, D, D, D / 2).fill({ color: 0x0d0b26, alpha: 0.45 }));
+      const btn = mkText("🔊", Math.round(24 * u), 0xffffff);
+      btn.anchor.set(0.5);
+      btn.x = D / 2;
+      btn.y = D / 2;
+      zone.addChild(btn);
+      muteBtn = btn;
+      syncMuteBtn(); // 자동재생이 막혀 이미 음소거로 시작했을 수도 있다
+      zone.eventMode = "static";
+      zone.cursor = "pointer";
+      // pointerdown은 캔버스에서 window로 버블링되기 전에 온다 — 여기서 자동 언뮤트 대기를
+      // 먼저 해제해야 사용자가 고른 상태를 곧바로 덮어쓰지 않는다
+      zone.on("pointerdown", () => { cancelAutoUnmute?.(); });
+      zone.on("pointertap", (e) => {
+        e.stopPropagation(); // 탭 스킵과 겹치지 않게
+        if (!videoEl) return;
+        videoEl.muted = !videoEl.muted;
+        syncMuteBtn();
+      });
+      slideLayer.addChild(zone);
+    };
+
     const show = (): void => {
       if (flashTick) { app.ticker.remove(flashTick); flashTick = null; }
-      root.removeChildren();
+      slideLayer.removeChildren();
+      muteBtn = null;
+      if (hasBg) { // 영상 모드 — 좌상단 음소거, 2회차부터 우상단 건너뛰기
+        addMute();
+        if (!firstPlay) addSkip(0xe8e2f5);
+        return;
+      }
       const s = SLIDES[idx];
       if (!s) { finish(); return; }
-      const bg = fullRect(s.bg);
-      root.addChild(bg);
+      slideLayer.addChild(fullRect(s.bg));
       let y = 340;
       for (const [text, size, color] of s.lines) {
-        root.addChild(center(mkText(text, size, color, size > 17), y));
+        slideLayer.addChild(center(mkText(text, size, color, size > 17), y));
         y += size * 2.2;
       }
       if (s.flash) { // 붉은 섬광 펄스
         const flash = fullRect(0xff2b2b, 0);
-        root.addChild(flash);
+        slideLayer.addChild(flash);
         let el = 0;
         flashTick = () => {
           el += app.ticker.deltaMS / 1000;
@@ -115,15 +268,8 @@ export function playPrologue(app: Application): Promise<void> {
         };
         app.ticker.add(flashTick);
       }
-      const hint = center(mkText("탭 또는 Space로 계속", 11, 0x6a628a), H - 70);
-      root.addChild(hint);
-      const skip = mkText("건너뛰기 ≫", 12, 0x8a82aa, true);
-      skip.x = W - skip.width - 20;
-      skip.y = 20;
-      skip.eventMode = "static";
-      skip.cursor = "pointer";
-      skip.on("pointertap", (e) => { e.stopPropagation(); finish(); });
-      root.addChild(skip);
+      slideLayer.addChild(center(mkText("탭 또는 Space로 계속", 11, 0x6a628a), H - 70));
+      addSkip(0x8a82aa);
     };
 
     root.eventMode = "static";
@@ -234,7 +380,11 @@ export function showTitle(app: Application, titleTex: Texture | null): Promise<v
       }
 
       // 타이틀+시작 버튼 통짜 영상 (title-hero · mp4) — 업로드 시 코드 타이틀 텍스트·시작 버튼을 대체.
-      // 표시는 로딩 화면 배경과 동일한 규칙: 화면 전체 cover (폭 맞춤 + 상하 크롭), 탭=시작 (Space도 유지)
+      // 표시 규칙은 배경 슬롯 coverBg()(stage.ts)와 **완전히 동일**하다 — 화면 전체 cover, 중앙 정렬.
+      // 즉 넘치는 축은 잘려나가므로, 아트는 배경과 같이 "잘려도 되는 블리드"를 포함해야 한다.
+      // 캔버스는 폭 430 고정 · 높이는 아무리 넓은 창에서도 800에서 멈추므로(비율 0.5375가 최악),
+      // 콘텐츠가 안 잘리려면 아트 가로 ≥ 세로 × 0.5375 여야 한다. (2500 기준 1344, 권장 1400)
+      // 배율·좌표를 바꾸지 말 것 — 로딩 배경과 다르게 보이면 그건 아트 규격 문제다.
       const heroTex = skinTexTrim("title-hero");
       if (heroTex) {
         const sh = stageHeight();
@@ -404,9 +554,12 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
     const OPEN_DY = bannerTex ? Math.round(bannerH * 0.4) : 240; // 아트 미업로드(벡터 폴백)만 고정값
     const bannerSkin = skinNode("lobby-deck-banner", W, bannerH);
     if (bannerSkin) bannerSkin.y = BANNER_TOP;
-    // 투명 히트영역 — 배너 전체가 스와이프/탭 판정 대상
-    const bodyRect = new Graphics().rect(0, BANNER_TOP, W, bannerH).fill({ color: 0xffffff, alpha: 0 });
+    // 개폐 핸들 = 배너 상단 제목 띠(카드 내용이 시작되기 전까지). 배너 전체를 판정 영역으로 두면
+    // 카드 위를 눌러도 시트가 끌려와, 카드를 눌러 상세를 보는 동작과 충돌한다.
+    const HANDLE_H = 98; // content 오프셋과 같은 값 — 제목 아래·첫 카드 줄 위
+    const bodyRect = new Graphics().rect(0, BANNER_TOP, W, HANDLE_H).fill({ color: 0xffffff, alpha: 0 });
     sheet.addChild(bodyRect);
+    sheet.hitArea = new Rectangle(0, BANNER_TOP, W, HANDLE_H); // 자식(배너 아트·카드)이 아니라 이 띠만 반응
     // 시트 내부 조각별 오프셋 그룹 — 시트 개폐(sheet.y)와 분리돼 열린 상태에서 위치 미세조정 가능
     const dgrp = (name: string, child: Container): Container => {
       const g = new Container();
@@ -581,26 +734,25 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
         new Graphics().circle(0, 0, 64).stroke({ width: 1.5, color: 0xffd9e9 }),
       );
     }
-    if (!ctaSkin) { // START 글씨는 스킨 이미지에 그려져 있음 — 벡터 폴백에서만 표시
-      const c1 = mkText("START", 10, 0xffe4f0, true);
-      c1.x = -c1.width / 2;
-      c1.y = -40;
-      cta.addChild(c1);
-    }
-    const c2 = mkText(`${runNumber}회차`, 24, 0xffffff, true);
-    c2.x = -c2.width / 2;
-    c2.y = -18;
-    const c3 = mkText("시작의 밤", 11, 0xffe4f0, true);
-    c3.x = -c3.width / 2;
-    c3.y = 16;
-    cta.addChild(c2, c3);
+    // CTA 위 글자들은 아트 중앙 기준(0,0)의 상대 좌표다. 기본값은 가로 중앙 정렬이고,
+    // 레이아웃 에디터에서 각각 따로 옮길 수 있다 — 아트가 바뀌면 문구 위치도 손봐야 해서.
+    const ctaText = (name: string, t: Text, defY: number): void => {
+      const q = pos(name, { x: -t.width / 2, y: defY });
+      t.x = q.x;
+      t.y = q.y;
+      cta.addChild(t);
+      editable(name, t);
+    };
+    // START 글씨는 원형 아트에 그려져 있지 않아 코드가 얹는다 (벡터 폴백도 동일).
+    // 색은 아트 속 별의 크림색(실측 평균 #FFEFD8)에 맞춘다.
+    ctaText("lobby_cta_start", mkText("START", 18, 0xffefd8, true), -62);
+    // 회차 숫자가 이 버튼의 주인공 — 원형 아트에 비해 작아 가독성이 떨어져서 키웠다(24→34, 부제 11→14).
+    ctaText("lobby_cta_round", mkText(`${runNumber}회차`, 34, 0xffffff, true), -28);
+    ctaText("lobby_cta_sub", mkText("시작의 밤", 14, 0xffe4f0, true), 28);
     // 진행 중인 런이 있으면 어디까지 왔는지 표시 (스토리 중간에 로비로 나온 경우)
     if (runInfo) {
       const label = runInfo.awaitingRegress ? "▶ 회귀 — 진행 방식을 골라요" : `▶ ${runInfo.week}주차 진행 중`;
-      const c4 = mkText(label, 9, 0xfff4c9, true);
-      c4.x = -c4.width / 2;
-      c4.y = 34;
-      cta.addChild(c4);
+      ctaText("lobby_cta_run", mkText(label, 9, 0xfff4c9, true), 36);
     }
     cta.eventMode = "static";
     cta.cursor = "pointer";

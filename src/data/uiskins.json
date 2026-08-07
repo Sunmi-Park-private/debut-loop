@@ -72,7 +72,7 @@
           ],
           "mode": "stretch",
           "small": true,
-          "scale": 1.3,
+          "scale": 1,
           "natural": true,
           "opacity": 0.2
         },
@@ -138,7 +138,7 @@
           ],
           "mode": "stretch",
           "small": true,
-          "scale": 1
+          "scale": 1.3
         },
         {
           "id": "lobby-icon-album",
@@ -150,7 +150,7 @@
           ],
           "mode": "stretch",
           "small": true,
-          "scale": 1.1
+          "scale": 1.3
         },
         {
           "id": "lobby-icon-shop",
@@ -162,7 +162,7 @@
           ],
           "mode": "stretch",
           "small": true,
-          "scale": 1.1
+          "scale": 1.3
         },
         {
           "id": "lobby-icon-settings",
@@ -174,7 +174,7 @@
           ],
           "mode": "stretch",
           "small": true,
-          "scale": 1.1
+          "scale": 1.3
         },
         {
           "id": "lobby-deck-banner",
@@ -283,7 +283,7 @@
           ],
           "mode": "stretch",
           "small": true,
-          "scale": 1.2
+          "scale": 1.3
         },
         {
           "id": "game-btn-member",
@@ -295,7 +295,7 @@
           ],
           "mode": "stretch",
           "small": true,
-          "scale": 1.2
+          "scale": 1.3
         }
       ]
     },
@@ -1362,7 +1362,7 @@
         {
           "id": "board-bg",
           "label": "배경판 (점검 화면 전체)",
-          "file": "assets/ui/board-bg.png",
+          "file": "assets/ui/board-bg.webp",
           "size": [
             394,
             660
@@ -1373,7 +1373,7 @@
         {
           "id": "audition-panel",
           "label": "멤버 점검 프레임 (패널)",
-          "file": "assets/ui/audition-panel.png",
+          "file": "assets/ui/audition-panel.webp",
           "size": [
             394,
             660
@@ -1428,7 +1428,7 @@
         {
           "id": "audition-held-row",
           "label": "보류 후보 행 배경",
-          "file": "assets/ui/audition-held-row.png",
+          "file": "assets/ui/audition-held-row.webp",
           "size": [
             366,
             34
@@ -1535,7 +1535,7 @@
           "mode": "stretch",
           "small": true,
           "natural": true,
-          "scale": 0.4
+          "scale": 0.3
         },
         {
           "id": "audition-btn-hold",
@@ -1548,7 +1548,7 @@
           "mode": "stretch",
           "small": true,
           "natural": true,
-          "scale": 0.4
+          "scale": 0.3
         },
         {
           "id": "audition-btn-sub",
@@ -1577,14 +1577,15 @@
         {
           "id": "audition-btn-mini",
           "label": "미니 버튼 (영입·버리기 — 텍스트는 코드) — 1배율=원본 크기",
-          "file": "assets/ui/audition-btn-mini.png",
+          "file": "assets/ui/audition-btn-mini.webp",
           "size": [
             58,
             24
           ],
           "mode": "stretch",
           "small": true,
-          "natural": true
+          "natural": true,
+          "scale": 0.3
         }
       ]
     },
@@ -1606,7 +1607,7 @@
         {
           "id": "audition-recruit-bg",
           "label": "영입 배경판 (후보 결과·영입 화면 전체)",
-          "file": "assets/ui/audition-recruit-bg.png",
+          "file": "assets/ui/audition-recruit-bg.webp",
           "size": [
             394,
             600
@@ -1617,7 +1618,7 @@
         {
           "id": "audition-card",
           "label": "후보 결과 카드 — 원본 비율 유지",
-          "file": "assets/ui/audition-card.png",
+          "file": "assets/ui/audition-card.webp",
           "size": [
             180,
             200
@@ -1628,7 +1629,7 @@
         {
           "id": "audition-btn-recruit",
           "label": "버튼 · 영입 — 1배율=원본 크기",
-          "file": "assets/ui/audition-btn-recruit.png",
+          "file": "assets/ui/audition-btn-recruit.webp",
           "size": [
             220,
             52

@@ -163,16 +163,17 @@ const upload = async (slot: CharSkinSlot, file: File, cell: HTMLElement): Promis
   const r = await fetch(`/__charupload?slot=${slot.id}&ext=${ext}`, { method: "POST", body: file });
   cell.style.opacity = "1";
   if (!r.ok) { alert(`업로드 실패: ${await r.text()}`); return; }
+  // 서버가 최종 경로를 돌려준다 — mov→webm, png/jpg→webp로 확장자가 바뀐다
+  slot.file = (await r.text()).trim() || `assets/char/skin/${slot.id}.${ext}`;
   if (isVid) {
     delete slot.frames; // 영상 = 시퀀스 대체 (서버도 동일 정리)
-    slot.file = `assets/char/skin/${slot.id}.webm`;
     const badge = cell.querySelector("[data-badge]") as HTMLElement | null;
     if (badge) badge.textContent = "🎬";
     showVideo(cell, `/${slot.file}?v=${Date.now()}`);
     return;
   }
   cell.querySelector("video")?.remove();
-  const img = showUploaded(cell, `/assets/char/skin/${slot.id}.${ext}`);
+  const img = showUploaded(cell, `/${slot.file}`);
   img.src = `${img.dataset["src"]}?v=${Date.now()}`;
 };
 
