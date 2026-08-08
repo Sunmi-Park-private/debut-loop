@@ -3,7 +3,8 @@
 // 판정은 engine, 카드·소모 반영은 컨트롤러 — 여긴 렌더+입력만.
 import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Sprite, type Texture, type Ticker } from "pixi.js";
 import type { MiniGameGrade, TrainingId, CardGrade } from "../engine/types";
-import { starNode, gaugeSymbol } from "./cardArt";
+import { starNode, gaugeSymbol, fanAngle } from "./cardArt";
+import { pressable } from "./press";
 import { TRAIN_DRAIN, TRAIN_GRADE_TO_CARD, resolveTraining } from "../engine/training";
 import { MATCH_CARDS } from "../engine/minigames";
 import { mountEngine, txt, btn, fxConfetti, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
@@ -21,6 +22,10 @@ import type { CharAssets } from "./assets";
 const W = MG_W;
 const H = 610;
 const GLBL: Record<string, string> = { skill: "실력", mental: "멘탈", reputation: "평판", bond: "유대", capital: "자본" };
+// 연습 결과 카드 — 여러 장이면 손패처럼 겹쳐 V자로 편다
+const CW2 = 120;           // 카드 폭
+const CH2 = 160;           // 카드 높이 (회전축을 밑변 가운데로 잡는 기준)
+const FAN_OVERLAP = 50;    // 옆 카드와 겹치는 폭
 
 interface Activity {
   id: TrainingId;
@@ -311,13 +316,12 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
       chip.x = tx;
       chip.y = banner ? 38 : 46;
       row.addChild(nm, fx, chip);
-      row.eventMode = "static";
-      row.cursor = "pointer";
       // 터치 영역을 패널 안쪽까지로 제한 — 마스크는 표시만 자르고 히트테스트는 못 막음
+      // (hitArea는 row 자신에 남으므로 pressable이 내용물을 감싸도 판정 범위는 그대로다)
       const bw = banner ? 246 : 166;
       const bh = banner ? 56 : 70;
       row.hitArea = new Rectangle(0, 0, Math.max(40, Math.min(bw, W - 3 - rp.x)), bh);
-      row.on("pointertap", () => pick(a));
+      pressable(row, () => pick(a));
       rowsGrp.addChild(row);
       editable(`train_row_${a.id}`, row);
     });
@@ -418,20 +422,26 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     const t = cardTemplates.find((c) => c.id === a.id);
     if (grade !== "clear") {
       const cardGrade = TRAIN_GRADE_TO_CARD[grade];
-      // 원형이 올리는 게이지마다 한 장 — 오디션(평판 5 · 실력 1)이면 두 장을 나란히
+      // 원형이 올리는 게이지마다 한 장 — 오디션(평판 5 · 실력 1)이면 두 장.
+      // 여러 장이면 손에 쥔 패처럼 살짝 겹쳐 V자로 펼친다 (나란히 두면 화면을 넓게 먹고 밋밋하다).
       const gained = resolveTraining(a.id, grade, cardTemplates).cards;
-      const CW2 = 120;
-      const CGAP = 14;
-      const rowW = gained.length * CW2 + (gained.length - 1) * CGAP;
+      const n = gained.length;
+      const step = CW2 - FAN_OVERLAP;               // 장당 가로 간격 (겹치는 만큼 좁아진다)
+      const blockW = CW2 + (n - 1) * step;
       const row = new Container();
-      row.x = (W - rowW) / 2;
+      row.x = (W - blockW) / 2;
       row.y = 100;
       grp("train_res_card", row); // 카드 묶음 전체 (조각들은 안쪽 그룹이라 함께 움직임)
       gained.forEach((card, idx) => {
         const big = new Container();
-        big.x = idx * (CW2 + CGAP);
+        // 아래쪽 가운데를 축으로 돌린다 — 밑동은 모이고 위쪽만 벌어져 V자가 된다.
+        // 한 장뿐이면 회전 0이라 예전과 완전히 같은 자리에 그려진다.
+        big.pivot.set(CW2 / 2, CH2);
+        big.x = CW2 / 2 + idx * step;
+        big.y = CH2;
+        big.rotation = (fanAngle(idx, n) * Math.PI) / 180; // 부채꼴 규격은 관문 선택과 공용
         row.addChild(big);
-        const cbg = skinFit("train-result-card", CW2, 160); // 카드 배경 — 원본 비율 유지 (빈 슬롯은 텍스트만)
+        const cbg = skinFit("train-result-card", CW2, CH2); // 카드 배경 — 원본 비율 유지 (빈 슬롯은 텍스트만)
         // 게이지 심볼 — 이 카드가 담당하는 게이지 아트, 없으면 카드 이모지로 폴백
         const sym = gaugeSymbol(card, CW2, 38);
         let ic: Container;

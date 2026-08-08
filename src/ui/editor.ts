@@ -49,7 +49,12 @@ export function beginFrame(): void {
 }
 
 /** 컴포넌트를 에디터 대상으로 등록 — 항상 기록하고, 에디터 켜짐이면 실드 최상단 유지 + 패널 갱신 */
+/** 이번 세션에 한 번이라도 등록된 이름 — 저장 시 "코드가 아직 쓰는 키"인지 판별하는 근거.
+ *  visible은 매 프레임 비워져 현재 화면분만 남으므로 따로 누적한다. */
+const everRegistered = new Set<string>();
+
 export function editable(name: string, c: Container): void {
+  everRegistered.add(name);
   visible.set(name, c);
   if (on) { mountShield(); refreshPanel(); }
 }
@@ -170,9 +175,24 @@ function refreshPanel(): void {
   save.style.cssText =
     "margin-top:8px;width:100%;padding:7px;border:0;border-radius:8px;background:#ff7fb0;color:#fff;font-weight:700;cursor:pointer";
   save.onclick = () => {
-    void fetch("/__layout", { method: "POST", body: JSON.stringify(allPos(), null, 2) })
-      .then((r) => { save.textContent = r.ok ? "✅ 저장됨" : "❌ 실패(dev 서버 전용)"; })
-      .catch(() => { save.textContent = "❌ 실패(dev 서버 전용)"; });
+    void (async (): Promise<void> => {
+      const mem = allPos();
+      let out = mem;
+      let dropped = 0;
+      // 메모리 맵은 페이지를 열 때의 layout.json 사본이라, 그 뒤 파일에서 지운 키도 그대로 들고 있다.
+      // 통째로 저장하면 그 키가 되살아나므로, 저장 직전에 디스크와 대조해서 걸러낸다.
+      // 남기는 기준: 파일에 아직 있거나(다른 화면 것일 수 있음) 이번 세션에 등록된 적이 있는 키.
+      try {
+        const disk = await fetch("/__layout").then((r) => r.json() as Promise<Record<string, unknown>>);
+        const kept = Object.entries(mem).filter(([k]) => k in disk || everRegistered.has(k));
+        dropped = Object.keys(mem).length - kept.length;
+        out = Object.fromEntries(kept);
+      } catch { /* GET 미지원 서버 — 메모리 그대로 저장 (기존 동작) */ }
+      const r = await fetch("/__layout", { method: "POST", body: JSON.stringify(out, null, 2) });
+      save.textContent = r.ok
+        ? (dropped > 0 ? `✅ 저장됨 (고아 ${dropped}개 정리)` : "✅ 저장됨")
+        : "❌ 실패(dev 서버 전용)";
+    })().catch(() => { save.textContent = "❌ 실패(dev 서버 전용)"; });
   };
   p.appendChild(save);
 }

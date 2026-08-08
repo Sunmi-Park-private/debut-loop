@@ -7,6 +7,20 @@ import { cardEffect } from "../engine/cards";
 import { cardTemplates } from "../data";
 import { skinFit } from "./uiSkin";
 
+// ── 여러 장을 펼칠 때의 부채꼴 규격 (연습 결과·관문 선택 공용) ──
+/** 장당 기울기(도). 두 장이면 ±10°로 벌어진다. 회전축은 카드 밑변 가운데 — 밑동은 모이고 위만 벌어져 V자 */
+export const FAN_STEP_DEG = 20;
+/** 전체 부채 각도 상한 — 장수가 많아도 이보다 넓게 펴지 않는다 (관문 선택은 최대 10장) */
+export const FAN_MAX_SPREAD_DEG = 52;
+
+/** 장수에 따른 전체 부채 각도 */
+export const fanSpread = (n: number): number =>
+  n <= 1 ? 0 : Math.min(FAN_MAX_SPREAD_DEG, (n - 1) * FAN_STEP_DEG);
+
+/** i번째 카드의 기울기(도) — 가운데 기준 좌우 대칭 */
+export const fanAngle = (i: number, n: number): number =>
+  n <= 1 ? 0 : -fanSpread(n) / 2 + (fanSpread(n) / (n - 1)) * i;
+
 export const STARS: Record<CardGrade, string> = { epic: "★★★", rare: "★★", common: "★" };
 const STAR_COLOR = 0xf0a93a;
 

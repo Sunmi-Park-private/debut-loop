@@ -231,6 +231,15 @@ function editorSavePlugin(): Plugin {
     configureServer(server) {
       for (const [route, file] of Object.entries(SAVE_TARGETS)) {
         server.middlewares.use(route, (req, res) => {
+          // GET = 디스크의 현재 내용. 에디터가 저장 직전에 대조해, 파일에서 이미 지워진 키를
+          // 메모리에 남아 있다는 이유로 되살리지 않게 한다 (고아 키 부활 방지)
+          if (req.method === 'GET') {
+            try {
+              res.setHeader('Content-Type', 'application/json')
+              res.end(fs.readFileSync(path.resolve(process.cwd(), file), 'utf8'))
+            } catch { res.statusCode = 404; res.end('not found') }
+            return
+          }
           if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
           let body = ''
           req.on('data', (d: Buffer) => { body += d.toString() })

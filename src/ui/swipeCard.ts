@@ -2,6 +2,8 @@
 import { AnimatedSprite, BlurFilter, Container, Graphics, Sprite, Text, Texture, type FederatedPointerEvent } from "pixi.js";
 import type { Beat } from "../engine/types";
 import { pos } from "./layout";
+import { easeOut, easeInOut, lerp } from "./ease";
+import { pressable } from "./press";
 import { buzz } from "./haptics";
 import { pairSpace } from "./keys";
 import { skinNode, skinTexTrim } from "./uiSkin";
@@ -14,6 +16,10 @@ const CARD_W = 394;
 const DRAG_TH = 140; // 커밋 임계 — 100에서 상향: 실수로 놓쳐도 덜 민감, 커밋 기울기 5.2°→7.2° (회전 강도 0.0009는 유지)
 const TILT_SCRUB_SPEED = 0.8; // 갸웃 시퀀스 진행 속도 — 드래그 거리당 프레임 진행 배율 (1=임계에서 마지막 프레임)
 const ROT_PER_PX = 0.0009; // 드래그 1px당 기울기 (rad) — 임계 140px에서 7.2°
+// 임계 미달 복귀 — 남은 거리에 비례한 시간을 상·하한으로 묶는다 (카드덱 시트 스냅과 같은 규칙)
+const SETTLE_MS_PER_PX = 1.1;
+const SETTLE_MIN_MS = 140;
+const SETTLE_MAX_MS = 260;
 // 기울기의 회전축 = 카드 가로 중앙. 카드 원점(좌상단)을 축으로 쓰면 축에서 가로로 떨어진 만큼
 // 회전이 세로 이동으로 새어 나온다(Δy = 축거리·sin θ). 캐릭터는 축에서 195px 떨어져 있어
 // 임계에서 약 25px씩 — 왼쪽으로 끌면 정수리가 올라가고 오른쪽으로 끌면 내려가, 좌우 차가 50px에 달했다.
@@ -155,9 +161,8 @@ export function renderCard(
     editable(name, b);
     editable(`${name}_text`, t);
     btnRefs[dir] = { b, color: btnSkin ? (dir === "left" ? 0xff6f91 : 0x6ec8ff) : color };
-    b.eventMode = "static";
-    b.cursor = "pointer";
-    b.on("pointertap", () => flashChoice(dir, () => onChoose(dir)));
+    // 눌림 → 복귀 후 블룸·확정. 안쪽 컨테이너로 감싸도 t의 로컬 좌표는 그대로라 에디터 조정과 충돌하지 않는다
+    pressable(b, () => flashChoice(dir, () => onChoose(dir)));
     card.addChild(b);
   };
   // 답변 확정 순간 선택된 버튼 라이트 블룸 — 블러 처리된 버튼 모양 발광체가 뒤에서 은은하게 넓게 번지며 소멸
@@ -313,11 +318,32 @@ export function renderCard(
       dx = e.globalX - startX;
       apply();
     };
+    // 임계에 못 미치고 놓았을 때 — 뚝 끊기지 않게 제자리로 밀어 되돌린다 (끄는 동안은 손가락을 1:1로 따라감)
+    const settleBack = (): void => {
+      const from = dx;
+      if (Math.abs(from) < 0.5) { reset(); return; }
+      const dur = Math.max(SETTLE_MIN_MS, Math.min(SETTLE_MAX_MS, Math.abs(from) * SETTLE_MS_PER_PX));
+      const t0 = performance.now();
+      const step = (now: number): void => {
+        if (card.destroyed || !card.parent) return;
+        const t = Math.min(1, (now - t0) / dur);
+        dx = lerp(from, 0, easeOut(t));
+        apply();
+        if (t < 1) { requestAnimationFrame(step); return; }
+        reset();
+      };
+      requestAnimationFrame(step);
+    };
     const finish = (): void => {
       if (!dragging) return;
+      dragging = false; // 되돌아가는 동안 move가 끼어들지 않게 먼저 끊는다
       const commit = Math.abs(dx) >= DRAG_TH ? (dx < 0 ? "left" : "right") : null;
-      reset();
-      if (commit) flashChoice(commit, () => onChoose(commit));
+      if (commit) {
+        reset();
+        flashChoice(commit, () => onChoose(commit));
+      } else {
+        settleBack();
+      }
     };
     card.on("globalpointermove", move); // global은 한 곳만 배선 (양쪽에 걸면 이벤트당 2회 호출)
     for (const t of dragTargets) {
@@ -341,7 +367,7 @@ export function renderCard(
       const step = (now: number): void => {
         if (card.destroyed || !card.parent) return;
         const t = Math.min(1, (now - t0) / DUR);
-        dx = target * t;
+        dx = target * easeInOut(t); // 키보드 스와이프도 드래그와 같은 감각으로
         apply();
         if (t < 1) { requestAnimationFrame(step); return; }
         animating = false;

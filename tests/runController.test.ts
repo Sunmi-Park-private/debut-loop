@@ -1,8 +1,15 @@
 // tests/runController.test.ts — RunController 유닛 (S0, Lv.6)
 import { describe, it, expect } from "vitest";
 import { createRunController } from "../src/ui/runController";
-import { DEFAULT_TUNING } from "../src/engine/state";
+import { DEFAULT_TUNING, STARTER_CARDS } from "../src/engine/state";
 import type { GameConfig, Beat, GateDef } from "../src/engine/types";
+
+/** 시작 카드를 비운 컨트롤러 — 연습·관문 메커닉만 격리해서 본다.
+ *  (시작 덱 자체는 "1회차 시작 덱" describe에서 따로 검증) */
+function emptyDeck<T extends { state: { cards: unknown[] } }>(c: T): T {
+  c.state.cards = [];
+  return c;
+}
 
 const cfg: GameConfig = {
   totalWeeks: 24, debutWeek: 24,
@@ -89,6 +96,28 @@ describe("RunController v2 (회귀 배선)", () => {
   });
 });
 
+describe("1회차 시작 덱", () => {
+  it("새 런은 시작 카드를 들고 출발한다 — 덱이 비어 보이지 않게", () => {
+    const c = createRunController(beats, cfg, "small");
+    expect(c.state.cards).toEqual(STARTER_CARDS);
+    expect(c.state.cards.length).toBeGreaterThan(0);
+  });
+  it("시작 카드는 런마다 복사본 — 한 런에서 소모해도 다음 런에 영향 없다", () => {
+    const a = createRunController(beats, cfg, "small");
+    const b = createRunController(beats, cfg, "small");
+    a.state.cards.pop();
+    expect(b.state.cards).toEqual(STARTER_CARDS);
+    expect(STARTER_CARDS.length).toBeGreaterThan(0); // 원본도 그대로
+  });
+  it("회귀는 계승분으로만 시작 — 시작 카드를 다시 주지 않는다", () => {
+    const only: Beat[] = [{ id: "x", act: 1, textKey: "", left: { label: "L", effects: {} }, right: { label: "R", effects: {} } }];
+    const c = createRunController(only, cfg, "small", [], { ...DEFAULT_TUNING, cardCarryOver: 0 });
+    c.choose("left"); // 소진 → regress
+    c.regress();
+    expect(c.state.cards).toEqual([]);
+  });
+});
+
 describe("RunController v4 (연습 배선)", () => {
   const trainBeats: Beat[] = [
     { id: "t1", act: 1, week: 2, training: true, textKey: "연습", left: { label: "L", effects: {} }, right: { label: "R", effects: {} } },
@@ -96,7 +125,7 @@ describe("RunController v4 (연습 배선)", () => {
   ];
 
   it("finishTraining(perfect) → 에픽 카드 + 소모만(상승 없음) + 비트 소진", () => {
-    const c = createRunController(trainBeats, cfg, "small");
+    const c = emptyDeck(createRunController(trainBeats, cfg, "small"));
     expect(c.current?.training).toBe(true);
     const m0 = c.state.gauges.mental;
     const s0 = c.state.gauges.skill;
@@ -108,14 +137,14 @@ describe("RunController v4 (연습 배선)", () => {
   });
 
   it("finishTraining(clear) → 카드 없음, 소모만", () => {
-    const c = createRunController(trainBeats, cfg, "small");
+    const c = emptyDeck(createRunController(trainBeats, cfg, "small"));
     c.finishTraining("vocal", "clear");
     expect(c.state.cards).toEqual([]);
     expect(c.current?.id).toBe("n1");
   });
 
   it("skipTraining → 소모·카드 없이 진행", () => {
-    const c = createRunController(trainBeats, cfg, "small");
+    const c = emptyDeck(createRunController(trainBeats, cfg, "small"));
     const m0 = c.state.gauges.mental;
     c.skipTraining();
     expect(c.state.cards).toEqual([]);
@@ -124,7 +153,7 @@ describe("RunController v4 (연습 배선)", () => {
   });
 
   it("trainFree(자유 연습) → 카드+소모, 비트 진행 없음", () => {
-    const c = createRunController(trainBeats, cfg, "small");
+    const c = emptyDeck(createRunController(trainBeats, cfg, "small"));
     c.skipTraining(); // n1 카드 상태에서
     const cur = c.current?.id;
     c.trainFree("bond", "good");
@@ -138,7 +167,7 @@ describe("RunController v4 (연습 배선)", () => {
 
   it("회귀 시 카드 계승 — cardCarryOver 개수 (데이브 더 다이버식)", () => {
     const only: Beat[] = [{ id: "x", act: 1, textKey: "", left: { label: "L", effects: {} }, right: { label: "R", effects: {} } }];
-    const c = createRunController(only, cfg, "small", [], { ...DEFAULT_TUNING, cardCarryOver: 2 });
+    const c = emptyDeck(createRunController(only, cfg, "small", [], { ...DEFAULT_TUNING, cardCarryOver: 2 }));
     c.trainFree("vocal", "perfect");
     c.trainFree("dance", "good");
     c.trainFree("promo", "good");
@@ -150,7 +179,7 @@ describe("RunController v4 (연습 배선)", () => {
 
   it("회귀 시 카드 계승 — 보유량보다 큰 설정은 전부 계승", () => {
     const only: Beat[] = [{ id: "x", act: 1, textKey: "", left: { label: "L", effects: {} }, right: { label: "R", effects: {} } }];
-    const c = createRunController(only, cfg, "small", [], { ...DEFAULT_TUNING, cardCarryOver: 99 });
+    const c = emptyDeck(createRunController(only, cfg, "small", [], { ...DEFAULT_TUNING, cardCarryOver: 99 }));
     c.trainFree("vocal", "perfect");
     c.choose("left");
     c.regress();
@@ -170,7 +199,7 @@ describe("RunController v3 (관문 배선)", () => {
   ];
 
   it("막 경계 진입 시 pendingGate + choose 차단", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     expect(c.pendingGate).toBeNull();      // 1막은 관문 없음
     c.choose("left");                       // a1 → a2 진입
     expect(c.pendingGate?.id).toBe("act2");
@@ -180,7 +209,7 @@ describe("RunController v3 (관문 배선)", () => {
   });
 
   it("resolveGate(등급, 선택카드) → 카드 효과 적용·소모 + 티켓·포인트 + 진행 재개", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     c.trainFree("vocal", "good");           // 레어 보컬 1장(skill+8)
     c.trainFree("bond", "perfect");         // 에픽 유대 2장 — 유대(bond+14) · 멘탈(mental+9)
     c.state.gauges.mental = 55;             // trainFree 소모 리셋(테스트 단순화)
@@ -199,7 +228,7 @@ describe("RunController v3 (관문 배선)", () => {
   });
 
   it("resolveGate — 등급 초과 선택은 허용 장수만 반영(굿=1장)", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     c.trainFree("vocal", "good");
     c.trainFree("promo", "good");
     c.state.gauges.mental = 55;
@@ -211,7 +240,7 @@ describe("RunController v3 (관문 배선)", () => {
   });
 
   it("resolveGate — 빈 덱(선택 0장)은 티켓·포인트만", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     c.choose("left");
     const g0 = JSON.stringify(c.state.gauges);
     c.resolveGate("good", []);
@@ -221,7 +250,7 @@ describe("RunController v3 (관문 배선)", () => {
   });
 
   it("skipGate(종료하기) → 보상 없이 관문 통과", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     c.choose("left"); // act2 관문
     const skill0 = c.state.gauges.skill;
     c.skipGate();
@@ -234,7 +263,7 @@ describe("RunController v3 (관문 배선)", () => {
   });
 
   it("retryGate → 멘탈 −1", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     c.choose("left");
     const m0 = c.state.gauges.mental;
     c.retryGate();
@@ -243,7 +272,7 @@ describe("RunController v3 (관문 배선)", () => {
   });
 
   it("회귀 후 관문 재등장 (회차마다 반복)", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     c.choose("left"); c.resolveGate("good", []);
     c.choose("left"); c.resolveGate("good", []); // clueG
     c.choose("left");                        // k 소진 → regress
@@ -264,7 +293,7 @@ describe("RunController v5 (관문 광고 보너스 라운드)", () => {
   ];
 
   it("settleGateRound — 라운드 즉시 정산: 게이지·⭐ 즉시 적용 + 카드 즉시 소모, 티켓은 finishGate 전까지 없음", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     c.trainFree("vocal", "good");           // [0] 레어 보컬 (skill+8)
     c.trainFree("bond", "perfect");         // [1] 유대(bond+14) · [2] 멘탈(mental+9)
     c.state.gauges.mental = 55;
@@ -280,7 +309,7 @@ describe("RunController v5 (관문 광고 보너스 라운드)", () => {
   });
 
   it("2라운드(광고 보너스) — 라운드별 정산 누적 + finishGate에서 티켓 1회", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     c.trainFree("vocal", "good");           // [0] skill+8
     c.trainFree("bond", "perfect");         // [1] bond+14, [2] mental+9
     c.state.gauges.mental = 55;
@@ -299,7 +328,7 @@ describe("RunController v5 (관문 광고 보너스 라운드)", () => {
   });
 
   it("settleGateRound — 등급 초과·중복 인덱스는 허용 장수만 반영", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     c.trainFree("vocal", "good");           // [0] skill+8
     c.trainFree("promo", "good");           // [1] 레어 홍보 (reputation)
     c.state.gauges.mental = 55;
@@ -311,7 +340,7 @@ describe("RunController v5 (관문 광고 보너스 라운드)", () => {
   });
 
   it("resolveGate(단일) — 기존 계약 유지 (settle+finish 위임)", () => {
-    const c = createRunController(gateBeats, cfg, "small", gateDefs);
+    const c = emptyDeck(createRunController(gateBeats, cfg, "small", gateDefs));
     c.choose("left");
     c.resolveGate("good", []);
     expect(c.state.deck).toContain("audition_pass");

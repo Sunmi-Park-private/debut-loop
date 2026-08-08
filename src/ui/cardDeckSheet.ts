@@ -4,6 +4,7 @@
 import { Container, Graphics, Text } from "pixi.js";
 import type { Card, CardGrade } from "../engine/types";
 import { starNode, gaugeSymbol } from "./cardArt";
+import { easeIn, easeOut, easeInOut, lerp } from "./ease";
 import { pos } from "./layout";
 import { editable } from "./editor";
 import { BASE_W, BASE_H } from "./stage";
@@ -25,6 +26,10 @@ const HANDLE_H = 98;   // 개폐 핸들 띠 높이 — content 오프셋과 같�
 const FLIP_HALF = 130; // 뒤집기 반바퀴 (ms) — 폭이 0이 되는 시점에 앞뒤 면 교체
 const LIFT_DY = 14;    // 살짝 떠오르는 높이 (px)
 const LIFT_DUR = 150;
+// 시트 개폐 스냅 — 남은 거리에 비례한 시간(짧게 끌면 짧게, 멀면 길게)을 상·하한으로 묶는다
+const SNAP_MS_PER_PX = 1.1;
+const SNAP_MIN_MS = 150;
+const SNAP_MAX_MS = 320;
 
 /** 로비 카드 뒤집힘 상태 — 모듈 스코프라 화면을 오가도 유지되고, 앱을 새로 켜면(=모듈 재평가) 초기화된다 */
 const revealed = new Set<string>();
@@ -46,10 +51,6 @@ export interface CardDeckSheetOpts {
   onToggle: (open: boolean) => void;
   /** 카드 탭 반응 (기본 lift) */
   tapMode?: DeckTapMode;
-  /** 카드가 하나라도 있을 때 그리드 아래 안내 문구 (없으면 미표시) */
-  filledHint?: string;
-  /** 카드가 없을 때 "?" 슬롯 아래 안내 문구 */
-  emptyHint?: string;
 }
 
 export interface CardDeckSheet {
@@ -249,14 +250,15 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
 
     const flip = (): void => {
       busy = true;
-      // 폭을 0까지 좁혔다가 그 순간 면을 바꾸고 다시 편다 — 스케일이 음수로 가지 않아 글자가 뒤집히지 않는다
-      tween(FLIP_HALF, (p) => { tile.scale.x = 1 - p; }, () => {
+      // 폭을 0까지 좁혔다가 그 순간 면을 바꾸고 다시 편다 — 스케일이 음수로 가지 않아 글자가 뒤집히지 않는다.
+      // 앞 반바퀴는 가속(easeIn), 뒤 반바퀴는 감속(easeOut) — 이어 붙이면 한 번의 ease-in-out으로 읽힌다.
+      tween(FLIP_HALF, (p) => { tile.scale.x = 1 - easeIn(p); }, () => {
         faceUp = !faceUp;
         front.visible = faceUp;
         back.visible = !faceUp;
         if (faceUp) revealed.add(key);
         else revealed.delete(key);
-        tween(FLIP_HALF, (p) => { tile.scale.x = p; }, () => {
+        tween(FLIP_HALF, (p) => { tile.scale.x = easeOut(p); }, () => {
           tile.scale.x = 1;
           busy = false;
         });
@@ -267,10 +269,7 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
       const from = tile.y;
       const to = lifted ? homeY : homeY - LIFT_DY;
       lifted = !lifted;
-      tween(LIFT_DUR, (p) => {
-        const e = 1 - Math.pow(1 - p, 3); // easeOutCubic
-        tile.y = from + (to - from) * e;
-      }, () => {
+      tween(LIFT_DUR, (p) => { tile.y = lerp(from, to, easeInOut(p)); }, () => {
         tile.y = to;
         busy = false;
       });
@@ -292,7 +291,7 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
     cancelAnims();
     registered.clear(); // 새 빌드의 첫 카드가 다시 에디터 핸들을 갖는다
     content.removeChildren();
-    const cSub = mkText("연습으로 모으고, 관문에서 사용해요", 11, 0xa99bc0);
+    const cSub = mkText("연습으로 카드를 모아서, 관문에서 레벨업", 11, 0xa99bc0);
     cSub.x = (W - cSub.width) / 2;
     cSub.y = 26;
     cgrp("card_deck_sub", cSub);
@@ -308,12 +307,6 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
 
     if (groups.size === 0) {
       for (let i = 0; i < MAX_TILES; i++) emptySlot(i);
-      if (opts.emptyHint) {
-        const cHint = mkText(opts.emptyHint, 10.5, 0xc4b8d6);
-        cHint.x = (W - cHint.width) / 2;
-        cHint.y = rowY(MAX_TILES) + 6;
-        cgrp("card_deck_hint", cHint);
-      }
       return;
     }
 
@@ -323,16 +316,11 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
       cardTile(i, key, card, count);
       i++;
     }
-    if (groups.size > MAX_TILES) {
+    if (groups.size > MAX_TILES) { // 표시 상한 초과분 — 안내가 아니라 현황 표기라 남긴다
       const more = mkText(`외 ${groups.size - MAX_TILES}종…`, 10.5, 0xc4b8d6);
       more.x = (W - more.width) / 2;
       more.y = rowY(MAX_TILES) + 6;
       content.addChild(more);
-    } else if (opts.filledHint) {
-      const cHint = mkText(opts.filledHint, 10.5, 0xc4b8d6);
-      cHint.x = (W - cHint.width) / 2;
-      cHint.y = rowY(MAX_TILES) + 6;
-      cgrp("card_deck_hint", cHint);
     }
   };
   buildContent();
@@ -356,7 +344,36 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
   sheet.eventMode = "passive"; // 시트 자신은 안 받고 자식(핸들·카드)이 각자 받는다
   handle.eventMode = "static";
   handle.cursor = "grab";
-  handle.on("pointerdown", (e) => { dragging = true; startY = e.globalY; baseY = sheet.y; moved = 0; });
+  // 손을 뗀 뒤의 스냅은 뚝 끊기지 않게 ease-in-out으로 민다. 끄는 동안(smove)은 손가락을 1:1로 따라간다.
+  // 카드 애니메이션(anims)과 분리해 둔다 — 시트 스냅만 따로 취소해야 드래그를 다시 잡을 때 튀지 않는다.
+  let snapRaf = 0;
+  const cancelSnap = (): void => {
+    if (snapRaf) cancelAnimationFrame(snapRaf);
+    snapRaf = 0;
+  };
+  const snapTo = (to: number): void => {
+    cancelSnap();
+    const from = sheet.y;
+    const dist = Math.abs(to - from);
+    if (dist < 0.5) { sheet.y = to; return; }
+    const dur = Math.max(SNAP_MIN_MS, Math.min(SNAP_MAX_MS, dist * SNAP_MS_PER_PX));
+    const t0 = performance.now();
+    const step = (now: number): void => {
+      const t = Math.min(1, (now - t0) / dur);
+      sheet.y = lerp(from, to, easeInOut(t));
+      if (t < 1) snapRaf = requestAnimationFrame(step);
+      else { sheet.y = to; snapRaf = 0; }
+    };
+    snapRaf = requestAnimationFrame(step);
+  };
+
+  handle.on("pointerdown", (e) => {
+    cancelSnap(); // 스냅 도중 다시 잡으면 그 자리에서 이어서 끈다
+    dragging = true;
+    startY = e.globalY;
+    baseY = sheet.y;
+    moved = 0;
+  });
   const smove = (e: { globalY: number }): void => {
     if (!dragging) return;
     const dy = e.globalY - startY;
@@ -370,7 +387,7 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
     dragging = false;
     if (moved < TAP_SLOP) sheetOpen = !sheetOpen;  // 탭 = 토글
     else sheetOpen = sheet.y < -OPEN_DY / 2;       // 스와이프 = 가까운 쪽 스냅
-    sheet.y = sheetOpen ? -OPEN_DY : 0;
+    snapTo(sheetOpen ? -OPEN_DY : 0);
     opts.onToggle(sheetOpen);
   };
   handle.on("pointerup", sfinish);
