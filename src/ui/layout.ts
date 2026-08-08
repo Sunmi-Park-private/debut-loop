@@ -79,12 +79,21 @@ export function clearDirty(): void {
 /** dirtyPos()가 돌려준 스냅샷 중 실제로 전송에 성공한 필드만 지운다.
  *  clearDirty()처럼 맵 전체를 비우면, fetch가 날아가 있는 동안 들어온 새 편집(다른 필드거나
  *  같은 필드의 재수정)까지 함께 사라져 저장되지 않은 채 유실된다.
- *  전송한 필드를 하나씩 지우고, 그 결과 컴포넌트의 남은 필드가 없을 때만 항목째 제거한다. */
+ *
+ *  같은 필드를 전송 중에 또 고친 경우가 까다롭다 — mark()는 이미 dirty인 필드 이름에는
+ *  아무 표시도 남기지 않으므로(Set이라 이름만 기억), 필드 이름만 보고 지우면 그 재수정이
+ *  통째로 사라진다. 그래서 이름이 아니라 **값**으로 판단한다: 지금 layout에 있는 값이
+ *  보낸 값과 여전히 같을 때만 "그 사이에 아무도 안 건드렸다"고 보고 지운다. 값이 달라졌으면
+ *  전송 중에 또 고친 것이므로 dirty로 남겨 다음 저장(finally의 재예약)에 실리게 한다.
+ *  texts는 배열이라 JSON 문자열로 비교한다. */
 export function clearSent(sent: Record<string, Record<string, unknown>>): void {
   for (const name of Object.keys(sent)) {
     const s = dirty.get(name);
     if (!s) continue;
-    for (const f of Object.keys(sent[name]!)) s.delete(f);
+    const cur = layout[name] as Record<string, unknown> | undefined;
+    for (const [f, v] of Object.entries(sent[name]!)) {
+      if (JSON.stringify(cur?.[f] ?? null) === JSON.stringify(v)) s.delete(f);
+    }
     if (s.size === 0) dirty.delete(name);
   }
 }
