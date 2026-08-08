@@ -181,13 +181,19 @@ function applyStoredStyle(name: string, c: Container): void {
   if (e.scale !== undefined && e.scale > 0) c.scale.set(e.scale);
   if (e.fontSize === undefined && e.color === undefined && e.texts === undefined) return;
   const { texts } = scan(c);
+  // 등록된 노드가 텍스트 자신이면 그 좌표는 에디터가 소유한다(코드가 pos()로 넣고, 드래그가 덮어쓴다).
+  // 이때 중심 보정을 걸면 문구 덮어쓰기로 폭이 바뀔 때마다 저장된 x를 밀어내, 옮겨 저장해도
+  // 다음 렌더에서 다시 어긋난다. 보정은 코드가 폭 기준으로 좌표를 잡는 그룹 컴포넌트에만 필요하다.
+  const owns = c instanceof Text;
   texts.forEach((t, i) => {
-    mutateTextKeepingCenter(t, () => {
+    const edit = (): void => {
       if (e.fontSize !== undefined && e.fontSize > 0) t.style.fontSize = e.fontSize;
       if (e.color !== undefined) t.style.fill = e.color;
       const ov = textEditable(name) ? e.texts?.[i] : undefined; // 동적 문구는 코드 값을 그대로 둔다
       if (typeof ov === "string") t.text = ov;
-    });
+    };
+    if (owns) edit();
+    else mutateTextKeepingCenter(t, edit);
   });
 }
 

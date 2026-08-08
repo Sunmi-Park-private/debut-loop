@@ -162,14 +162,18 @@ export function renderCard(
       // 왼쪽에 붙지 않게. 블록만 가운데 두면 줄끼리 어긋나 보인다.
       style: { fontSize: 17, fill: btnSkin ? 0x5b4a70 : 0xffffff, wordWrap: true, wordWrapWidth: 154, lineHeight: 26, align: "center" },
     });
-    // 버튼(178×60) 안 정중앙 — 항상 계산으로 정한다.
-    // 문구 길이가 비트마다 달라(6~12자, 두 줄도 있음) 고정 오프셋은 어느 한 비트에 맞추면
-    // 나머지가 전부 틀어진다. 그래서 이 텍스트는 레이아웃 에디터 대상에서 제외한다
-    // (위치를 옮겨야 하면 버튼 자체 = card_btn_left/right 를 옮긴다).
-    t.x = Math.round((178 - t.width) / 2);
-    t.y = Math.round((60 - t.height) / 2);
+    // 기본값은 버튼(178×60) 안 정중앙 — 문구 길이가 비트마다 달라(6~12자, 두 줄도 있음)
+    // 고정 오프셋을 쓰면 어느 한 비트에 맞춘 값이 나머지를 전부 틀어지게 한다.
+    // 에디터에서 옮기면 그 값이 우선하지만, 그 순간부터 길이 보정은 사라진다는 뜻이다.
+    const pT = pos(`${name}_text`, {
+      x: Math.round((178 - t.width) / 2),
+      y: Math.round((60 - t.height) / 2),
+    });
+    t.x = pT.x;
+    t.y = pT.y;
     b.addChild(g, t);
     editable(name, b);
+    editable(`${name}_text`, t); // 문구 크기·색을 버튼과 따로 조정
     btnRefs[dir] = { b, color: btnSkin ? (dir === "left" ? 0xff6f91 : 0x6ec8ff) : color };
     // 눌림 → 복귀 후 블룸·확정. 안쪽 컨테이너로 감싸도 t의 로컬 좌표는 그대로라 에디터 조정과 충돌하지 않는다
     pressable(b, () => flashChoice(dir, () => onChoose(dir)));

@@ -439,6 +439,56 @@
       ]
     },
     {
+      "id": "ending",
+      "label": "엔딩 · 회귀 화면",
+      "slots": [
+        {
+          "id": "end-panel",
+          "label": "엔딩·회귀 패널 배경",
+          "file": "",
+          "size": [
+            394,
+            402
+          ],
+          "mode": "9slice",
+          "slice": 24
+        },
+        {
+          "id": "end-btn-fast",
+          "label": "회귀 · ⚡ 빠른 모드 버튼",
+          "file": "",
+          "size": [
+            300,
+            56
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "end-btn-normal",
+          "label": "회귀 · 📖 정속 모드 버튼",
+          "file": "",
+          "size": [
+            300,
+            56
+          ],
+          "mode": "stretch",
+          "small": true
+        },
+        {
+          "id": "end-btn-action",
+          "label": "엔딩 · 단일 액션 버튼",
+          "file": "",
+          "size": [
+            300,
+            56
+          ],
+          "mode": "stretch",
+          "small": true
+        }
+      ]
+    },
+    {
       "id": "training",
       "label": "연습하기",
       "slots": [

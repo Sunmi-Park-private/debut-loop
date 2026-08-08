@@ -5,6 +5,7 @@ import { pos } from "./layout";
 import { pairSpace } from "./keys";
 import { editable } from "./editor";
 import { pressable } from "./press";
+import { skinNode } from "./uiSkin";
 
 interface EndCopy {
   emoji: string;
@@ -49,8 +50,23 @@ export function renderEndScreen(
   scr.x = p.x;
   scr.y = p.y;
 
+  // 조각별 오프셋 그룹 — 화면 전체(endScreen)와 별개로 각 요소를 따로 옮길 수 있게 한다.
+  // 자식 좌표는 코드가 잡은 그대로 두고, 그룹만 움직이므로 기존 배치가 바뀌지 않는다.
+  const grp = (key: string, child: Container): Container => {
+    const g = new Container();
+    const q = pos(key, { x: 0, y: 0 });
+    g.x = q.x;
+    g.y = q.y;
+    g.addChild(child);
+    scr.addChild(g);
+    editable(key, g);
+    return g;
+  };
+
   const bgH = event.type === "regress" ? 402 : 340; // 회귀는 모드 선택 2버튼 수용
-  const bg = new Graphics().roundRect(0, 0, 394, bgH, 24).fill(0xffffff).stroke({ width: 2, color: 0xece4f4 });
+  // 배경판 — 업로드된 아트가 있으면 교체, 없으면 기존 벡터
+  const bgArt = skinNode("end-panel", 394, bgH);
+  const bg = bgArt ?? new Graphics().roundRect(0, 0, 394, bgH, 24).fill(0xffffff).stroke({ width: 2, color: 0xece4f4 });
   const c = copyFor(event, state);
   const emoji = new Text({ text: c.emoji, style: { fontSize: 44 } });
   emoji.x = 175;
@@ -65,39 +81,47 @@ export function renderEndScreen(
   body.x = (394 - body.width) / 2;
   body.y = 148;
 
-  scr.addChild(bg, emoji, title, body);
+  grp("end_bg", bg);
+  grp("end_emoji", emoji);
+  grp("end_title", title);
+  grp("end_body", body);
 
   // 버튼: 회귀=2회차 모드 선택 2버튼, 엔딩=단일 버튼. 탭·Space 공용 1회 실행(진행해도 리스너 해제)
-  const mkAction = (label: string, sub: string, y: number, color: number, fire: () => void): Container => {
+  const mkAction = (key: string, label: string, sub: string, y: number, color: number, fire: () => void): Container => {
     const b = new Container();
-    const g = new Graphics().roundRect(0, 0, 300, 56, 16).fill(color);
+    // 버튼 아트 — 슬롯이 비어 있으면 기존 벡터 유지
+    const g = skinNode(`end-btn-${key}`, 300, 56)
+      ?? new Graphics().roundRect(0, 0, 300, 56, 16).fill(color);
     const t = new Text({ text: label, style: { fontSize: 15, fill: 0xffffff, fontWeight: "bold" } });
     t.x = (300 - t.width) / 2;
     t.y = sub ? 9 : 18;
     b.addChild(g, t);
+    editable(`end_${key}_text`, t); // 버튼 문구를 따로 조정
     if (sub) {
       const st = new Text({ text: sub, style: { fontSize: 10.5, fill: 0xffffff } });
       st.alpha = 0.8;
       st.x = (300 - st.width) / 2;
       st.y = 33;
       b.addChild(st);
+      editable(`end_${key}_sub`, st);
     }
-    b.x = (394 - 300) / 2;
-    b.y = y;
+    const p2 = pos(`end_${key}`, { x: (394 - 300) / 2, y });
+    b.x = p2.x;
+    b.y = p2.y;
     pressable(b, fire);
+    scr.addChild(b);
+    editable(`end_${key}`, b);
     return b;
   };
   let done = false;
   let offSpace = (): void => {};
   const fire = (mode?: "fast" | "normal") => (): void => { if (done) return; done = true; offSpace(); onAction(mode); };
   if (event.type === "regress") {
-    scr.addChild(
-      mkAction("⚡ 빠른 모드로 다시", "겪은 장면은 탭 한 번에 넘어가요", 216, 0xff7fb0, fire("fast")),
-      mkAction("📖 정속 모드로 다시", "모든 장면을 다시 보며 선택해요", 282, 0x9a7fe0, fire("normal")),
-    );
+    mkAction("fast", "⚡ 빠른 모드로 다시", "겪은 장면은 탭 한 번에 넘어가요", 216, 0xff7fb0, fire("fast"));
+    mkAction("normal", "📖 정속 모드로 다시", "모든 장면을 다시 보며 선택해요", 282, 0x9a7fe0, fire("normal"));
     offSpace = pairSpace(fire("fast"), () => !done && !scr.destroyed); // Space = 추천(빠른 모드)
   } else {
-    scr.addChild(mkAction(c.action, "", 240, 0xff7fb0, fire()));
+    mkAction("action", c.action, "", 240, 0xff7fb0, fire());
     offSpace = pairSpace(fire(), () => !done && !scr.destroyed);
   }
 
