@@ -189,8 +189,10 @@ function layoutSavePlugin(): Plugin {
       server.middlewares.use('/__layout', (req, res) => {
         const abs = path.resolve(process.cwd(), FILE)
         if (req.method === 'GET') {
-          res.setHeader('Content-Type', 'application/json')
-          res.end(fs.readFileSync(abs, 'utf8'))
+          try {
+            res.setHeader('Content-Type', 'application/json')
+            res.end(fs.readFileSync(abs, 'utf8'))
+          } catch { res.statusCode = 404; res.end('not found') }
           return
         }
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
@@ -219,9 +221,16 @@ function layoutSavePlugin(): Plugin {
               }
             }
             const cur = JSON.parse(fs.readFileSync(abs, 'utf8')) as Record<string, Record<string, unknown>>
+            const STYLE_FIELDS = ['scale', 'fontSize', 'color', 'texts', 'textForce']
             for (const [name, fields] of Object.entries(patch)) {
+              const existed = cur[name] !== undefined
+              const isStylePatch = existed && Object.keys(fields).some((f) => STYLE_FIELDS.includes(f))
               const entry = { ...(cur[name] ?? {}) }
               for (const [f, v] of Object.entries(fields)) {
+                // 이미 존재하는 항목에 스타일 필드가 함께 오면 x/y는 클라이언트가 ensureCoords()로
+                // 채운 "그려진 그대로"의 스냅샷일 뿐이다 — 그 사이 다른 사람이 저장한 좌표를
+                // 덮어쓰지 않도록 무시한다. x/y만 오는 패치(진짜 드래그 이동)는 그대로 반영한다.
+                if (isStylePatch && (f === 'x' || f === 'y')) continue
                 if (v === null) delete entry[f]
                 else entry[f] = v
               }
@@ -387,6 +396,22 @@ function editorSavePlugin(): Plugin {
             try {
               const parsed: unknown = JSON.parse(body) // 유효성 검증
               const abs = path.resolve(process.cwd(), file)
+              if (route === '/__beats') {
+                // 통째 덮어쓰기 저장이라, 탭 두 개(또는 오래된 탭 하나)가 번갈아 저장하면
+                // 나중 저장이 먼저 저장분을 조용히 지운다. 프로토콜을 고칠 시간은 없으니
+                // 최소한 덮어써지기 직전의 상태를 타임스탬프로 남겨 복구는 가능하게 한다.
+                const backupDir = path.join(path.dirname(abs), '.backups')
+                try {
+                  if (fs.existsSync(abs)) {
+                    fs.mkdirSync(backupDir, { recursive: true })
+                    const d = new Date()
+                    const pad = (v: number): string => String(v).padStart(2, '0')
+                    const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
+                    const base = path.basename(abs, '.json')
+                    fs.copyFileSync(abs, path.join(backupDir, `${base}-${stamp}.json`))
+                  }
+                } catch { /* 백업 실패는 저장 자체를 막지 않는다 */ }
+              }
               fs.writeFileSync(abs, JSON.stringify(parsed, null, 2) + '\n')
               // watch 제외 파일은 모듈 캐시가 안 갱신됨 → 직접 무효화 (리로드 없이, 다음 새로고침부터 새 값)
               const mods = server.moduleGraph.getModulesByFile(abs)

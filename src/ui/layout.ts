@@ -76,6 +76,19 @@ export function clearDirty(): void {
   dirty.clear();
 }
 
+/** dirtyPos()가 돌려준 스냅샷 중 실제로 전송에 성공한 필드만 지운다.
+ *  clearDirty()처럼 맵 전체를 비우면, fetch가 날아가 있는 동안 들어온 새 편집(다른 필드거나
+ *  같은 필드의 재수정)까지 함께 사라져 저장되지 않은 채 유실된다.
+ *  전송한 필드를 하나씩 지우고, 그 결과 컴포넌트의 남은 필드가 없을 때만 항목째 제거한다. */
+export function clearSent(sent: Record<string, Record<string, unknown>>): void {
+  for (const name of Object.keys(sent)) {
+    const s = dirty.get(name);
+    if (!s) continue;
+    for (const f of Object.keys(sent[name]!)) s.delete(f);
+    if (s.size === 0) dirty.delete(name);
+  }
+}
+
 /** layout.json에 이 컴포넌트 항목이 이미 있는지 (없으면 코드 기본 좌표로 그려지는 중) */
 export function hasEntry(name: string): boolean {
   return layout[name] !== undefined;

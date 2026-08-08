@@ -9,7 +9,7 @@
 //   · 행을 선택하면 화면의 해당 에셋에 빨간 테두리를 그려 매핑을 보여준다
 // 저장 값은 layout.json 항목에 x/y와 함께 들어간다(미설정이면 코드가 그린 그대로).
 import { Graphics, Point, Text, type Container, type FederatedPointerEvent } from "pixi.js";
-import { setPos, setStyle, pos, dirtyPos, clearDirty, hasEntry, onDirty } from "./layout";
+import { setPos, setStyle, pos, dirtyPos, clearSent, hasEntry, onDirty } from "./layout";
 import { BASE_W, stageTop, stageHeight } from "./stage";
 import { slotIdOf, slotMeta, type UiSkinSlot } from "./uiSkin";
 
@@ -201,6 +201,7 @@ function clearHighlight(): void {
   highlight?.parent?.removeChild(highlight);
   highlight?.destroy();
   highlight = null;
+  selected = null; // 안 지우면 에디터를 닫았다 다시 열 때 테두리 없이 "선택됨" 상태로 행이 그려진다
 }
 
 /** 선택된 컴포넌트의 화면 경계를 매 프레임 따라다니며 빨간 테두리로 표시.
@@ -216,8 +217,7 @@ function paintHighlight(): void {
     highlight = new Graphics();
     highlight.eventMode = "none"; // 입력을 가로채지 않는다
   }
-  if (highlight.parent !== root) root.addChild(highlight);
-  else root.addChild(highlight); // 항상 최상단 유지
+  root.addChild(highlight); // 이미 자식이어도 다시 addChild — 매 프레임 최상단으로 재부상시킨다
   const b = c.getBounds();
   highlight.clear();
   if (b.width <= 0 || b.height <= 0) return;
@@ -300,6 +300,7 @@ function unmountShield(): void {
 const AUTOSAVE_MS = 600;
 let saveTimer = 0;
 let saving = false;
+let retryPending = false; // 마지막 시도가 실패해 재시도가 필요함(finally에서 소비)
 let saveStatus = "편집하면 자동 저장됩니다";
 let statusEl: HTMLElement | null = null;
 
@@ -318,16 +319,18 @@ async function flushSave(): Promise<void> {
   setStatus(`저장 중… (${n}개)`);
   try {
     const r = await fetch("/__layout", { method: "POST", body: JSON.stringify(changed) });
-    if (!r.ok) { setStatus(`❌ 저장 실패 — ${await r.text()}`); return; }
-    clearDirty(); // 성공한 것만 비운다
+    if (!r.ok) { setStatus(`❌ 저장 실패 — ${await r.text()}`); retryPending = true; return; }
+    clearSent(changed); // 보낸 필드만 비운다 — 전송 중 새로 들어온 편집은 남겨 다음 저장에 실린다
     const t = new Date();
     const pad = (v: number): string => String(v).padStart(2, "0");
     setStatus(`✅ ${n}개 저장됨 · ${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`);
   } catch {
     setStatus("❌ 저장 실패 (dev 서버 전용)");
+    retryPending = true;
   } finally {
     saving = false;
-    if (dirtyKeyCount() > 0) scheduleSave(); // 저장 중에 더 편집했으면 이어서
+    // 저장 중에 더 편집했으면 이어서, 실패했으면 재시도(둘 다 같은 디바운스 경로를 탄다)
+    if (dirtyKeyCount() > 0 || retryPending) { retryPending = false; scheduleSave(); }
   }
 }
 
@@ -348,7 +351,7 @@ function flushBeacon(): void {
   const changed = dirtyPos();
   if (Object.keys(changed).length === 0) return;
   const body = new Blob([JSON.stringify(changed)], { type: "application/json" });
-  if (navigator.sendBeacon("/__layout", body)) clearDirty();
+  if (navigator.sendBeacon("/__layout", body)) clearSent(changed);
 }
 window.addEventListener("beforeunload", flushBeacon);
 window.addEventListener("pagehide", flushBeacon);
@@ -388,10 +391,15 @@ const css = {
 
 function refreshPanel(): void {
   if (!on) return;
-  // 문구를 입력하는 중이면 다시 그리지 않는다 — editable()이 매 렌더마다 부르기 때문에
-  // 그대로 두면 한 글자 칠 때마다 input이 새로 만들어져 포커스와 커서가 날아간다.
+  // 패널 안의 컨트롤을 조작하는 중이면 다시 그리지 않는다 — editable()이 매 렌더마다 부르기 때문에
+  // 그대로 두면 한 글자 칠 때마다(문구 입력), 값이 바뀔 때마다(x/y/크기 숫자칸) 새 DOM 노드가
+  // 만들어져 포커스·커서가 날아가고, 배율 슬라이더는 드래그 중 노드가 뽑혀 나가 조작이 끊기고,
+  // 열려 있던 농도 드롭다운은 통째로 사라진다. 다른 디자이너의 에셋 교체 알림도 같은 rebuild를
+  // 타므로, 텍스트 하나만 봐서는 안 되고 패널 안의 컨트롤 전체를 보호해야 한다.
   const act = document.activeElement;
-  if (act instanceof HTMLInputElement && act.type === "text" && _panel?.contains(act)) return;
+  const isPanelControl =
+    act instanceof HTMLInputElement || act instanceof HTMLSelectElement || act instanceof HTMLTextAreaElement;
+  if (isPanelControl && _panel?.contains(act)) return;
   const p = panelEl();
   p.style.display = "block";
   p.innerHTML =
@@ -629,17 +637,23 @@ function slotControls(slot: UiSkinSlot): HTMLDivElement {
   btn.style.cssText =
     "margin-left:auto;font-size:10.5px;padding:3px 8px;border:1px solid #ece4f4;border-radius:6px;" +
     "background:#f8f4fc;color:#5b4a70;font-weight:600;cursor:pointer";
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = `image/png,image/jpeg,image/webp${slot.vid ? ",video/quicktime,video/webm,video/mp4,.mov,.webm,.mp4" : ""}`;
-  input.style.display = "none";
-  document.body.appendChild(input); // 패널이 다시 그려져도 파일 선택창이 살아있도록 body에 둔다
-  input.onchange = () => {
-    const f = input.files?.[0];
-    if (f) void uploadSlotFile(slot, f, btn);
-    input.remove();
+  // 클릭할 때만 만든다 — 패널은 편집·에셋 알림마다 다시 그려지는데, 매번 body에 하나씩
+  // 붙여 두면(이전엔 렌더마다 append) 선택창을 한 번도 안 열어도 고아 노드가 계속 쌓인다.
+  btn.onclick = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = `image/png,image/jpeg,image/webp${slot.vid ? ",video/quicktime,video/webm,video/mp4,.mov,.webm,.mp4" : ""}`;
+    input.style.display = "none";
+    document.body.appendChild(input); // 파일 선택창이 떠 있는 동안 패널이 다시 그려져도 살아있도록 body에 둔다
+    const cleanup = (): void => input.remove();
+    input.onchange = () => {
+      const f = input.files?.[0];
+      if (f) void uploadSlotFile(slot, f, btn);
+      cleanup(); // 선택했든 안 했든 노드는 남겨두지 않는다
+    };
+    input.oncancel = cleanup; // 선택창을 취소하면 change가 안 오므로 별도로 처리
+    input.click();
   };
-  btn.onclick = () => input.click();
 
   bar.append(cap, sel, btn);
   return bar;
