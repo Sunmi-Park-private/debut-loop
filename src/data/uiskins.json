@@ -247,7 +247,7 @@
         {
           "id": "side-close-x",
           "label": "공통 · 닫기 X 버튼",
-          "file": "assets/ui/side-close-x.png",
+          "file": "assets/ui/side-close-x.webp",
           "size": [
             26,
             26
