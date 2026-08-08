@@ -152,14 +152,18 @@ export function renderCard(
     const t = new Text({
       text: label,
       // 대사와 동일한 폰트 스타일·크기 (스킨 버튼 위 색상도 대사와 동일, 벡터 폴백은 흰색 유지)
-      style: { fontSize: 17, fill: btnSkin ? 0x5b4a70 : 0xffffff, wordWrap: true, wordWrapWidth: 154, lineHeight: 26 },
+      // align:center — 두 줄로 접히는 긴 라벨("그래도 지금은 / 동료야")의 둘째 줄이
+      // 왼쪽에 붙지 않게. 블록만 가운데 두면 줄끼리 어긋나 보인다.
+      style: { fontSize: 17, fill: btnSkin ? 0x5b4a70 : 0xffffff, wordWrap: true, wordWrapWidth: 154, lineHeight: 26, align: "center" },
     });
-    const pT = pos(`${name}_text`, { x: 12, y: 12 }); // 버튼 내부 텍스트 위치 — 에디터 조정 가능
-    t.x = pT.x;
-    t.y = pT.y;
+    // 버튼(178×60) 안 정중앙 — 항상 계산으로 정한다.
+    // 문구 길이가 비트마다 달라(6~12자, 두 줄도 있음) 고정 오프셋은 어느 한 비트에 맞추면
+    // 나머지가 전부 틀어진다. 그래서 이 텍스트는 레이아웃 에디터 대상에서 제외한다
+    // (위치를 옮겨야 하면 버튼 자체 = card_btn_left/right 를 옮긴다).
+    t.x = Math.round((178 - t.width) / 2);
+    t.y = Math.round((60 - t.height) / 2);
     b.addChild(g, t);
     editable(name, b);
-    editable(`${name}_text`, t);
     btnRefs[dir] = { b, color: btnSkin ? (dir === "left" ? 0xff6f91 : 0x6ec8ff) : color };
     // 눌림 → 복귀 후 블룸·확정. 안쪽 컨테이너로 감싸도 t의 로컬 좌표는 그대로라 에디터 조정과 충돌하지 않는다
     pressable(b, () => flashChoice(dir, () => onChoose(dir)));
@@ -217,8 +221,9 @@ export function renderCard(
       cx += chip.width + 10;
     }
   } else {
-    mkBtn("← " + beat.left.label, 18, 0x9a7fe0, "left");
-    mkBtn(beat.right.label + " →", 198, 0xff7fb0, "right");
+    // 방향은 버튼 아트가 표시한다 — 문구에 ←/→를 덧붙이지 않는다
+    mkBtn(beat.left.label, 18, 0x9a7fe0, "left");
+    mkBtn(beat.right.label, 198, 0xff7fb0, "right");
   }
 
   // ── replay(빠른 모드): 탭·Space·→ 1회로 기록된 선택 재적용 — 드래그/버튼/방향키 없음 ──
