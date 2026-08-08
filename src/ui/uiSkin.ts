@@ -4,7 +4,7 @@ import uiskinsJson from "../data/uiskins.json";
 import { assetUrl, type HotAssetUpdate } from "./hotAssets";
 import { isVideoUrl, loadVideoTexture } from "./videoLoad";
 
-export interface UiSkinSlot { id: string; label: string; file: string; size: [number, number]; mode: "stretch" | "9slice" | "3slice"; slice?: number; small?: boolean; scale?: number; opacity?: number; natural?: boolean; vid?: boolean }
+export interface UiSkinSlot { id: string; label: string; file: string; size: [number, number]; mode: "stretch" | "9slice" | "3slice"; slice?: number; small?: boolean; scale?: number; opacity?: number; natural?: boolean; vid?: boolean; dom?: boolean }
 export interface UiSkinScreen { id: string; label: string; slots: UiSkinSlot[] }
 export const uiSkinScreens = (uiskinsJson as unknown as { screens: UiSkinScreen[] }).screens;
 export const allUiSkinSlots = (): UiSkinSlot[] => uiSkinScreens.flatMap((s) => s.slots);
@@ -68,6 +68,7 @@ const DEFER_SLOT = /^(gate-|train-|audition-|member-|board-|grade-)/;
 export async function loadUiSkins(onTick?: () => void): Promise<void> {
   await Promise.all(allUiSkinSlots().map(async (slot) => {
     if (!slot.file) { onTick?.(); return; } // 삭제된(빈) 슬롯 — 로드 시도 없음
+    if (slot.dom) { onTick?.(); return; }   // DOM 팝업이 CSS로 직접 참조 — Pixi 텍스처로 올릴 필요 없음
     if (isVideoUrl(assetUrl(slot.file) ?? slot.file)) {
       onTick?.();
       void loadSlotTexture(slot).then((r) => {
@@ -115,6 +116,16 @@ function applyDensity(node: Container, slot: UiSkinSlot): void {
     f.saturate(-op * 2, false); // −50% → 채도 +100%
     node.filters = [f];
   }
+}
+
+/** 슬롯의 이미지 URL — Pixi가 아니라 **DOM/CSS**에서 쓰는 슬롯용 (메타 메뉴 팝업 등).
+ *  업로드 전이면 null이라 호출측이 기존 벡터·이모지 모양을 유지한다.
+ *  파일 존재 여부는 알 수 없으므로(매니페스트는 플레이스홀더 경로를 들고 있다) `dom` 슬롯은
+ *  CSS background-image로 쓰고, 없으면 브라우저가 조용히 무시하도록 배경색을 함께 지정할 것. */
+export function skinUrl(id: string): string | null {
+  const slot = allUiSkinSlots().find((s) => s.id === id);
+  if (!slot?.file) return null;
+  return assetUrl(slot.file) ?? slot.file;
 }
 
 /** 업로드된 스킨의 원본 텍스처 (트리밍 없음) — 아트 좌표에 직접 그려야 하는 특수 레이아웃(게이지 프레임 등)용 */
