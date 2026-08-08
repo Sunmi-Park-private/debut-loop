@@ -84,6 +84,28 @@ function stripArtistTag(abs: string): void {
   } catch { /* ffmpeg 부재·포맷 미지원 → 원본 유지 */ }
 }
 
+// 빌드 산출물(APK·ios/)은 무겁고 gitignore 대상이라 워크트리마다 새로 생기지 않는다.
+// 세션이 워크트리에서 돌 때도 메인 체크아웃의 산출물을 찾도록 폴백 경로를 만든다.
+// (.git 이 파일이면 워크트리 → gitdir 의 `.git/worktrees/<name>` 에서 두 단계 위가 메인 저장소)
+function mainCheckoutDir(): string | null {
+  try {
+    const dotGit = path.resolve(process.cwd(), '.git')
+    if (!fs.existsSync(dotGit) || fs.statSync(dotGit).isDirectory()) return null // 메인 체크아웃 자신
+    const m = /^gitdir:\s*(.+)$/m.exec(fs.readFileSync(dotGit, 'utf8'))
+    if (!m) return null
+    return path.resolve(m[1].trim(), '../../..') // .git/worktrees/<name> → 저장소 루트
+  } catch { return null }
+}
+/** cwd 우선, 없으면 메인 체크아웃에서 찾는다. 둘 다 없으면 null */
+function resolveBuildArtifact(rel: string): string | null {
+  const here = path.resolve(process.cwd(), rel)
+  if (fs.existsSync(here)) return here
+  const main = mainCheckoutDir()
+  if (!main) return null
+  const there = path.resolve(main, rel)
+  return fs.existsSync(there) ? there : null
+}
+
 // dev 편의: 최신 APK 빌드 다운로드 — 에디터 허브 우측 상단 버튼 (/__apk·/__apkrelease, ?info=메타)
 // debug=치트 메뉴 포함(팀 테스트) · release=치트 제외(제출·외부 공유), 둘 다 디버그 키 서명이라 사이드로드 가능
 function apkDownloadPlugin(kind: 'debug' | 'release' = 'debug'): Plugin {
@@ -95,8 +117,8 @@ function apkDownloadPlugin(kind: 'debug' | 'release' = 'debug'): Plugin {
     name: `apk-download:${kind}`,
     configureServer(server) {
       server.middlewares.use(route, (req, res) => {
-        const p = path.resolve(process.cwd(), apkPath)
-        if (!fs.existsSync(p)) { res.statusCode = 404; res.end('no build'); return }
+        const p = resolveBuildArtifact(apkPath)
+        if (!p) { res.statusCode = 404; res.end('no build'); return }
         const st = fs.statSync(p)
         const q = new URL(req.url ?? '/', 'http://localhost').searchParams
         if (q.has('info')) {
@@ -122,8 +144,8 @@ function iosZipPlugin(): Plugin {
     name: 'ios-zip',
     configureServer(server) {
       server.middlewares.use('/__ioszip', (req, res) => {
-        const iosDir = path.resolve(process.cwd(), 'ios')
-        if (!fs.existsSync(iosDir)) { res.statusCode = 404; res.end('no ios project'); return }
+        const iosDir = resolveBuildArtifact('ios')
+        if (!iosDir) { res.statusCode = 404; res.end('no ios project'); return }
         const pubDir = path.join(iosDir, 'App/App/public')
         const mtime = fs.statSync(fs.existsSync(pubDir) ? pubDir : iosDir).mtimeMs // 마지막 cap sync 시각
         const q = new URL(req.url ?? '/', 'http://localhost').searchParams
@@ -137,7 +159,7 @@ function iosZipPlugin(): Plugin {
         res.setHeader('Content-Type', 'application/zip')
         res.setHeader('Content-Disposition',
           `attachment; filename="debut-loop-ios-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.zip"`)
-        const child = spawn('zip', ['-rq', '-', 'ios', '-x', '*.DS_Store'], { cwd: process.cwd() }) // 요청 시점 상태를 스트리밍 (임시 파일 없음)
+        const child = spawn('zip', ['-rq', '-', 'ios', '-x', '*.DS_Store'], { cwd: path.dirname(iosDir) }) // 요청 시점 상태를 스트리밍 (임시 파일 없음)
         child.stdout.pipe(res)
         child.on('error', () => { if (!res.writableEnded) { res.statusCode = 500; res.end('zip failed') } })
         req.on('close', () => { child.kill() })
