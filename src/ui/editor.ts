@@ -501,22 +501,30 @@ function refreshPanel(): void {
   if (isPanelControl && _panel?.contains(act)) return;
   const p = panelEl();
   p.style.display = "block";
-  p.innerHTML =
-    "<b>📐 레이아웃 에디터</b><br><small>드래그 · 좌표 입력 · 이름을 누르면 화면에서 <span style='color:#ff2d2d;font-weight:700'>빨간 테두리</span>로 표시</small>" +
-    "<hr style='border:none;border-top:1px solid #ece4f4'>";
+  p.innerHTML = "";
+  // 머리말은 스크롤과 무관하게 위에 붙어 있는다 — 목록이 길어지면 ✕와 모드 토글을 찾아
+  // 한참 올려야 했다. 패널 좌우 패딩을 음수 마진으로 덮어 스크롤 내용이 뒤로 비쳐 보이지 않게 한다.
+  const head = document.createElement("div");
+  head.style.cssText =
+    "position:sticky;top:-10px;z-index:2;background:#fff;margin:-10px -12px 8px;padding:10px 12px 8px;" +
+    "border-bottom:1px solid #ece4f4";
+  head.innerHTML =
+    "<b>📐 레이아웃 에디터</b><br><small>드래그 · 좌표 입력 · 이름을 누르면 화면에서 " +
+    "<span style='color:#ff2d2d;font-weight:700'>빨간 테두리</span>로 표시</small>";
+  p.appendChild(head);
   // ✕ 닫기 — 에디터 모드 종료 (치트 메뉴 토글과 동일)
   const close = document.createElement("button");
   close.textContent = "✕";
   close.title = "에디터 닫기";
   close.style.cssText =
-    "position:absolute;top:8px;right:8px;width:24px;height:24px;border:1px solid #ece4f4;border-radius:50%;" +
+    "position:absolute;top:10px;right:12px;width:24px;height:24px;border:1px solid #ece4f4;border-radius:50%;" +
     "background:#f8f4fc;color:#a99bc0;font-weight:700;cursor:pointer;line-height:1";
   close.onclick = () => setEditorMode(false);
-  p.appendChild(close);
+  head.appendChild(close);
   // 모드 토글 — 편집(실드·그리드) ⇄ 조작(게임 정상 동작). 상태가 곧 설명이 되게 적는다
   const mode = document.createElement("button");
   mode.style.cssText =
-    "width:100%;margin:0 0 8px;padding:8px 10px;border:0;border-radius:9px;cursor:pointer;text-align:left;" +
+    "width:100%;margin:8px 0 0;padding:8px 10px;border:0;border-radius:9px;cursor:pointer;text-align:left;" +
     "font:12px -apple-system,sans-serif;line-height:1.55;color:#fff;background:" +
     (interact ? "#2fb573" : "#ff7fb0");
   mode.innerHTML = interact
@@ -527,7 +535,7 @@ function refreshPanel(): void {
       "<span style='opacity:.85;font-size:11px'>드래그로 옮기고 10px에 붙어요 (Alt = 1px)<br>" +
       "<b>`</b> 또는 여기를 눌러 조작으로 (화면 진행)</span>";
   mode.onclick = () => setInteractMode(!interact);
-  p.appendChild(mode);
+  head.appendChild(mode); // 모드 토글도 머리말에 — 자주 오가는 컨트롤이라 항상 손에 닿아야 한다
   const rows = [...visible].filter(([, c]) => !c.destroyed && c.parent); // 화면에 남아있는 것만
   if (rows.length === 0) {
     const empty = document.createElement("div");
