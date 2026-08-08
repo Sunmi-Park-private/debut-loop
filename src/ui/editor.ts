@@ -139,9 +139,9 @@ export function mutateTextKeepingCenter(t: Text, edit: () => void): void {
 // 스토리 선택지·게이지 수치처럼 코드가 화면마다 새로 쓰는 문구를 덮어쓰면,
 // 그 컴포넌트는 모든 비트에서 같은 문구로 고정돼 스토리가 바뀌지 않는다.
 // 처음부터 아는 것은 목록으로 막고, 나머지는 실행 중에 문구가 바뀌는지 보고 자동으로 잠근다.
-const DYNAMIC_TEXT = /^(card$|card_btn_(left|right)(_text)?$|story_val_|story_tab$|lobby_cta_(round|sub|run)$|card_deck_item_)/;
+const DYNAMIC_TEXT = /^(card(_text)?$|card_btn_(left|right)(_text)?$|card_replay_|card_seen_note$|story_val_|story_tab$|lobby_cta_(round|sub|run)$|card_deck_item_)/;
 /** 그중 스토리 데이터(beats)에서 오는 것 — 비트별 수정은 스토리 에디터(flow.html) 담당 */
-const STORY_TEXT = /^(card$|card_btn_(left|right)(_text)?$)/;
+const STORY_TEXT = /^(card(_text)?$|card_btn_(left|right)(_text)?$|card_replay_)/;
 const dynamicText = new Set<string>();
 const codeTexts = new Map<string, string[]>();
 

@@ -24,6 +24,10 @@ const SETTLE_MAX_MS = 260;
 // 회전이 세로 이동으로 새어 나온다(Δy = 축거리·sin θ). 캐릭터는 축에서 195px 떨어져 있어
 // 임계에서 약 25px씩 — 왼쪽으로 끌면 정수리가 올라가고 오른쪽으로 끌면 내려가, 좌우 차가 50px에 달했다.
 const PIVOT_X = CARD_W / 2;
+// 선택 버튼 문구를 버튼 중앙에서 화면 **안쪽(중심선 방향)** 으로 당기는 양.
+// 좌 버튼 문구는 오른쪽으로, 우 버튼 문구는 왼쪽으로 이만큼 이동한다.
+// 버튼 아트를 넓힌 뒤 문구가 바깥으로 치우쳐 보여 모았다. 바깥으로 밀려면 음수로.
+const BTN_TEXT_IN = 30;
 
 export interface CardOpts {
   seen?: boolean; // 회귀 가속: 축약 카드로 표시
@@ -139,12 +143,21 @@ export function renderCard(
       wordWrap: true, wordWrapWidth: 360, lineHeight: seen ? 21 : 26, align: "center",
     },
   });
-  // 패널 아트(game-card-frame, 폭 CARD_W) 기준 가로 가운데 — 실제 렌더 폭으로 계산해
+  // 세로는 **상단 기준**으로 고정한다. 예전엔 `btnY - line.height`로 아래를 맞춰서,
+  // 3줄짜리는 안정적인데 1·2줄짜리는 위쪽에 빈 공간이 생기고 문단이 아래로 내려앉았다.
+  // 3줄이 지금과 같은 자리에 오도록 그 높이만큼 위에서 시작한다.
+  const bodyLH = seen ? 21 : 26;
+  const bodyTop = btnY - bodyLH * 3 - 16;
+  // 가로는 패널 아트(game-card-frame, 폭 CARD_W) 기준 가운데 — 실제 렌더 폭으로 계산해
   // 대사 길이가 장면마다 달라도 항상 패널 중앙에 온다
-  line.x = Math.round((CARD_W - line.width) / 2);
-  // 초상 카드: 대사를 버튼 바로 위(하단)에 배치 — 낮아진 패널에서 빈 공간 제거
-  line.y = !seen && hasPortrait ? btnY - line.height - 16 : textY;
+  const pLine = pos("card_text", {
+    x: Math.round((CARD_W - line.width) / 2),
+    y: !seen && hasPortrait ? bodyTop : textY,
+  });
+  line.x = pLine.x;
+  line.y = pLine.y;
   card.addChild(line);
+  editable("card_text", line); // 대사 문구를 카드와 별개로 조정 (크기·색·위치)
 
   // 확정 시 라이트 블룸 대상 — 버튼 컨테이너와 블룸 색 (스킨 아트 색상: 좌=핑크, 우=블루 / 벡터 폴백=버튼 채색)
   const btnRefs: Partial<Record<"left" | "right", { b: Container; color: number }>> = {};
@@ -164,11 +177,13 @@ export function renderCard(
       // 왼쪽에 붙지 않게. 블록만 가운데 두면 줄끼리 어긋나 보인다.
       style: { fontSize: 17, fill: btnSkin ? 0x5b4a70 : 0xffffff, wordWrap: true, wordWrapWidth: 154, lineHeight: 26, align: "center" },
     });
-    // 기본값은 버튼(178×60) 안 정중앙 — 문구 길이가 비트마다 달라(6~12자, 두 줄도 있음)
-    // 고정 오프셋을 쓰면 어느 한 비트에 맞춘 값이 나머지를 전부 틀어지게 한다.
-    // 에디터에서 옮기면 그 값이 우선하지만, 그 순간부터 길이 보정은 사라진다는 뜻이다.
+    // 기본값은 버튼(178×60) 안 정중앙에서 중심선 쪽으로 BTN_TEXT_IN만큼 당긴 자리.
+    // 가운데 정렬 자체는 유지되므로 문구 길이가 비트마다 달라도(6~12자, 두 줄 포함)
+    // 전 비트가 같은 규칙으로 놓인다.
+    // 에디터에서 옮기면 그 값이 우선하지만, 그 순간부터 길이 보정은 사라진다.
+    const dx = dir === "left" ? BTN_TEXT_IN : -BTN_TEXT_IN;
     const pT = pos(`${name}_text`, {
-      x: Math.round((178 - t.width) / 2),
+      x: Math.round((178 - t.width) / 2 + dx),
       y: Math.round((60 - t.height) / 2),
     });
     t.x = pT.x;
