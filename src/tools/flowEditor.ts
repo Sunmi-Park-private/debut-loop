@@ -44,20 +44,23 @@ function validate(): string | null {
 
 // 타이핑 → 게임에 실시간 반영 (저장 아님). 문구만 보내고, 파일 기록은 💾가 담당한다.
 let previewTimer = 0;
+let previewPending: Record<string, unknown> = {};
 function sendPreview(): void {
   const bt = beats[sel];
   if (!bt) return;
-  const patch = {
-    [bt.id]: {
-      textKey: bt.textKey,
-      left: { label: bt.left.label, hint: bt.left.hint },
-      right: { label: bt.right.label, hint: bt.right.hint },
-    },
+  // 대기 중인 다른 비트의 수정을 덮어쓰지 않고 모아 둔다 —
+  // 0.3초 안에 다른 비트로 옮겨 타이핑하면 앞 비트의 반영이 통째로 사라지던 문제
+  previewPending[bt.id] = {
+    textKey: bt.textKey,
+    left: { label: bt.left.label, hint: bt.left.hint },
+    right: { label: bt.right.label, hint: bt.right.hint },
   };
   if (previewTimer) clearTimeout(previewTimer);
   previewTimer = window.setTimeout(() => {
     previewTimer = 0;
-    void fetch("/__beatspreview", { method: "POST", body: JSON.stringify(patch) }).catch(() => {});
+    const body = JSON.stringify(previewPending);
+    previewPending = {};
+    void fetch("/__beatspreview", { method: "POST", body }).catch(() => {});
   }, 300);
 }
 
