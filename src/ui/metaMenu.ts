@@ -3,6 +3,26 @@
 // 본선: docs/META_UI.md 원설계(메타 저장·정산·오디오·다국어)로 확장.
 import { bgmVolume, setBgmVolume, bgmMuted, setBgmMuted } from "./audio";
 import { pairSpace } from "./keys";
+import { skinUrl } from "./uiSkin";
+
+// 업로드된 슬롯 아트를 CSS 배경으로 얹는다 (ui.html 「메인 로비 사이드」 그룹).
+// 매니페스트는 미업로드 슬롯도 플레이스홀더 경로를 들고 있어 URL만으로는 존재 여부를 알 수 없다.
+// 한 번 로드를 시도해 보고 성공한 것만 입히므로, 아트가 없으면 기존 벡터·이모지 모양이 그대로 남는다.
+const skinBgOk = new Map<string, boolean>();
+function skinBg(el: HTMLElement, id: string): void {
+  const url = skinUrl(id);
+  if (!url || skinBgOk.get(id) === false) return;
+  const paint = (): void => {
+    el.style.backgroundImage = `url('${url}')`;
+    el.style.backgroundSize = "100% 100%";
+    el.style.backgroundRepeat = "no-repeat";
+  };
+  if (skinBgOk.get(id)) { paint(); return; }
+  const probe = new Image();
+  probe.onload = () => { skinBgOk.set(id, true); paint(); };
+  probe.onerror = () => { skinBgOk.set(id, false); };
+  probe.src = url;
+}
 
 const INK = "#5b4a70";
 const SUB = "#a99bc0";
@@ -54,6 +74,7 @@ function ensureCore(): void {
     "background:#fff;border-radius:20px;width:360px;max-width:92vw;max-height:82vh;overflow:auto;" +
     `font:14px -apple-system,'Apple SD Gothic Neo',sans-serif;color:${INK};` +
     "box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px 18px 20px";
+  skinBg(modal, "side-panel");
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
   overlay.onclick = (e) => { if (e.target === overlay) overlay.style.display = "none"; };
@@ -86,6 +107,8 @@ function ensureCore(): void {
       "width:26px;height:26px;border:1px solid #ece4f4;border-radius:50%;background:#f8f4fc;" +
       `color:${SUB};font-weight:700;cursor:pointer;line-height:1`;
     x.onclick = () => { overlay.style.display = "none"; };
+    skinBg(row, "side-title-bar");
+    skinBg(x, "side-close-x");
     row.append(title, x);
     modal.appendChild(row);
   }
@@ -184,7 +207,27 @@ function ensureCore(): void {
   // ── 🛍 상점 ──
   function renderShop(): void {
     header("shop");
-    modal.appendChild(section(`<div style='display:flex;justify-content:space-between;font-size:13px;font-weight:800'><span>상점</span><span style='color:#c9527f'>⭐ 32</span></div>`));
+    const shopTop = document.createElement("div");
+    shopTop.style.cssText = "display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:800";
+    const shopName = document.createElement("span");
+    shopName.textContent = "상점";
+    const purse = document.createElement("span");
+    purse.style.cssText = "display:flex;align-items:center;gap:4px;color:#c9527f";
+    // 재화 아이콘 — 아트를 올리면 ⭐ 자리에 들어간다 (미업로드면 이모지 그대로)
+    const coin = document.createElement("span");
+    coin.textContent = "⭐";
+    if (skinUrl("side-shop-coin")) {
+      const probe = new Image();
+      probe.onload = () => {
+        coin.textContent = "";
+        coin.style.cssText = "width:18px;height:18px;background-size:100% 100%;background-repeat:no-repeat";
+        coin.style.backgroundImage = `url('${skinUrl("side-shop-coin") ?? ""}')`;
+      };
+      probe.src = skinUrl("side-shop-coin") ?? "";
+    }
+    purse.append(coin, Object.assign(document.createElement("span"), { textContent: "32" }));
+    shopTop.append(shopName, purse);
+    modal.appendChild(shopTop);
     const items: Array<[string, string, string, string]> = [
       ["🎴", "카드팩", "랜덤 카드 3장", "⭐ 15"],
       ["🎟", "패자부활권", "탈락 위기에서 한 번 부활", "⭐ 20"],
@@ -201,6 +244,8 @@ function ensureCore(): void {
       buy.textContent = price;
       buy.style.cssText = `padding:8px 13px;border:0;border-radius:10px;background:${PINK};color:#fff;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap`;
       buy.onclick = () => toast("데모 버전에서는 준비 중이에요 🛍");
+      skinBg(d, "side-shop-row");
+      skinBg(buy, "side-shop-btn-buy");
       d.appendChild(buy);
       modal.appendChild(d);
     }
@@ -224,6 +269,7 @@ function ensureCore(): void {
           today ? `background:#fff2f9;border:2.5px solid ${PINK};color:#c9527f;cursor:pointer;box-shadow:0 4px 12px rgba(255,127,176,.35)` :
             `background:#f8f4fc;border:2px solid ${LINE};color:${SUB}`);
       d.innerHTML = `D${day}<br><span style='font-size:15px'>${done ? "✓" : r}</span>${today ? "<br><b style='font-size:9px'>오늘!</b>" : ""}`;
+      skinBg(d, done ? "side-daily-cell-done" : today ? "side-daily-cell-today" : "side-daily-cell-lock");
       if (today) d.onclick = () => { mock.dailyClaimed = true; toast("⭐15 획득! 내일 또 만나요 🎁"); renderDaily(); };
       grid.appendChild(d);
     });
@@ -259,6 +305,7 @@ function ensureCore(): void {
         (open ? `background:linear-gradient(180deg,#fdf3f8,#f3e8fa);border:2px solid ${PINK}` :
           `background:#f3eef9;border:2px solid ${LINE};color:${SUB}`);
       d.innerHTML = open ? `<span style='font-size:26px'>${ic}</span>${cap}` : `<span style='font-size:22px'>🔒</span>???`;
+      skinBg(d, open ? "side-album-cell-got" : "side-album-cell-lock");
       d.onclick = () => toast(open ? `"${cap}" — 데모에서 해금된 장면이에요 📔` : "아직 만나지 못한 장면이에요 🔒");
       grid.appendChild(d);
     }

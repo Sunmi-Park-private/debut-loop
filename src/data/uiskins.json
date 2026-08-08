@@ -229,6 +229,142 @@
       ]
     },
     {
+      "id": "lobbyside",
+      "label": "메인 로비 사이드",
+      "slots": [
+        {
+          "id": "side-panel",
+          "label": "공통 · 팝업 배경판",
+          "file": "assets/ui/side-panel.png",
+          "size": [
+            320,
+            420
+          ],
+          "mode": "9slice",
+          "slice": 24,
+          "dom": true
+        },
+        {
+          "id": "side-close-x",
+          "label": "공통 · 닫기 X 버튼",
+          "file": "assets/ui/side-close-x.png",
+          "size": [
+            26,
+            26
+          ],
+          "mode": "stretch",
+          "dom": true
+        },
+        {
+          "id": "side-title-bar",
+          "label": "공통 · 제목 띠",
+          "file": "assets/ui/side-title-bar.png",
+          "size": [
+            320,
+            34
+          ],
+          "mode": "9slice",
+          "slice": 12,
+          "dom": true
+        },
+        {
+          "id": "side-daily-cell-done",
+          "label": "데일리 · 출석 칸 · 받음",
+          "file": "assets/ui/side-daily-cell-done.png",
+          "size": [
+            68,
+            62
+          ],
+          "mode": "9slice",
+          "slice": 12,
+          "dom": true
+        },
+        {
+          "id": "side-daily-cell-today",
+          "label": "데일리 · 출석 칸 · 오늘",
+          "file": "assets/ui/side-daily-cell-today.png",
+          "size": [
+            68,
+            62
+          ],
+          "mode": "9slice",
+          "slice": 12,
+          "dom": true
+        },
+        {
+          "id": "side-daily-cell-lock",
+          "label": "데일리 · 출석 칸 · 예정",
+          "file": "assets/ui/side-daily-cell-lock.png",
+          "size": [
+            68,
+            62
+          ],
+          "mode": "9slice",
+          "slice": 12,
+          "dom": true
+        },
+        {
+          "id": "side-album-cell-got",
+          "label": "앨범 · 수집 칸 · 획득",
+          "file": "assets/ui/side-album-cell-got.png",
+          "size": [
+            92,
+            92
+          ],
+          "mode": "9slice",
+          "slice": 12,
+          "dom": true
+        },
+        {
+          "id": "side-album-cell-lock",
+          "label": "앨범 · 수집 칸 · 미획득",
+          "file": "assets/ui/side-album-cell-lock.png",
+          "size": [
+            92,
+            92
+          ],
+          "mode": "9slice",
+          "slice": 12,
+          "dom": true
+        },
+        {
+          "id": "side-shop-row",
+          "label": "상점 · 아이템 행 배경",
+          "file": "assets/ui/side-shop-row.png",
+          "size": [
+            296,
+            62
+          ],
+          "mode": "9slice",
+          "slice": 14,
+          "dom": true
+        },
+        {
+          "id": "side-shop-btn-buy",
+          "label": "상점 · 구매 버튼",
+          "file": "assets/ui/side-shop-btn-buy.png",
+          "size": [
+            72,
+            32
+          ],
+          "mode": "9slice",
+          "slice": 10,
+          "dom": true
+        },
+        {
+          "id": "side-shop-coin",
+          "label": "상점 · 재화 아이콘 (⭐)",
+          "file": "assets/ui/side-shop-coin.png",
+          "size": [
+            18,
+            18
+          ],
+          "mode": "stretch",
+          "dom": true
+        }
+      ]
+    },
+    {
       "id": "game",
       "label": "본게임 (스토리)",
       "slots": [

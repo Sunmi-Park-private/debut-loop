@@ -7,12 +7,12 @@ const screens = (uiskins as unknown as { screens: Array<{ id: string; slots: Slo
 const all = screens.flatMap((s) => s.slots);
 
 describe("uiskins.json", () => {
-  it("8화면 · 139슬롯", () => {
-    expect(screens.length).toBe(8);
-    expect(all.length).toBe(139); // 카드 프레임 뒷면 추가 · 미사용 카드덱 그룹 정리 (2026-08-07)
+  it("9화면 · 150슬롯", () => {
+    expect(screens.length).toBe(9);
+    expect(all.length).toBe(150); // 「메인 로비 사이드」 11슬롯 추가 (2026-08-08)
   });
   it("id 유일 + 파일 규약(assets/ui/<id>.*)", () => {
-    expect(new Set(all.map((s) => s.id)).size).toBe(139);
+    expect(new Set(all.map((s) => s.id)).size).toBe(150);
     // file=""은 삭제된(빈) 슬롯 — 에디터 🗑 삭제가 매니페스트를 해제한 정상 상태
     for (const s of all) expect(s.file === "" || s.file.startsWith(`assets/ui/${s.id}.`)).toBe(true);
   });
