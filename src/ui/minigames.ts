@@ -12,7 +12,9 @@ import {
 } from "../engine/minigames";
 import { gatePickCount, resolveGate as sumCardEffects } from "../engine/gate";
 import { cardEffect } from "../engine/cards";
-import { starNode, gaugeSymbol } from "./cardArt";
+import { starNode, gaugeSymbol, fanAngle } from "./cardArt";
+import { easeIn, easeOut } from "./ease";
+import { pressable, type PressOpts } from "./press";
 import { cardTemplates, tuning, beatmaps, tickets } from "../data";
 import { skinNode, skinTex, skinTexTrim, skinFit, skinNatural, skinCover, skinScale } from "./uiSkin";
 import { pos } from "./layout";
@@ -44,7 +46,7 @@ let PH = MG_H;
 export const txt = (s: string, size: number, fill: number, bold = false): Text =>
   new Text({ text: s, style: { fontSize: size, fill, fontWeight: bold ? "bold" : "normal", wordWrap: true, wordWrapWidth: W - 40, lineHeight: size * 1.5 } });
 
-export const btn = (label: string, w: number, color: number, onTap: () => void, skinId = "gate-btn"): Container => {
+export const btn = (label: string, w: number, color: number, onTap: () => void, skinId = "gate-btn", pressOpts?: PressOpts): Container => {
   const b = new Container();
   // 개별 스킨 → 관문 공통 → UI 공용 버튼(ui-btn) → 벡터 순 폴백
   const g = skinNode(skinId, w, 52) ?? skinNode("gate-btn", w, 52) ?? skinNatural("ui-btn", w, 52) ?? new Graphics().roundRect(0, 0, w, 52, 14).fill(color); // ui-btn은 1배율=원본 크기
@@ -52,9 +54,7 @@ export const btn = (label: string, w: number, color: number, onTap: () => void, 
   t.x = (w - t.width) / 2;
   t.y = 16;
   b.addChild(g, t);
-  b.eventMode = "static";
-  b.cursor = "pointer";
-  b.on("pointertap", onTap);
+  pressable(b, onTap, pressOpts); // eventMode·cursor·pointertap 배선까지 여기서 (기본은 복귀 후 onTap)
   return b;
 };
 
@@ -581,21 +581,17 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
         rb.x = (W - 88) / 2;
       }
       rb.y = 336;
-      rb.eventMode = "static";
-      rb.cursor = "pointer";
-      rb.on("pointertap", doStop);
+      pressable(rb, doStop, { immediate: true }); // 판정 시점 = 탭 순간
       grp("rec_btn", rb);
     } else if (variant === "mirror") {
       // 업로드 아트에 문구가 들어있으므로 스킨이 있으면 라벨을 덧그리지 않는다
       const holdSkin = skinNode("gate-mirror-btn", W, 52); // 원본 크기 유지 + 패널 폭 기준 중앙 정렬
       let stopBtn: Container;
       if (holdSkin) {
-        holdSkin.eventMode = "static";
-        holdSkin.cursor = "pointer";
-        holdSkin.on("pointertap", doStop);
+        pressable(holdSkin, doStop, { immediate: true });
         stopBtn = holdSkin;
       } else {
-        stopBtn = btn("STOP  (Space)", 160, LAV, doStop); // 아트 미업로드 시 폴백 — 문구 통일
+        stopBtn = btn("STOP  (Space)", 160, LAV, doStop, "gate-btn", { immediate: true }); // 아트 미업로드 시 폴백 — 문구 통일
         stopBtn.x = (W - 160) / 2;
       }
       stopBtn.y = 540;
@@ -605,12 +601,10 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       const btnSkin = skinNode("gate-stop-btn", W, 64); // 원본 크기 유지 + 패널 폭 기준 중앙 정렬
       let stopBtn: Container;
       if (btnSkin) {
-        btnSkin.eventMode = "static";
-        btnSkin.cursor = "pointer";
-        btnSkin.on("pointertap", doStop);
+        pressable(btnSkin, doStop, { immediate: true });
         stopBtn = btnSkin;
       } else {
-        stopBtn = btn("STOP  (Space)", 160, PINK, doStop);
+        stopBtn = btn("STOP  (Space)", 160, PINK, doStop, "gate-btn", { immediate: true });
         stopBtn.x = (W - 160) / 2;
       }
       stopBtn.y = 250;
@@ -693,7 +687,8 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       const step = (now: number): void => {
         if (c.destroyed) return;
         const t = Math.min(1, (now - t0) / DUR);
-        c.scale.x = Math.max(0.02, t < 0.5 ? 1 - t * 2 : t * 2 - 1);
+        // 앞 반바퀴 가속 · 뒤 반바퀴 감속 — 카드덱 뒤집기와 같은 감각
+        c.scale.x = Math.max(0.02, t < 0.5 ? 1 - easeIn(t * 2) : easeOut(t * 2 - 1));
         if (t >= 0.5 && !swapped) { swapped = true; setFace(mc, s); }
         if (t < 1) requestAnimationFrame(step);
         else c.scale.x = 1;
@@ -1847,10 +1842,9 @@ export function renderGate(
     const drawHand = (): void => {
       hand.removeChildren();
       const nCards = shown.length;
-      const spread = Math.min(52, nCards * 13); // 전체 부채 각도
       shown.forEach(({ c: card, i }, iPos) => {
         const t = cardTemplates.find((x) => x.id === card.templateId);
-        const angle = nCards === 1 ? 0 : -spread / 2 + (spread / (nCards - 1)) * iPos;
+        const angle = fanAngle(iPos, nCards); // 연습 결과 카드와 같은 부채꼴 규격 (두 장이면 ±10°)
         const rad = (angle * Math.PI) / 180;
         const on = sel.has(i);
         const cc = new Container();

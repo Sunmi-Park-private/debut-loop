@@ -691,10 +691,6 @@
     "x": 200,
     "y": 71
   },
-  "card_deck_hint": {
-    "x": 1,
-    "y": -277
-  },
   "card_deck_title": {
     "x": -2,
     "y": 42
@@ -734,5 +730,9 @@
   "card_deck_item_sym": {
     "x": 13,
     "y": 15
+  },
+  "lobby_cta_run": {
+    "x": -33,
+    "y": 46
   }
 }

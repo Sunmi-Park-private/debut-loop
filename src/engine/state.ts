@@ -1,5 +1,5 @@
 // engine/state.ts — 런 상태 생성/변형/회귀. 순수 TS(렌더러 의존 0).
-import type { State, GameConfig, GaugeId, Effect, Tuning } from "./types";
+import type { State, GameConfig, GaugeId, Effect, Tuning, Card } from "./types";
 import { clampGauges } from "./gauges";
 
 export const DEFAULT_TUNING: Tuning = {
@@ -12,6 +12,12 @@ export const DEFAULT_TUNING: Tuning = {
 
 /** 회귀 시 계승하는 플래그 접두사 = 기시감(파편 기억) */
 export const MEMORY_FLAG_PREFIX = "memory_";
+
+/** 1회차 시작 카드 — 덱이 완전히 비어 있으면 카드가 무엇인지 배울 계기가 없어 한 장만 쥐어준다.
+ *  회귀(2회차)는 계승분(cardCarryOver)으로 시작하므로 여기서 다시 주지 않는다. */
+export const STARTER_CARDS: Card[] = [
+  { templateId: "bond", grade: "common", gauge: "mental" }, // 멘탈 +5
+];
 
 type DifficultyId = "small" | "big";
 
@@ -33,7 +39,7 @@ export function createState(config: GameConfig, difficultyId: DifficultyId, seed
     seenBeats: new Set<string>(),
     played: new Set<string>(),
     choices: {},
-    cards: [],
+    cards: STARTER_CARDS.map((c) => ({ ...c })), // 복사 — 런 간 공유 금지
     members: [{ characterId: "haru", role: "protagonist", stat: 65, joinedWeek: 0 }],
     membersLocked: false,
     candidateStats: {},

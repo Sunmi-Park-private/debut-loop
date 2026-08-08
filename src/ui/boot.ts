@@ -13,6 +13,7 @@ import { renderLobbyStatusBar } from "./lobbyStatusBar";
 import { attachSeamlessLoop } from "./loopVideo";
 import { skinNode, skinNatural, skinFit, skinTexTrim, skinScale } from "./uiSkin";
 import { renderCardDeckSheet } from "./cardDeckSheet";
+import { pressable, resetPress } from "./press";
 import { config } from "../data";
 import { playBgm } from "./audio";
 
@@ -531,9 +532,7 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
         l.y = 50;
       }
       b.addChild(l);
-      b.eventMode = "static";
-      b.cursor = "pointer";
-      b.on("pointertap", onTap);
+      pressable(b, onTap);
       root.addChild(b);
       editable(name, b);
     };
@@ -543,14 +542,16 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
     ico("lobby_shop", "🛍", "상점", W - 64, 290, () => openMetaMenu("shop"));
     ico("lobby_settings", "⚙️", "설정", W - 64, 370, () => openMetaMenu("settings"));
 
+    // 덱 시트가 열리면 CTA를 잠근다 — 시트 몸통은 입력을 막지 않으므로(핸들 띠만 반응),
+    // 열린 시트에 가려진 START가 그대로 눌려 런이 시작되던 문제를 여기서 끊는다.
+    let lockCta: (open: boolean) => void = () => {};
+
     // 하단 카드덱 시트 — 로비·스토리 공용 컴포넌트 (배너를 끌거나 탭해서 개폐)
     const deck = renderCardDeckSheet(root, {
       cards: () => [...currentRunCards(), ...getPendingCards()], // 진행 중 런의 덱 + 대기 버퍼(카드 에디터)
       open: deckSheetOpen,
-      onToggle: (o) => { deckSheetOpen = o; }, // build 재실행에도 유지
+      onToggle: (o) => { deckSheetOpen = o; lockCta(o); }, // build 재실행에도 유지
       tapMode: "flip", // 뒷면으로 깔아두고, 누르면 뒤집어 확인 (앱 재실행 전까지 유지)
-      emptyHint: "런을 시작하면 여기에 카드가 쌓여요",
-      filledHint: "런 시작 시 이 카드들을 갖고 출발해요 (개발 버퍼)",
     });
     refreshDeck = deck.rebuild;
 
@@ -590,12 +591,20 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
       const label = runInfo.awaitingRegress ? "▶ 회귀 — 진행 방식을 골라요" : `▶ ${runInfo.week}주차 진행 중`;
       ctaText("lobby_cta_run", mkText(label, 9, 0xfff4c9, true), 36);
     }
-    cta.eventMode = "static";
-    cta.cursor = "pointer";
-    cta.on("pointertap", start);
+    // 눌림 효과 — 아트와 글자(회차·START·진행 표시)가 한 덩어리로 작아졌다 돌아온다
+    pressable(cta, start);
     root.addChild(cta);
     editable("lobby_cta", cta);
     root.addChild(deck.view); // 시트를 CTA 위 레이어로 — 열리면 CTA를 덮음 (에디터 오프셋 래퍼째)
+
+    // 덱이 열려 있는 동안 CTA는 입력을 받지 않는다. 눌리지 않는다는 걸 눈으로도 알 수 있게 흐리게.
+    lockCta = (open: boolean): void => {
+      cta.eventMode = open ? "none" : "static";
+      cta.cursor = open ? "default" : "pointer";
+      cta.alpha = open ? 0.45 : 1;
+      if (open) resetPress(cta); // 누른 채로 덱이 열리면 축소 상태로 굳는다 — 원위치
+    };
+    lockCta(deckSheetOpen); // 리드로우 전 열려 있었으면 잠긴 채로 복원
 
     } // ── build() 끝 ──
     build();

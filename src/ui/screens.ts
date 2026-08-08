@@ -4,6 +4,7 @@ import type { RunEvent, State } from "../engine/types";
 import { pos } from "./layout";
 import { pairSpace } from "./keys";
 import { editable } from "./editor";
+import { pressable } from "./press";
 
 interface EndCopy {
   emoji: string;
@@ -83,9 +84,7 @@ export function renderEndScreen(
     }
     b.x = (394 - 300) / 2;
     b.y = y;
-    b.eventMode = "static";
-    b.cursor = "pointer";
-    b.on("pointertap", fire);
+    pressable(b, fire);
     return b;
   };
   let done = false;

@@ -12,6 +12,7 @@ import { editable, setRedrawHook } from "./editor";
 import { fullRect } from "./stage";
 import { toast } from "./metaMenu";
 import { playBgm } from "./audio";
+import { pressable } from "./press";
 
 const W = MG_W;
 const H = 660; // 보류 후보 섹션 수용 (y=120 앵커 기준 화면 내)
@@ -348,9 +349,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
         b.addChild(t2);
         b.x = x;
         b.y = 4;
-        b.eventMode = "static";
-        b.cursor = "pointer";
-        b.on("pointertap", onTap);
+        pressable(b, onTap);
         return b;
       };
       row.addChild(mkMini("영입", rw - 128, 0xffffff, PINK, () => {

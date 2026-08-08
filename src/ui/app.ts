@@ -5,6 +5,7 @@ import type { GameAssets } from "./assets";
 import { createRunController, type RunController } from "./runController";
 import { beats, config, casting, gates, tuning, characters, cardTemplates } from "../data";
 import { makeCards } from "../engine/cards";
+import { STARTER_CARDS } from "../engine/state";
 import { renderTrainingBoard } from "./training";
 import { renderMemberBoard } from "./memberBoard";
 import { renderGauges } from "./gaugeBar";
@@ -19,6 +20,7 @@ import { addCard, removeCards } from "../engine/deck";
 import { isDevMode } from "./devMode";
 import { toast } from "./metaMenu";
 import { renderCardDeckSheet } from "./cardDeckSheet";
+import { pressable } from "./press";
 import { playBgm, setBgmVolume, setBgmMuted, DEFAULT_VOLUME } from "./audio";
 import { guide, guideSeq, resetTutorial } from "./tutorial";
 import { pickBgSlot, bgManifest } from "./bgSlots";
@@ -40,9 +42,11 @@ let currentDraw: () => void = () => {}; // 현재 진입의 draw (치트·에디
 let cardOpsInited = false;
 let gameActive = false;                 // 게임 화면 활성 여부 (로비로 나가면 false — 치트 활성/비활성 기준)
 
-/** 현재 런의 카드 덱 (로비 덱 시트 표시용 — 런 없으면 빈 배열) */
+/** 현재 런의 카드 덱 (로비 덱 시트 표시용).
+ *  런이 아직 없으면(첫 로비 — showLobby가 startApp보다 먼저 돈다) 시작 덱을 미리 보여준다.
+ *  로비 덱은 "런 시작 시 이 카드들을 갖고 출발해요"를 보여주는 자리라 예고가 맞다. */
 export function currentRunCards(): Card[] {
-  return ctrl?.state.cards ?? [];
+  return ctrl ? ctrl.state.cards : STARTER_CARDS.map((c) => ({ ...c }));
 }
 
 /** 진행 중인 런의 회차·주차 (로비 START·상단 상태 패널 표시용 — 진행 중인 런 없으면 null) */
@@ -257,9 +261,7 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
     t.x = 10;
     t.y = 6;
     b.addChild(g, t);
-    b.eventMode = "static";
-    b.cursor = "pointer";
-    b.on("pointertap", () => exit());
+    pressable(b, () => exit());
     root.addChild(b);
     editable("backBtn", b);
   }
@@ -279,9 +281,7 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
     t.x = 10;
     t.y = 6;
     b.addChild(g, t);
-    b.eventMode = "static";
-    b.cursor = "pointer";
-    b.on("pointertap", () => { memberBoardForced = true; draw(); });
+    pressable(b, () => { memberBoardForced = true; draw(); });
     root.addChild(b);
     editable("memberBtn", b);
   }
@@ -428,7 +428,6 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
         open: deckOpen,
         onToggle: (o) => { deckOpen = o; },
         tapMode: "lift", // 진행 중엔 앞면이 보여야 하므로 뒤집지 않고 살짝 떠오르기만
-        emptyHint: "연습으로 카드를 모아보세요",
       });
       return;
     }
