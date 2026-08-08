@@ -114,7 +114,8 @@
             64
           ],
           "mode": "stretch",
-          "scale": 1
+          "scale": 1,
+          "opacity": -0.4
         },
         {
           "id": "lobby-start",
@@ -126,7 +127,7 @@
           ],
           "mode": "stretch",
           "small": true,
-          "scale": 1.5
+          "scale": 1.3
         },
         {
           "id": "lobby-icon-daily",

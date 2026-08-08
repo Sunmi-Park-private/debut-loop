@@ -18,7 +18,7 @@
       "id": "act2",
       "label": "2막 (W5–10)",
       "act": 2,
-      "file": "assets/bg/act2.png"
+      "file": "assets/bg/act2.webp"
     },
     {
       "id": "act3",
@@ -30,7 +30,7 @@
       "id": "act4",
       "label": "4막 (W19–23)",
       "act": 4,
-      "file": "assets/bg/act4.png"
+      "file": "assets/bg/act4.webp"
     },
     {
       "id": "act5",
