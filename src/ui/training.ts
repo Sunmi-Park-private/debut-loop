@@ -4,6 +4,7 @@
 import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Sprite, type Texture, type Ticker } from "pixi.js";
 import type { MiniGameGrade, TrainingId, CardGrade } from "../engine/types";
 import { starNode, gaugeSymbol, fanAngle } from "./cardArt";
+import { templateGauges } from "../engine/cards";
 import { pressable } from "./press";
 import { TRAIN_DRAIN, TRAIN_GRADE_TO_CARD, resolveTraining } from "../engine/training";
 import { MATCH_CARDS } from "../engine/minigames";
@@ -43,6 +44,17 @@ const ACTIVITIES: Activity[] = [
 ];
 const ACT_NAME: Record<TrainingId, string> = {
   vocal: "보컬 연습", dance: "안무 연습", promo: "SNS 홍보", funds: "알바", audition: "오디션 대비", bond: "휴식",
+};
+
+/** 커맨드 목록의 카드 표기 — "🎴 유대 카드 2장 (유대·멘탈)".
+ *  원형이 올리는 게이지마다 한 장씩 주므로 이름만 적으면 실제 장수와 어긋난다. */
+const cardChipLabel = (id: TrainingId): string => {
+  const t = cardTemplates.find((c) => c.id === id);
+  if (!t) return "";
+  const gauges = templateGauges(t);
+  const names = gauges.map((g) => GLBL[g] ?? g).join("·");
+  const count = gauges.length > 1 ? ` ${gauges.length}장` : "";
+  return `🎴 ${t.name}${count} (${names})`;
 };
 
 const drainLabel = (id: TrainingId): string => {
@@ -312,7 +324,9 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
       const fx = txt(`${drainLabel(a.id)} · ${a.gameLabel}`, 9, SUB);
       fx.x = tx;
       fx.y = banner ? 22 : 28;
-      const chip = txt(`🎴 ${t?.name ?? ""}`, 9, 0xc9527f, true);
+      // 실제로 받는 장수와 게이지를 그대로 적는다 — 게이지가 둘이면 두 장이라 이름만으론 어긋난다.
+      // 휴식도 미니게임 없이 바로 카드를 주므로 다른 활동과 같은 표기를 쓴다.
+      const chip = txt(cardChipLabel(a.id), 9, 0xc9527f, true);
       chip.x = tx;
       chip.y = banner ? 38 : 46;
       row.addChild(nm, fx, chip);
