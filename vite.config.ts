@@ -317,6 +317,51 @@ function opacitySavePlugin(route: string, manifestFile: string,
   }
 }
 
+// dev 편의: 플로우 에디터의 미저장 대사를 게임에 실시간 반영 (문구만).
+// 저장 전 임시본이라 파일에 쓰지 않고 서버 메모리에만 둔다 — dev 서버를 재시작하면 사라진다.
+// 설계: docs/superpowers/specs/2026-08-08-beats-live-preview-design.md
+let beatsOverlay: Record<string, unknown> = {}
+
+function beatsPreviewPlugin(): Plugin {
+  return {
+    name: 'beats-preview',
+    configureServer(server) {
+      server.middlewares.use('/__beatspreview', (req, res) => {
+        if (req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ overlay: beatsOverlay }))
+          return
+        }
+        if (req.method === 'DELETE') {
+          beatsOverlay = {}
+          server.ws.send({ type: 'custom', event: 'beats-preview', data: { overlay: beatsOverlay } })
+          res.end('ok')
+          return
+        }
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
+        // 청크를 모아 한 번에 디코딩 — 청크마다 toString()하면 한글(3바이트)이 경계에서 깨진다
+        const chunks: Buffer[] = []
+        req.on('data', (d: Buffer) => { chunks.push(d) })
+        req.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8')
+          try {
+            const patch = JSON.parse(body) as Record<string, unknown>
+            if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+              res.statusCode = 400; res.end('bad overlay'); return
+            }
+            for (const [id, v] of Object.entries(patch)) {
+              if (v === null) delete beatsOverlay[id]   // null = 이 비트 되돌리기
+              else beatsOverlay[id] = v
+            }
+            server.ws.send({ type: 'custom', event: 'beats-preview', data: { overlay: beatsOverlay } })
+            res.end('ok')
+          } catch { res.statusCode = 400; res.end('invalid json') }
+        })
+      })
+    },
+  }
+}
+
 function editorSavePlugin(): Plugin {
   return {
     name: 'editor-save',
@@ -346,6 +391,12 @@ function editorSavePlugin(): Plugin {
               // watch 제외 파일은 모듈 캐시가 안 갱신됨 → 직접 무효화 (리로드 없이, 다음 새로고침부터 새 값)
               const mods = server.moduleGraph.getModulesByFile(abs)
               if (mods) for (const m of mods) server.moduleGraph.invalidateModule(m)
+              if (route === '/__beats') {
+                // 파일에 들어갔으니 임시본은 필요 없다. 게임은 이 신호를 받아
+                // 지금 화면의 문구를 기준값으로 승격한다 (비우기만 하면 옛 문구로 되돌아간다).
+                beatsOverlay = {}
+                server.ws.send({ type: 'custom', event: 'beats-committed', data: {} })
+              }
               res.end('ok')
             } catch {
               res.statusCode = 400
@@ -557,6 +608,7 @@ export default defineConfig({
   plugins: [
     uploadedAssetServePlugin(),
     layoutSavePlugin(), // /__layout — 키 단위 병합 (editorSavePlugin의 통짜 저장과 분리)
+    beatsPreviewPlugin(),
     editorSavePlugin(),
     scaleSavePlugin('/__charscale', 'src/data/charskins.json',
       (m) => (m as CharSkinManifest).chars.flatMap((c) => c.slots), 'char-scale-updated'),
@@ -593,6 +645,7 @@ export default defineConfig({
         '**/src/data/layout.json', '**/src/data/tuning.json', '**/src/data/cards.json',
         '**/src/data/bgm.json', '**/src/data/backgrounds.json', '**/src/data/uiskins.json',
         '**/src/data/charskins.json', '**/src/data/beatmaps.json',
+        '**/src/data/beats/*.json', // 저장해도 게임을 리로드하지 않는다 — 반영은 프리뷰 채널이 담당
       ],
     },
   },
