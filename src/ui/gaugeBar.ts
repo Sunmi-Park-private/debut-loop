@@ -6,6 +6,7 @@ import { pos } from "./layout";
 import { skinNode } from "./uiSkin";
 import { editable } from "./editor";
 import { config } from "../data";
+import { statusLine } from "./runStatus";
 
 // 색은 로비 상태바(lobbyStatusBar CELLS)와 통일 — 아이콘 톤에 맞춤
 const GAUGES: Array<[GaugeId, string, number]> = [
@@ -129,14 +130,16 @@ function renderGaugeBarSkin(parent: Container, state: State, opts: GaugeOpts, ba
     });
 
     // 하단 탭: 회차 · 주차 · D-데뷔까지(주) · 카드 (예시 포맷)
-    const clueTxt = state.clues.size > 0 ? ` · 🔍 ${state.clues.size}/4` : "";
     // 중앙 정렬을 박스 '안'에서 처리 — 박스 x를 그대로 저장/복원해야 에디터 드래그가 유지된다
     const tp = pos("story_tab", { x: TAB_CX, y: TAB_Y });
     const tabBox = new Container();
     tabBox.x = tp.x;
     tabBox.y = tp.y;
     const tab = new Text({
-      text: `${state.loopCount}회차 · W${state.week} · D-${config.debutWeek - state.week} · 카드 ${state.cards.length}${clueTxt}`,
+      text: statusLine({
+        loop: state.loopCount, week: state.week, debutWeek: config.debutWeek,
+        cards: state.cards.length, clues: state.clues.size,
+      }),
       style: { fontSize: 11, fill: 0x8a7ba0, fontWeight: "bold" },
     });
     tab.x = -tab.width / 2; // 박스 기준점 = 문구 중앙

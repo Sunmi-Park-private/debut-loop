@@ -15,7 +15,7 @@ import { renderGate } from "./minigames";
 import { pos } from "./layout";
 import { fullRect, stageTop, stageHeight } from "./stage";
 import { beginFrame, editable, onRedraw, triggerRedraw } from "./editor";
-import { initCheatMenu, registerCheat, registerCardOps, drainPendingCards, setInGameCheck } from "./cheatMenu";
+import { initCheatMenu, registerCheat, registerCardOps, drainPendingCards, getPendingCards, setInGameCheck } from "./cheatMenu";
 import { addCard, removeCards } from "../engine/deck";
 import { isDevMode } from "./devMode";
 import { toast } from "./metaMenu";
@@ -47,6 +47,13 @@ let gameActive = false;                 // 게임 화면 활성 여부 (로비�
  *  로비 덱은 "런 시작 시 이 카드들을 갖고 출발해요"를 보여주는 자리라 예고가 맞다. */
 export function currentRunCards(): Card[] {
   return ctrl ? ctrl.state.cards : STARTER_CARDS.map((c) => ({ ...c }));
+}
+
+/** 화면에 보이는 카드 전체 — 로비 덱·스토리 덱·상단 진행 표기가 **모두 이걸** 본다.
+ *  각자 다른 출처를 쓰다 장수가 어긋난 적이 있어 한 곳으로 모았다.
+ *  대기 버퍼는 런 시작 시 덱으로 들어가므로(startApp) 런 중에는 비어 있다. */
+export function visibleCards(): Card[] {
+  return [...currentRunCards(), ...getPendingCards()];
 }
 
 /** 진행 중인 런의 회차·주차 (로비 START·상단 상태 패널 표시용 — 진행 중인 런 없으면 null) */
@@ -424,7 +431,7 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
       });
       // 하단 카드덱 시트 — 로비와 같은 컴포넌트, 스토리 진행 중 수시 열람 (상하 스와이프/탭)
       renderCardDeckSheet(root, {
-        cards: () => c.state.cards,
+        cards: visibleCards, // 로비 덱·상단 표기와 같은 출처
         open: deckOpen,
         onToggle: (o) => { deckOpen = o; },
         tapMode: "lift", // 진행 중엔 앞면이 보여야 하므로 뒤집지 않고 살짝 떠오르기만

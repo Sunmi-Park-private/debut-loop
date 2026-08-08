@@ -7,8 +7,8 @@ import { pos } from "./layout";
 import { fullRect, coverBg, stageTop, stageHeight } from "./stage";
 import { bgManifest } from "./bgSlots";
 import { beginFrame, editable, onRedraw } from "./editor";
-import { getPendingCards, onDevDeckChange } from "./cheatMenu";
-import { currentRunCards, currentRunInfo } from "./app";
+import { onDevDeckChange } from "./cheatMenu";
+import { visibleCards, currentRunInfo } from "./app";
 import { renderLobbyStatusBar } from "./lobbyStatusBar";
 import { attachSeamlessLoop } from "./loopVideo";
 import { skinNode, skinNatural, skinFit, skinTexTrim, skinScale } from "./uiSkin";
@@ -466,11 +466,15 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
     root.addChild(fullRect(0xe8ddf6, 0.35));
 
     // 상단 상태 패널 (달력 D-day + 5게이지, 본게임과 동일 데이터) — 런 없으면 시작값(소형 기획사) 표시
-    renderLobbyStatusBar(root, runInfo ?? {
-      week: 0,
-      debutWeek: config.debutWeek,
-      act: 0,
-      gauges: { ...config.difficulties.small.startGauges },
+    renderLobbyStatusBar(root, {
+      ...(runInfo ?? {
+        week: 0,
+        debutWeek: config.debutWeek,
+        act: 0,
+        gauges: { ...config.difficulties.small.startGauges },
+      }),
+      loop: runNumber,               // START 버튼의 회차 표기와 같은 값
+      cards: visibleCards().length,  // 로비 덱에 실제로 깔리는 장수와 같은 값
     });
 
     // 캐릭터 센터 (일상복 시퀀스 → 일상복 단일 → 반신 기본 idle 시퀀스 → 스탠딩/상반신 → 실루엣 폴백)
@@ -548,7 +552,7 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
 
     // 하단 카드덱 시트 — 로비·스토리 공용 컴포넌트 (배너를 끌거나 탭해서 개폐)
     const deck = renderCardDeckSheet(root, {
-      cards: () => [...currentRunCards(), ...getPendingCards()], // 진행 중 런의 덱 + 대기 버퍼(카드 에디터)
+      cards: visibleCards, // 로비·스토리·상단 표기가 같은 출처를 본다
       open: deckSheetOpen,
       onToggle: (o) => { deckSheetOpen = o; lockCta(o); }, // build 재실행에도 유지
       tapMode: "flip", // 뒷면으로 깔아두고, 누르면 뒤집어 확인 (앱 재실행 전까지 유지)
