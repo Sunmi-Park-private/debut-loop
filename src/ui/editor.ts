@@ -2,9 +2,16 @@
 // 켜면: 화면 최상단에 투명 실드를 깔아 게임 입력을 차단하고, 등록된 컴포넌트를
 // 드래그로 이동(겹치면 더 작은 컴포넌트 우선) + 패널에서 x/y 직접 입력 + layout.json 저장.
 // 등록(editable)은 에디터 꺼짐 상태에서도 항상 기록 — 켜는 순간 리드로우 없이도 전 항목 편집 가능.
-import { Graphics, type Container, type FederatedPointerEvent } from "pixi.js";
-import { setPos, allPos } from "./layout";
+//
+// 좌표 외 편집(2026-08 확장):
+//   · 텍스트 컴포넌트 → 폰트 크기 + 색상 팔레트
+//   · 이미지·영상 컴포넌트 → 배율(scale)
+//   · 행을 선택하면 화면의 해당 에셋에 빨간 테두리를 그려 매핑을 보여준다
+// 저장 값은 layout.json 항목에 x/y와 함께 들어간다(미설정이면 코드가 그린 그대로).
+import { Graphics, Point, Text, type Container, type FederatedPointerEvent } from "pixi.js";
+import { setPos, setStyle, pos, dirtyPos, clearDirty, hasEntry, onDirty } from "./layout";
 import { BASE_W, stageTop, stageHeight } from "./stage";
+import { slotIdOf, slotMeta, type UiSkinSlot } from "./uiSkin";
 
 let on = new URLSearchParams(location.search).has("editor");
 let redraw: () => void = () => {};
@@ -24,7 +31,7 @@ export function setEditorMode(next: boolean): void {
   const handled = toggleHook?.(next) ?? false;
   if (!handled) redraw();
   if (on) { mountShield(); refreshPanel(); }
-  else unmountShield();
+  else { unmountShield(); clearHighlight(); }
 }
 
 export function onRedraw(fn: () => void): void {
@@ -49,14 +56,188 @@ export function beginFrame(): void {
 }
 
 /** 컴포넌트를 에디터 대상으로 등록 — 항상 기록하고, 에디터 켜짐이면 실드 최상단 유지 + 패널 갱신 */
-/** 이번 세션에 한 번이라도 등록된 이름 — 저장 시 "코드가 아직 쓰는 키"인지 판별하는 근거.
- *  visible은 매 프레임 비워져 현재 화면분만 남으므로 따로 누적한다. */
-const everRegistered = new Set<string>();
-
 export function editable(name: string, c: Container): void {
-  everRegistered.add(name);
   visible.set(name, c);
+  (c as unknown as Record<string, string>)[NAME_TAG] = name; // 중첩 판별 표식 (scan이 경계로 삼는다)
+  sampleCodeTexts(name, c); // 코드가 쓴 문구를 표본으로 — 매번 달라지면 덮어쓰기를 잠근다
+  // 저장된 표시 속성은 이 자리에서 바로 입히지 않고 다음 프레임으로 미룬다.
+  //  · 텍스트 자식이 editable() 뒤에 붙는 화면이 있고,
+  //  · 부모가 자식보다 먼저 등록되면 아직 자식 표식이 없어 남의 텍스트까지 집는다.
+  // 한 프레임 뒤엔 그 화면의 등록이 모두 끝나 있어 소유 관계가 정확해진다.
+  if (hasOverride(name)) markStyled(name, c);
   if (on) { mountShield(); refreshPanel(); }
+}
+
+// ── 컴포넌트 내용 분석 ──────────────────────────────────────────────
+interface Scan { texts: Text[]; slots: string[]; hasVisual: boolean }
+
+// 등록된 컴포넌트에 이름을 심어 둔다 — 중첩 판별용
+const NAME_TAG = "__layoutName";
+const nameOf = (n: Container): string | undefined =>
+  (n as unknown as Record<string, string | undefined>)[NAME_TAG];
+
+/** 컨테이너 하위를 훑어 텍스트 노드·출처 슬롯·그림 유무를 모은다.
+ *  **다른 등록 컴포넌트로 내려가면 멈춘다** — 컴포넌트가 중첩된 경우(gauges_bar ⊃ story_lbl_mental,
+ *  card_btn_left ⊃ card_btn_left_text) 같은 텍스트를 둘이 함께 잡으면 덮어쓰기가 서로를 지운다.
+ *  가장 안쪽 컴포넌트 하나만 그 텍스트를 소유하게 한다(드래그가 작은 쪽을 고르는 규칙과 동일). */
+function scan(c: Container): Scan {
+  const texts: Text[] = [];
+  const slots: string[] = [];
+  let hasVisual = false;
+  const walk = (n: Container, isRoot: boolean): void => {
+    if (!isRoot && nameOf(n) !== undefined) return; // 다른 컴포넌트의 영역
+    const sid = slotIdOf(n);
+    if (sid && !slots.includes(sid)) slots.push(sid);
+    if (n instanceof Text) { texts.push(n); return; } // 텍스트 내부는 더 볼 것 없음
+    if (n.constructor.name !== "Container") hasVisual = true; // Sprite·Graphics·NineSlice 등
+    for (const ch of n.children) walk(ch as Container, false);
+  };
+  walk(c, true);
+  return { texts, slots, hasVisual };
+}
+
+/** 저장된 표시 속성 적용 — 텍스트는 크기·색, 그 외는 배율 */
+/** 문구·크기를 바꾸면 폭이 달라지는데, 코드는 이미 원래 폭 기준으로 좌표를 잡아둔 상태다.
+ *  (대부분 `x = (박스폭 - text.width) / 2` 식의 가운데 정렬)
+ *  그대로 두면 왼쪽 끝만 고정되고 중심이 밀리므로, 바뀐 폭의 절반만큼 되밀어 중심을 유지한다. */
+export function mutateTextKeepingCenter(t: Text, edit: () => void): void {
+  const w0 = t.width, h0 = t.height;
+  edit();
+  t.x += (w0 - t.width) / 2;
+  t.y += (h0 - t.height) / 2;
+}
+
+// ── 동적 문구 보호 ─────────────────────────────────────────────────
+// 스토리 선택지·게이지 수치처럼 코드가 화면마다 새로 쓰는 문구를 덮어쓰면,
+// 그 컴포넌트는 모든 비트에서 같은 문구로 고정돼 스토리가 바뀌지 않는다.
+// 처음부터 아는 것은 목록으로 막고, 나머지는 실행 중에 문구가 바뀌는지 보고 자동으로 잠근다.
+const DYNAMIC_TEXT = /^(card$|card_btn_(left|right)(_text)?$|story_val_|story_tab$|lobby_cta_(round|sub|run)$|card_deck_item_)/;
+/** 그중 스토리 데이터(beats)에서 오는 것 — 비트별 수정은 스토리 에디터(flow.html) 담당 */
+const STORY_TEXT = /^(card$|card_btn_(left|right)(_text)?$)/;
+const dynamicText = new Set<string>();
+const codeTexts = new Map<string, string[]>();
+
+/** 코드가 그린 문구를 표본으로 남긴다 — 이전 표본과 다르면 그 컴포넌트는 동적이다.
+ *  applyStoredStyle이 다음 프레임에 도는 덕에, 이 시점 값은 아직 코드가 쓴 원본이다. */
+function sampleCodeTexts(name: string, c: Container): void {
+  if (dynamicText.has(name)) return;
+  if (DYNAMIC_TEXT.test(name)) { dynamicText.add(name); return; }
+  const cur = scan(c).texts.map((t) => String(t.text));
+  const prev = codeTexts.get(name);
+  if (prev && prev.length === cur.length && prev.some((v, i) => v !== cur[i])) {
+    dynamicText.add(name); // 같은 자리 문구가 바뀌었다 = 코드가 채우는 값
+    codeTexts.delete(name);
+    return;
+  }
+  codeTexts.set(name, cur);
+}
+
+/** 문구 덮어쓰기를 적용해도 되는 컴포넌트인지.
+ *  동적으로 판정됐어도 에디터에서 잠금을 풀었다면(textForce) 사용자의 뜻을 따른다. */
+export const textEditable = (name: string): boolean =>
+  !dynamicText.has(name) || pos(name).textForce === true;
+
+/** 코드가 채우는 문구인데 사용자가 잠금을 풀어 둔 상태 — 경고를 띄울 대상 */
+const isForced = (name: string): boolean => dynamicText.has(name) && pos(name).textForce === true;
+
+/** 이 컴포넌트에 저장된 표시 속성이 하나라도 있는지 */
+function hasOverride(name: string): boolean {
+  const e = pos(name);
+  return e.scale !== undefined || e.fontSize !== undefined || e.color !== undefined || e.texts !== undefined;
+}
+
+// 덮어쓰기가 걸린 컴포넌트를 매 프레임 다시 입힌다 — 에디터를 꺼도 동작해야 한다
+// (저장된 layout.json은 일반 플레이에도 그대로 적용돼야 하므로).
+const styledLive = new Map<string, Container>();
+let styleRaf = 0;
+
+/** 스타일만 바꾸는 경우에도 좌표를 먼저 확정한다.
+ *  항목이 없던 컴포넌트는 x/y가 비어 저장이 거부되고, setStyle의 기본값(0,0)이 끼면 좌우로 튄다.
+ *  지금 화면에 그려진 위치를 그대로 적어 둔다(= 눈에 보이는 변화 없음). */
+function ensureCoords(name: string, c: Container): void {
+  if (hasEntry(name)) return;
+  setPos(name, { x: Math.round(c.x), y: Math.round(c.y) });
+}
+
+/** 컴포넌트를 프레임 루프에 올린다 — 적용은 다음 프레임부터(등록이 다 끝난 뒤) */
+function markStyled(name: string, node?: Container): void {
+  const c = node ?? visible.get(name);
+  if (!c || c.destroyed || !c.parent) return;
+  styledLive.set(name, c);
+  if (!styleRaf) styleRaf = requestAnimationFrame(pumpStyles);
+}
+
+function pumpStyles(): void {
+  styleRaf = 0;
+  for (const [name, c] of styledLive) {
+    if (c.destroyed || !c.parent) { styledLive.delete(name); continue; } // 화면에서 사라진 것 정리
+    applyStoredStyle(name, c);
+  }
+  if (styledLive.size > 0) styleRaf = requestAnimationFrame(pumpStyles);
+}
+
+function applyStoredStyle(name: string, c: Container): void {
+  const e = pos(name);
+  if (e.scale !== undefined && e.scale > 0) c.scale.set(e.scale);
+  if (e.fontSize === undefined && e.color === undefined && e.texts === undefined) return;
+  const { texts } = scan(c);
+  texts.forEach((t, i) => {
+    mutateTextKeepingCenter(t, () => {
+      if (e.fontSize !== undefined && e.fontSize > 0) t.style.fontSize = e.fontSize;
+      if (e.color !== undefined) t.style.fill = e.color;
+      const ov = textEditable(name) ? e.texts?.[i] : undefined; // 동적 문구는 코드 값을 그대로 둔다
+      if (typeof ov === "string") t.text = ov;
+    });
+  });
+}
+
+// ── 선택 하이라이트: 화면의 해당 에셋에 빨간 테두리 ──────────────────
+let selected: string | null = null;
+let highlight: Graphics | null = null;
+let hlRaf = 0;
+
+function clearHighlight(): void {
+  if (hlRaf) { cancelAnimationFrame(hlRaf); hlRaf = 0; }
+  highlight?.parent?.removeChild(highlight);
+  highlight?.destroy();
+  highlight = null;
+}
+
+/** 선택된 컴포넌트의 화면 경계를 매 프레임 따라다니며 빨간 테두리로 표시.
+ *  리드로우로 컨테이너 인스턴스가 바뀌어도 이름으로 다시 찾으므로 끊기지 않는다. */
+function paintHighlight(): void {
+  hlRaf = requestAnimationFrame(paintHighlight);
+  if (!on || !selected) { highlight?.clear(); return; }
+  const c = visible.get(selected);
+  if (!c || c.destroyed || !c.parent) { highlight?.clear(); return; }
+  let root: Container = c;
+  while (root.parent) root = root.parent as Container;
+  if (!highlight || highlight.destroyed) {
+    highlight = new Graphics();
+    highlight.eventMode = "none"; // 입력을 가로채지 않는다
+  }
+  if (highlight.parent !== root) root.addChild(highlight);
+  else root.addChild(highlight); // 항상 최상단 유지
+  const b = c.getBounds();
+  highlight.clear();
+  if (b.width <= 0 || b.height <= 0) return;
+  // getBounds()는 전역(화면) 좌표 — 테두리는 root 안에 그리므로 root 로컬로 되돌려야 한다.
+  // (스테이지가 화면 비율에 맞춰 스케일/이동돼 있어, 변환 없이 그리면 배율이 한 번 더 먹는다)
+  const tl = root.toLocal(new Point(b.x, b.y));
+  const br = root.toLocal(new Point(b.x + b.width, b.y + b.height));
+  const x = tl.x - 2, y = tl.y - 2;
+  const w = br.x - tl.x + 4, h = br.y - tl.y + 4;
+  highlight
+    .rect(x, y, w, h)
+    .fill({ color: 0xff2d2d, alpha: 0.06 })
+    .rect(x, y, w, h)
+    .stroke({ width: 2, color: 0xff2d2d, alpha: 0.95 });
+}
+
+function select(name: string | null): void {
+  selected = name;
+  if (name && !hlRaf) paintHighlight();
+  refreshPanel();
 }
 
 // ── 실드: 전화면 투명 레이어 — 게임 입력 차단 + 드래그 처리 (끄면 제거 = 원상복구) ──
@@ -87,6 +268,7 @@ function mountShield(): void {
     }
     target = best;
     if (!best) return;
+    select(best.name); // 화면에서 집은 것도 패널에서 선택 상태로
     sx = e.globalX;
     sy = e.globalY;
     ox = best.c.x;
@@ -112,26 +294,109 @@ function unmountShield(): void {
   shield = null;
 }
 
+// ── 자동 저장 ───────────────────────────────────────────────────────
+// 💾를 누르는 걸 잊어 작업이 날아가는 사고를 막는다. 편집이 멎으면 곧바로 파일에 반영하고,
+// 부분 저장이라 다른 사람이 저장한 값은 건드리지 않는다. 💾 버튼은 "기다리지 않고 지금" 용도로 남긴다.
+const AUTOSAVE_MS = 600;
+let saveTimer = 0;
+let saving = false;
+let saveStatus = "편집하면 자동 저장됩니다";
+let statusEl: HTMLElement | null = null;
+
+function setStatus(s: string): void {
+  saveStatus = s;
+  if (statusEl) statusEl.textContent = s;
+}
+
+async function flushSave(): Promise<void> {
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = 0; }
+  if (saving) return;
+  const changed = dirtyPos();
+  const n = Object.keys(changed).length;
+  if (n === 0) { setStatus("변경 없음 — 모두 저장됨"); return; }
+  saving = true;
+  setStatus(`저장 중… (${n}개)`);
+  try {
+    const r = await fetch("/__layout", { method: "POST", body: JSON.stringify(changed) });
+    if (!r.ok) { setStatus(`❌ 저장 실패 — ${await r.text()}`); return; }
+    clearDirty(); // 성공한 것만 비운다
+    const t = new Date();
+    const pad = (v: number): string => String(v).padStart(2, "0");
+    setStatus(`✅ ${n}개 저장됨 · ${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`);
+  } catch {
+    setStatus("❌ 저장 실패 (dev 서버 전용)");
+  } finally {
+    saving = false;
+    if (dirtyKeyCount() > 0) scheduleSave(); // 저장 중에 더 편집했으면 이어서
+  }
+}
+
+const dirtyKeyCount = (): number => Object.keys(dirtyPos()).length;
+
+function scheduleSave(): void {
+  if (saveTimer) clearTimeout(saveTimer);
+  setStatus("편집 중…");
+  saveTimer = window.setTimeout(() => { saveTimer = 0; void flushSave(); }, AUTOSAVE_MS);
+}
+
+onDirty(scheduleSave);
+
+/** 페이지가 사라지기 직전 마지막 밀어내기.
+ *  일반 fetch는 언로드 중에 취소되므로 sendBeacon으로 보낸다(브라우저가 배송을 보장).
+ *  개발 중 코드 수정 → vite 리로드가 잦은데, 이때 디바운스를 기다리던 편집이 통째로 날아가던 문제. */
+function flushBeacon(): void {
+  const changed = dirtyPos();
+  if (Object.keys(changed).length === 0) return;
+  const body = new Blob([JSON.stringify(changed)], { type: "application/json" });
+  if (navigator.sendBeacon("/__layout", body)) clearDirty();
+}
+window.addEventListener("beforeunload", flushBeacon);
+window.addEventListener("pagehide", flushBeacon);
+if (import.meta.hot) {
+  // vite가 모듈을 갈아끼우거나 새로고침하기 직전 — 저장되지 않은 편집을 먼저 보낸다
+  import.meta.hot.on("vite:beforeFullReload", flushBeacon);
+  import.meta.hot.on("vite:beforeUpdate", flushBeacon);
+}
+
 // ── DOM 패널 ──
 let _panel: HTMLDivElement | null = null;
 
 function panelEl(): HTMLDivElement {
   if (_panel) return _panel;
   const p = document.createElement("div");
+  // 폭은 화면을 넘어가도 무방 — 행마다 좌표·배율·폰트 컨트롤이 한 줄에 들어가야 한다
   p.style.cssText =
     "position:fixed;top:64px;right:12px;z-index:1000;background:#fff;border:2px solid #ece4f4;" +
     "border-radius:12px;padding:10px 12px;font:12px -apple-system,sans-serif;color:#5b4a70;" +
-    "box-shadow:0 8px 24px rgba(167,139,230,.3);min-width:210px;display:none;max-height:70vh;overflow-y:auto";
+    "box-shadow:0 8px 24px rgba(167,139,230,.3);width:470px;display:none;max-height:78vh;overflow-y:auto";
   document.body.appendChild(p);
   _panel = p;
   return p;
 }
 
+// 텍스트 색상 팔레트 — 게임에서 실제로 쓰는 색 위주
+const PALETTE: Array<[string, string]> = [
+  ["#5b4a70", "잉크"], ["#a99bc0", "서브"], ["#ffffff", "흰색"], ["#000000", "검정"],
+  ["#ff7fb0", "핑크"], ["#9a7fe0", "라벤더"], ["#c9527f", "진한 핑크"], ["#f0a93a", "주황"],
+  ["#ffefd8", "별 노랑"], ["#f0c05a", "골드"], ["#ffe4f0", "연핑크"], ["#fff4c9", "크림"],
+];
+
+const css = {
+  num: "width:52px;padding:2px 4px;border:1px solid #ece4f4;border-radius:6px;font:11px -apple-system,sans-serif",
+  tag: "font-size:9.5px;color:#a99bc0;margin-right:2px",
+};
+
 function refreshPanel(): void {
   if (!on) return;
+  // 문구를 입력하는 중이면 다시 그리지 않는다 — editable()이 매 렌더마다 부르기 때문에
+  // 그대로 두면 한 글자 칠 때마다 input이 새로 만들어져 포커스와 커서가 날아간다.
+  const act = document.activeElement;
+  if (act instanceof HTMLInputElement && act.type === "text" && _panel?.contains(act)) return;
   const p = panelEl();
   p.style.display = "block";
-  p.innerHTML = "<b>📐 레이아웃 에디터</b><br><small>드래그 또는 좌표 입력</small><hr style='border:none;border-top:1px solid #ece4f4'>";
+  p.innerHTML =
+    "<b>📐 레이아웃 에디터</b><br><small>드래그 · 좌표 입력 · 이름을 누르면 화면에서 <span style='color:#ff2d2d;font-weight:700'>빨간 테두리</span>로 표시</small>" +
+    "<hr style='border:none;border-top:1px solid #ece4f4'>";
   // ✕ 닫기 — 에디터 모드 종료 (치트 메뉴 토글과 동일)
   const close = document.createElement("button");
   close.textContent = "✕";
@@ -144,55 +409,368 @@ function refreshPanel(): void {
   const rows = [...visible].filter(([, c]) => !c.destroyed && c.parent); // 화면에 남아있는 것만
   if (rows.length === 0) {
     const empty = document.createElement("div");
-    empty.style.cssText = "margin:8px 0 4px;font-size:11.5px;color:#a99bc0;line-height:1.6;max-width:210px";
+    empty.style.cssText = "margin:8px 0 4px;font-size:11.5px;color:#a99bc0;line-height:1.6";
     empty.textContent = "이 화면엔 편집할 컴포넌트가 없어요. 게임(스토리·연습·관문) 화면에서 열면 목록이 나타납니다.";
     p.appendChild(empty);
     return; // 저장 버튼도 생략 — 빈 저장 방지
   }
   for (const [name, c] of rows) {
-    const row = document.createElement("div");
-    row.style.cssText = "display:flex;gap:4px;align-items:center;margin:4px 0";
-    const mk = (v: number, apply: (n: number) => void): HTMLInputElement => {
-      const i = document.createElement("input");
-      i.type = "number";
-      i.value = String(Math.round(v));
-      i.style.cssText = "width:56px;padding:2px 4px;border:1px solid #ece4f4;border-radius:6px";
-      i.onchange = () => apply(Number(i.value));
-      return i;
-    };
-    const label = document.createElement("span");
-    label.textContent = name;
-    label.style.cssText = "flex:1;font-weight:600";
-    row.append(
-      label,
-      mk(c.x, (n) => { c.x = n; setPos(name, { x: n, y: Math.round(c.y) }); }),
-      mk(c.y, (n) => { c.y = n; setPos(name, { x: Math.round(c.x), y: n }); }),
-    );
-    p.appendChild(row);
+    p.appendChild(buildRow(name, c));
   }
+  const status = document.createElement("div");
+  status.style.cssText = "margin-top:8px;font-size:10.5px;color:#a99bc0;text-align:center;line-height:1.5";
+  status.textContent = saveStatus;
+  statusEl = status;
+  p.appendChild(status);
   const save = document.createElement("button");
-  save.textContent = "💾 layout.json 저장";
+  save.textContent = "💾 지금 저장";
+  save.title = "자동 저장을 기다리지 않고 바로 반영";
   save.style.cssText =
-    "margin-top:8px;width:100%;padding:7px;border:0;border-radius:8px;background:#ff7fb0;color:#fff;font-weight:700;cursor:pointer";
-  save.onclick = () => {
-    void (async (): Promise<void> => {
-      const mem = allPos();
-      let out = mem;
-      let dropped = 0;
-      // 메모리 맵은 페이지를 열 때의 layout.json 사본이라, 그 뒤 파일에서 지운 키도 그대로 들고 있다.
-      // 통째로 저장하면 그 키가 되살아나므로, 저장 직전에 디스크와 대조해서 걸러낸다.
-      // 남기는 기준: 파일에 아직 있거나(다른 화면 것일 수 있음) 이번 세션에 등록된 적이 있는 키.
-      try {
-        const disk = await fetch("/__layout").then((r) => r.json() as Promise<Record<string, unknown>>);
-        const kept = Object.entries(mem).filter(([k]) => k in disk || everRegistered.has(k));
-        dropped = Object.keys(mem).length - kept.length;
-        out = Object.fromEntries(kept);
-      } catch { /* GET 미지원 서버 — 메모리 그대로 저장 (기존 동작) */ }
-      const r = await fetch("/__layout", { method: "POST", body: JSON.stringify(out, null, 2) });
-      save.textContent = r.ok
-        ? (dropped > 0 ? `✅ 저장됨 (고아 ${dropped}개 정리)` : "✅ 저장됨")
-        : "❌ 실패(dev 서버 전용)";
-    })().catch(() => { save.textContent = "❌ 실패(dev 서버 전용)"; });
-  };
+    "margin-top:4px;width:100%;padding:7px;border:0;border-radius:8px;background:#ff7fb0;color:#fff;font-weight:700;cursor:pointer";
+  save.onclick = () => { void flushSave(); };
   p.appendChild(save);
+}
+
+/** 컴포넌트 한 줄 — 이름(선택) + x/y + 유형별 컨트롤(배율 / 폰트 크기·색) */
+function buildRow(name: string, c: Container): HTMLDivElement {
+  const info = scan(c);
+  const isSel = selected === name;
+  const wrap = document.createElement("div");
+  wrap.style.cssText =
+    "margin:3px 0;padding:4px 6px;border-radius:7px;border:1px solid " +
+    (isSel ? "#ff2d2d" : "transparent") + ";background:" + (isSel ? "#fff5f5" : "transparent");
+
+  const head = document.createElement("div");
+  head.style.cssText = "display:flex;gap:5px;align-items:center";
+
+  const label = document.createElement("button");
+  const icon = info.texts.length > 0 && info.hasVisual ? "🖼🅣 " : info.texts.length > 0 ? "🅣 " : info.hasVisual ? "🖼 " : "◻︎ ";
+  label.textContent = icon + name;
+  label.title = "클릭하면 화면에서 빨간 테두리로 표시";
+  label.style.cssText =
+    "flex:1;text-align:left;border:0;background:none;padding:2px 0;cursor:pointer;font:600 11.5px -apple-system,sans-serif;" +
+    "color:" + (isSel ? "#ff2d2d" : "#5b4a70") + ";overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+  label.onclick = () => select(isSel ? null : name);
+
+  const mkNum = (v: number, tag: string, apply: (n: number) => void, step = 1): HTMLSpanElement => {
+    const s = document.createElement("span");
+    s.style.cssText = "display:inline-flex;align-items:center";
+    const t = document.createElement("span");
+    t.textContent = tag;
+    t.style.cssText = css.tag;
+    const i = document.createElement("input");
+    i.type = "number";
+    i.step = String(step);
+    i.value = String(step < 1 ? Math.round(v * 100) / 100 : Math.round(v));
+    i.style.cssText = css.num;
+    i.onchange = () => apply(Number(i.value));
+    s.append(t, i);
+    return s;
+  };
+
+  head.append(
+    label,
+    mkNum(c.x, "x", (n) => { c.x = n; setPos(name, { x: n, y: Math.round(c.y) }); }),
+    mkNum(c.y, "y", (n) => { c.y = n; setPos(name, { x: Math.round(c.x), y: n }); }),
+  );
+  wrap.appendChild(head);
+
+  // 텍스트 컴포넌트 → 폰트 크기 + 색상 팔레트
+  if (info.texts.length > 0) {
+    const t0 = info.texts[0]!;
+    const line = document.createElement("div");
+    line.style.cssText = "display:flex;gap:6px;align-items:center;margin-top:3px;padding-left:2px;flex-wrap:wrap";
+    const cur = pos(name);
+    line.appendChild(mkNum(cur.fontSize ?? Number(t0.style.fontSize), "크기", (n) => {
+      if (!(n > 0)) return;
+      for (const t of info.texts) mutateTextKeepingCenter(t, () => { t.style.fontSize = n; });
+      ensureCoords(name, c);
+      setStyle(name, { fontSize: n });
+      markStyled(name);
+      refreshPanel();
+    }));
+    const swatches = document.createElement("span");
+    swatches.style.cssText = "display:inline-flex;gap:2px;flex-wrap:wrap";
+    const curColor = (cur.color ?? "").toLowerCase();
+    for (const [hex, title] of PALETTE) {
+      const b = document.createElement("button");
+      b.title = title;
+      b.style.cssText =
+        "width:15px;height:15px;border-radius:4px;cursor:pointer;background:" + hex + ";" +
+        "border:" + (curColor === hex ? "2px solid #ff2d2d" : "1px solid #d8cce8");
+      b.onclick = () => {
+        for (const t of info.texts) t.style.fill = hex;
+        ensureCoords(name, c);
+        setStyle(name, { color: hex });
+        markStyled(name);
+        refreshPanel();
+      };
+      swatches.appendChild(b);
+    }
+    line.appendChild(swatches);
+    if (cur.color !== undefined || cur.fontSize !== undefined) {
+      const reset = document.createElement("button");
+      reset.textContent = "초기화";
+      reset.title = "코드 기본값으로 되돌림 (다시 그린 뒤 반영)";
+      reset.style.cssText =
+        "font-size:10px;padding:1px 6px;border:1px solid #ece4f4;border-radius:6px;background:#f8f4fc;color:#a99bc0;cursor:pointer";
+      reset.onclick = () => { ensureCoords(name, c); setStyle(name, { fontSize: undefined, color: undefined }); triggerRedraw(); refreshPanel(); };
+      line.appendChild(reset);
+    }
+    wrap.appendChild(line);
+  }
+
+  // 이미지·영상이 들어있으면 배율 — 텍스트만 있는 컴포넌트는 폰트 크기로 조절하므로 제외.
+  // 버튼처럼 아트+라벨이 섞인 컴포넌트는 둘 다 노출한다(배율은 라벨까지 함께 커진다).
+  if (info.hasVisual) {
+    const cur = pos(name);
+    const line = document.createElement("div");
+    line.style.cssText = "display:flex;gap:6px;align-items:center;margin-top:3px;padding-left:2px";
+    const val = cur.scale ?? c.scale.x;
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = "0.2";
+    slider.max = "3";
+    slider.step = "0.05";
+    slider.value = String(val);
+    slider.style.cssText = "flex:1;accent-color:#ff7fb0";
+    const shown = document.createElement("span");
+    shown.textContent = `${val.toFixed(2)}×`;
+    shown.style.cssText = "font-size:10.5px;color:#a99bc0;width:38px;text-align:right";
+    const apply = (n: number): void => {
+      c.scale.set(n);
+      ensureCoords(name, c);
+      setStyle(name, { scale: n });
+      markStyled(name);
+      shown.textContent = `${n.toFixed(2)}×`;
+    };
+    slider.oninput = () => apply(Number(slider.value));
+    const tag = document.createElement("span");
+    tag.textContent = "배율";
+    tag.style.cssText = css.tag;
+    line.append(tag, slider, shown);
+    if (cur.scale !== undefined) {
+      const reset = document.createElement("button");
+      reset.textContent = "1×";
+      reset.style.cssText =
+        "font-size:10px;padding:1px 6px;border:1px solid #ece4f4;border-radius:6px;background:#f8f4fc;color:#a99bc0;cursor:pointer";
+      reset.onclick = () => { ensureCoords(name, c); c.scale.set(1); setStyle(name, { scale: undefined }); refreshPanel(); };
+      line.appendChild(reset);
+    }
+    wrap.appendChild(line);
+  }
+
+  // 선택 시 매핑 정보 — 어떤 슬롯·파일이 그려졌고 텍스트 내용은 무엇인지
+  if (isSel) wrap.appendChild(buildMapping(name, c, info));
+  return wrap;
+}
+
+// ── 슬롯 직접 편집: 농도 + 파일 교체 (ui.html 에디터와 동일 규칙·엔드포인트) ──
+const VID_EXTS = ["mov", "webm", "mp4"]; // 영상 슬롯(slot.vid)만 허용
+const IMG_EXTS = ["png", "jpg", "webp"];
+
+/** 업로드 — 검증은 UI 에디터와 동일. 성공 시 서버가 최종 경로를 돌려주고(png→webp 등 변환),
+ *  갱신은 dev 서버의 asset-updated 브로드캐스트가 현재 화면에 자동 반영한다. */
+async function uploadSlotFile(slot: UiSkinSlot, file: File, btn: HTMLButtonElement): Promise<void> {
+  const raw = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const ext = raw === "jpeg" ? "jpg" : raw;
+  const isVid = VID_EXTS.includes(ext);
+  if (isVid && !slot.vid) { alert("이 슬롯은 이미지 전용입니다"); return; }
+  if (!isVid && !IMG_EXTS.includes(ext)) { alert(slot.vid ? "png/jpg/webp 또는 mov/webm/mp4만 가능합니다" : "png/jpg/webp만 가능합니다"); return; }
+  if (!isVid && file.size > 10 * 1024 * 1024) { alert("10MB 이하만 가능합니다"); return; }
+  const label = btn.textContent;
+  btn.textContent = "업로드 중…";
+  btn.disabled = true;
+  try {
+    const r = await fetch(`/__skinupload?slot=${slot.id}&ext=${ext}`, { method: "POST", body: file });
+    if (!r.ok) { alert(`업로드 실패: ${await r.text()}`); btn.textContent = label; btn.disabled = false; return; }
+    slot.file = (await r.text()).trim() || `assets/ui/${slot.id}.${ext}`;
+    btn.textContent = "✅ 교체됨";
+  } catch {
+    alert("업로드 실패 (dev 서버 전용)");
+    btn.textContent = label;
+  }
+  btn.disabled = false;
+}
+
+/** 슬롯 컨트롤 한 줄 — 농도 드롭다운 + 파일 교체 버튼 */
+function slotControls(slot: UiSkinSlot): HTMLDivElement {
+  const bar = document.createElement("div");
+  bar.style.cssText = "display:flex;gap:6px;align-items:center;margin:4px 0 6px";
+
+  const cap = document.createElement("span");
+  cap.textContent = "농도";
+  cap.style.cssText = css.tag;
+
+  // 0%=원본, −=진하게(채도 증가), +=연하게(알파 감소) — uiskins.json의 opacity와 같은 값
+  const sel = document.createElement("select");
+  sel.style.cssText = "padding:2px 4px;border:1px solid #ece4f4;border-radius:6px;font-size:10.5px;cursor:pointer;color:#5b4a70";
+  for (let v = -5; v <= 5; v++) {
+    const o = document.createElement("option");
+    o.value = String(v / 10);
+    o.textContent = v === 0 ? "0% (기본)" : v < 0 ? `−${-v * 10}% 진하게` : `+${v * 10}% 연하게`;
+    sel.appendChild(o);
+  }
+  sel.value = String(slot.opacity ?? 0);
+  sel.onchange = () => {
+    const next = Number(sel.value);
+    const prev = slot.opacity ?? 0;
+    void fetch("/__uiopacity", { method: "POST", body: JSON.stringify({ slot: slot.id, opacity: next }) })
+      .then(async (r) => {
+        if (!r.ok) { alert(`농도 저장 실패: ${await r.text()}`); sel.value = String(prev); return; }
+        slot.opacity = next; // 화면 반영은 서버의 ui-opacity-updated 브로드캐스트가 처리
+      })
+      .catch(() => { alert("농도 저장 실패 (dev 서버 전용)"); sel.value = String(prev); });
+  };
+
+  const btn = document.createElement("button");
+  btn.textContent = "📁 파일 교체";
+  btn.title = slot.vid ? "png/jpg/webp · mov/webm/mp4" : "png/jpg/webp · 10MB 이하";
+  btn.style.cssText =
+    "margin-left:auto;font-size:10.5px;padding:3px 8px;border:1px solid #ece4f4;border-radius:6px;" +
+    "background:#f8f4fc;color:#5b4a70;font-weight:600;cursor:pointer";
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = `image/png,image/jpeg,image/webp${slot.vid ? ",video/quicktime,video/webm,video/mp4,.mov,.webm,.mp4" : ""}`;
+  input.style.display = "none";
+  document.body.appendChild(input); // 패널이 다시 그려져도 파일 선택창이 살아있도록 body에 둔다
+  input.onchange = () => {
+    const f = input.files?.[0];
+    if (f) void uploadSlotFile(slot, f, btn);
+    input.remove();
+  };
+  btn.onclick = () => input.click();
+
+  bar.append(cap, sel, btn);
+  return bar;
+}
+
+/** 문구 입력칸 한 줄 — 실시간 반영 + 되돌리기. 정적/고정 두 경로가 함께 쓴다. */
+function buildTextInput(name: string, c: Container, info: Scan, idx: number, t: Text): HTMLDivElement {
+  const row = document.createElement("div");
+  row.style.cssText = "display:flex;gap:5px;align-items:center;flex:1;min-width:0;margin-top:3px";
+  const inp = document.createElement("input");
+  inp.type = "text";
+  inp.value = String(t.text);
+  inp.style.cssText =
+    "flex:1;min-width:0;padding:3px 6px;border:1px solid #ece4f4;border-radius:6px;" +
+    "font:11.5px -apple-system,sans-serif;color:#5b4a70";
+  // 실시간 반영 — 한 글자마다 화면과 layout 메모리에 쓴다 (파일 저장은 자동/💾)
+  inp.oninput = () => {
+    mutateTextKeepingCenter(t, () => { t.text = inp.value; }); // 중심 유지 — 좌우로 밀리지 않게
+    const arr: Array<string | null> = [...(pos(name).texts ?? [])];
+    while (arr.length < info.texts.length) arr.push(null);
+    arr[idx] = inp.value;
+    ensureCoords(name, c);
+    setStyle(name, { texts: arr });
+    markStyled(name);
+  };
+  const size = document.createElement("span");
+  size.textContent = `${Math.round(Number(t.style.fontSize))}px`;
+  size.style.cssText = "font-size:10px;color:#c4b8d6;flex-shrink:0";
+  row.append(inp, size);
+  if (typeof pos(name).texts?.[idx] === "string") {
+    const undo = document.createElement("button");
+    undo.textContent = "\u21ba";
+    undo.title = "이 문구를 원래대로 되돌림";
+    undo.style.cssText =
+      "flex-shrink:0;width:20px;height:20px;border:1px solid #ece4f4;border-radius:5px;" +
+      "background:#f8f4fc;color:#a99bc0;cursor:pointer;line-height:1";
+    undo.onclick = () => {
+      const arr: Array<string | null> = [...(pos(name).texts ?? [])];
+      arr[idx] = null;
+      ensureCoords(name, c);
+      setStyle(name, { texts: arr });
+      triggerRedraw();
+      refreshPanel();
+    };
+    row.appendChild(undo);
+  }
+  return row;
+}
+
+/** 텍스트 문구 편집 한 줄 — 입력 즉시 화면과 저장값에 반영 */
+function textRow(name: string, c: Container, info: Scan, idx: number): HTMLDivElement {
+  const t = info.texts[idx]!;
+  const line = document.createElement("div");
+  line.style.cssText = "display:flex;gap:5px;align-items:center;margin:3px 0";
+  const tag = document.createElement("span");
+  tag.textContent = "🅣";
+  // 코드가 채우는 문구(스토리 선택지·게이지 수치)는 장면마다 값이 달라진다.
+  // 자물쇠 은유 대신, 체크하면 무슨 일이 일어나는지 문장으로 적은 스위치 하나로 다룬다.
+  // 체크 = layout.json에 textForce가 남고 입력칸이 열린다. 해제 = 덮어쓴 문구까지 지우고 원문 복귀.
+  if (dynamicText.has(name)) {
+    const box = document.createElement("div");
+    box.style.cssText = "margin:3px 0";
+    const sw = document.createElement("label");
+    sw.style.cssText =
+      "display:flex;gap:6px;align-items:flex-start;font-size:10.5px;line-height:1.5;cursor:pointer;" +
+      "color:" + (isForced(name) ? "#d64545" : "#a99bc0");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = isForced(name);
+    cb.style.cssText = "margin:2px 0 0;accent-color:#ff7fb0;flex-shrink:0";
+    cb.onchange = () => {
+      if (cb.checked) {
+        ensureCoords(name, c);
+        setStyle(name, { textForce: true });
+        markStyled(name, c);
+      } else {
+        setStyle(name, { textForce: undefined, texts: undefined }); // 덮어쓴 문구도 함께 제거
+        triggerRedraw();
+      }
+      refreshPanel();
+    };
+    const cap = document.createElement("span");
+    cap.innerHTML = isForced(name)
+      ? "<b>모든 장면이 이 문구 하나로 덮여 있습니다</b> — 체크를 풀면 장면별 문구로 돌아갑니다"
+      : "예외로 <b>모든 장면을 같은 문구</b>로 덮으려면 체크 (권장하지 않음)";
+    sw.append(cb, cap);
+    // 어디서 고쳐야 하는지부터 알려준다 — 여기서 고칠 값이 아니다
+    const guide = document.createElement("div");
+    guide.style.cssText =
+      "font-size:10.5px;color:#8a76a8;line-height:1.6;margin-bottom:3px;padding:4px 6px;" +
+      "border-radius:5px;background:#f8f4fc";
+    guide.innerHTML = STORY_TEXT.test(name)
+      ? `이 문구는 <b>장면(비트)마다 다릅니다</b> — 지금은 "${String(t.text).slice(0, 16)}"<br>` +
+        `비트별로 고치려면 <a href="/flow.html" target="_blank" style="color:#ff7fb0;font-weight:700">스토리 에디터</a>에서 해당 비트의 <b>라벨</b>을 수정하세요`
+      : `게임 상태에 따라 <b>자동으로 채워지는 값</b>입니다 — 지금은 "${String(t.text).slice(0, 16)}"<br>` +
+        `여기서 고칠 값이 아니라, 위치·크기·색만 조정하세요`;
+    box.appendChild(guide);
+    box.appendChild(sw);
+    if (!isForced(name)) { line.append(tag, box); return line; }
+    // 고정 상태 — 스위치 아래에 입력칸을 붙인다
+    box.appendChild(buildTextInput(name, c, info, idx, t));
+    line.append(tag, box);
+    return line;
+  }
+  line.append(tag, buildTextInput(name, c, info, idx, t));
+  return line;
+}
+
+/** 선택된 컴포넌트가 무엇으로 그려졌는지 — UI 스킨 슬롯(파일)과 텍스트 내용 */
+function buildMapping(name: string, c: Container, info: Scan): HTMLDivElement {
+  const box = document.createElement("div");
+  box.style.cssText =
+    "margin-top:5px;padding:5px 7px;border-radius:6px;background:#fff;border:1px dashed #ffb3b3;" +
+    "font-size:10.5px;color:#8a76a8;line-height:1.65;word-break:break-all";
+  const add = (html: string): void => { const d = document.createElement("div"); d.innerHTML = html; box.appendChild(d); };
+  if (info.slots.length === 0 && info.texts.length === 0) {
+    add("연결된 에셋 없음 — 코드가 그린 벡터 도형입니다");
+    return box;
+  }
+  for (const id of info.slots) {
+    const s = slotMeta(id);
+    const file = s?.file ? s.file.replace(/^assets\//, "") : "(미업로드 — 폴백)";
+    const kind = /\.(mp4|webm|mov)$/i.test(s?.file ?? "") ? "🎬" : "🖼";
+    add(`${kind} <b style="color:#5b4a70">${id}</b>${s?.label ? ` · ${s.label}` : ""}<br><span style="color:#a99bc0">${file}</span>`);
+    if (s) box.appendChild(slotControls(s)); // 농도 + 파일 교체 (UI 에디터와 같은 규칙)
+  }
+  // 게이지 바처럼 텍스트가 많은 컴포넌트는 앞쪽만 — 목록이 패널을 다 잡아먹지 않게
+  const CAP = 6;
+  for (let i = 0; i < Math.min(info.texts.length, CAP); i++) {
+    box.appendChild(textRow(name, c, info, i));
+  }
+  if (info.texts.length > CAP) add(`<span style="color:#c4b8d6">…외 텍스트 ${info.texts.length - CAP}개</span>`);
+  return box;
 }

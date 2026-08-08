@@ -169,8 +169,8 @@ function iosZipPlugin(): Plugin {
 }
 
 // 개발용: 에디터(레이아웃·튜닝)의 💾 저장을 data JSON 파일로 반영 (화이트리스트)
+// ※ /__layout은 여기 없다 — 문서 통째 교체가 아니라 키 단위 병합이라 layoutSavePlugin이 따로 처리한다.
 const SAVE_TARGETS: Record<string, string> = {
-  '/__layout': 'src/data/layout.json',
   '/__tuning': 'src/data/tuning.json',
   '/__cards': 'src/data/cards.json',
   '/__beats': 'src/data/beats/demo2_zeroc.json', // 플로우 에디터(flow.html) — 저장 시 게임 탭 자동 리로드로 반영
@@ -178,6 +178,67 @@ const SAVE_TARGETS: Record<string, string> = {
   '/__uiskins': 'src/data/uiskins.json', // UI 스킨 에디터(ui.html)
   '/__beatmaps': 'src/data/beatmaps.json', // 박자 에디터(beat.html)
 }
+// 개발용: 레이아웃 저장 — **바뀐 키만** 받아 파일에 병합한다.
+// 통째로 덮어쓰면, 페이지를 열 때 뜬 스냅샷이 그 사이 다른 사람이 저장한 좌표를 되돌린다.
+// (디자이너 둘이 서로 다른 화면을 만져도 나중에 저장한 쪽이 상대 작업을 지우던 원인)
+function layoutSavePlugin(): Plugin {
+  const FILE = 'src/data/layout.json'
+  return {
+    name: 'layout-save',
+    configureServer(server) {
+      server.middlewares.use('/__layout', (req, res) => {
+        const abs = path.resolve(process.cwd(), FILE)
+        if (req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json')
+          res.end(fs.readFileSync(abs, 'utf8'))
+          return
+        }
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
+        let body = ''
+        req.on('data', (d: Buffer) => { body += d.toString() })
+        req.on('end', () => {
+          try {
+            // 속성 단위 패치가 온다. { 컴포넌트: { 바뀐속성: 값 | null } }
+            // null = 그 속성 삭제(코드 기본값 복귀). 보내지 않은 속성은 파일 값 그대로 둔다.
+            const OK: Record<string, (v: unknown) => boolean> = {
+              x: (v) => typeof v === 'number', y: (v) => typeof v === 'number',
+              scale: (v) => typeof v === 'number', fontSize: (v) => typeof v === 'number',
+              color: (v) => typeof v === 'string',
+              texts: (v) => Array.isArray(v) && v.every((t) => t === null || typeof t === 'string'),
+              textForce: (v) => typeof v === 'boolean', // 동적 문구 덮어쓰기를 의도적으로 허용한 표시
+            }
+            const patch = JSON.parse(body) as Record<string, Record<string, unknown>>
+            for (const fields of Object.values(patch)) {
+              if (!fields || typeof fields !== 'object') { res.statusCode = 400; res.end('bad patch'); return }
+              for (const [f, v] of Object.entries(fields)) {
+                if (!OK[f]) { res.statusCode = 400; res.end(`unknown field: ${f}`); return }
+                if (v !== null && !OK[f]!(v)) { res.statusCode = 400; res.end(`bad value: ${f}`); return }
+              }
+            }
+            const cur = JSON.parse(fs.readFileSync(abs, 'utf8')) as Record<string, Record<string, unknown>>
+            for (const [name, fields] of Object.entries(patch)) {
+              const entry = { ...(cur[name] ?? {}) }
+              for (const [f, v] of Object.entries(fields)) {
+                if (v === null) delete entry[f]
+                else entry[f] = v
+              }
+              // x/y는 항상 있어야 한다 — 스타일만 바꾼 신규 키가 좌표 없이 저장되면 읽는 쪽이 NaN이 된다
+              if (typeof entry['x'] !== 'number' || typeof entry['y'] !== 'number') {
+                res.statusCode = 400; res.end(`missing x/y: ${name}`); return
+              }
+              cur[name] = entry
+            }
+            fs.writeFileSync(abs, JSON.stringify(cur, null, 2) + '\n')
+            const mods = server.moduleGraph.getModulesByFile(abs)
+            if (mods) for (const m of mods) server.moduleGraph.invalidateModule(m)
+            res.end('ok')
+          } catch { res.statusCode = 400; res.end('invalid json') }
+        })
+      })
+    },
+  }
+}
+
 // 개발용: 스킨 배율 저장 팩토리 (char.html·ui.html) — 매니페스트 slot.scale 갱신 + 전 클라이언트 푸시 (1~2배 · 0.2 단위)
 function scaleSavePlugin(route: string, manifestFile: string,
   collect: (m: unknown) => Array<{ id: string; scale?: number }>, event: string): Plugin {
@@ -483,6 +544,7 @@ export default defineConfig({
   build: { target: 'es2020' },
   plugins: [
     uploadedAssetServePlugin(),
+    layoutSavePlugin(), // /__layout — 키 단위 병합 (editorSavePlugin의 통짜 저장과 분리)
     editorSavePlugin(),
     scaleSavePlugin('/__charscale', 'src/data/charskins.json',
       (m) => (m as CharSkinManifest).chars.flatMap((c) => c.slots), 'char-scale-updated'),
