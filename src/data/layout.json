@@ -36,8 +36,8 @@
     "y": 23
   },
   "lobby_char": {
-    "x": 20,
-    "y": 78
+    "x": 26,
+    "y": 65
   },
   "lobby_cta": {
     "x": 214,
@@ -84,8 +84,8 @@
     "y": 250
   },
   "lobby_status": {
-    "x": 16,
-    "y": -8
+    "x": 17,
+    "y": -22
   },
   "lobby_val_mental": {
     "x": 132,
@@ -564,8 +564,8 @@
     "y": -37
   },
   "card_deck_content": {
-    "x": -3,
-    "y": 7
+    "x": 0,
+    "y": -16
   },
   "bond_train_res_btn": {
     "x": 4,
@@ -644,8 +644,8 @@
     "y": -41
   },
   "card_deck_banner": {
-    "x": 0,
-    "y": 33
+    "x": -1,
+    "y": 31
   },
   "dance_mini_bg": {
     "x": 0,
@@ -693,11 +693,11 @@
   },
   "card_deck_title": {
     "x": -2,
-    "y": 42
+    "y": 40
   },
   "card_deck_sub": {
-    "x": 4,
-    "y": -1
+    "x": 0,
+    "y": 0
   },
   "board_title": {
     "x": 142,
@@ -717,19 +717,19 @@
   },
   "card_deck_item_name": {
     "x": -1,
-    "y": -11
+    "y": -13
   },
   "card_deck_item_star": {
-    "x": 0,
-    "y": 25
+    "x": -1,
+    "y": 26
   },
   "card_btn_left": {
     "x": 9,
-    "y": 121
+    "y": 129
   },
   "card_deck_item_sym": {
-    "x": 13,
-    "y": 15
+    "x": 28,
+    "y": 18
   },
   "lobby_cta_run": {
     "x": -33,
