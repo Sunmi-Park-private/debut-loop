@@ -17,6 +17,21 @@ let on = new URLSearchParams(location.search).has("editor");
 let redraw: () => void = () => {};
 const visible = new Map<string, Container>();
 
+// 같은 레이아웃 키를 여러 자리에서 되풀이해 쓰는 화면이 있다 (카드덱 8칸의 심볼·별·이름…).
+// 좌표는 한 벌만 저장하는 게 맞지만, 대표 한 칸만 등록해 두면 나머지 칸을 눌렀을 때
+// 그 칸의 조각이 잡히지 않고 바깥 컨테이너(=n칸 전체)가 선택된다.
+// 그래서 나머지 인스턴스도 여기 모아 선택·드래그·테두리·스타일에서 함께 다룬다.
+const clones = new Map<string, Container[]>();
+
+/** 이름 하나가 가리키는 화면상의 모든 노드 (대표 + 복제) */
+const instancesOf = (name: string): Container[] => {
+  const out: Container[] = [];
+  const p = visible.get(name);
+  if (p && !p.destroyed && p.parent) out.push(p);
+  for (const c of clones.get(name) ?? []) if (!c.destroyed && c.parent) out.push(c);
+  return out;
+};
+
 export const editorEnabled = (): boolean => on;
 
 // ── 편집 모드 ⇄ 조작 모드 ────────────────────────────────────────────
@@ -81,6 +96,7 @@ export function triggerRedraw(): void {
 /** 매 draw 시작 시 호출 — 현재 화면의 등록 목록 초기화 */
 export function beginFrame(): void {
   visible.clear();
+  clones.clear();
 }
 
 /** 컴포넌트를 에디터 대상으로 등록 — 항상 기록하고, 에디터 켜짐이면 실드 최상단 유지 + 패널 갱신 */
@@ -94,6 +110,17 @@ export function editable(name: string, c: Container): void {
   // 한 프레임 뒤엔 그 화면의 등록이 모두 끝나 있어 소유 관계가 정확해진다.
   if (hasOverride(name)) markStyled(name, c);
   if (on) { if (!interact) mountShield(); refreshPanel(); }
+}
+
+/** 이미 등록된 이름의 되풀이 인스턴스 — 패널에는 줄을 하나만 두되,
+ *  화면에서는 이 노드도 눌러서 잡히고 테두리·스타일이 같이 적용된다.
+ *  대표(editable)를 먼저 등록한 뒤 호출한다. */
+export function editableClone(name: string, c: Container): void {
+  const arr = clones.get(name);
+  if (arr) arr.push(c);
+  else clones.set(name, [c]);
+  (c as unknown as Record<string, string>)[NAME_TAG] = name; // 바깥 컴포넌트가 이 안을 넘보지 않게
+  if (hasOverride(name)) markStyled(name, c);
 }
 
 // ── 컴포넌트 내용 분석 ──────────────────────────────────────────────
@@ -176,7 +203,8 @@ function hasOverride(name: string): boolean {
 
 // 덮어쓰기가 걸린 컴포넌트를 매 프레임 다시 입힌다 — 에디터를 꺼도 동작해야 한다
 // (저장된 layout.json은 일반 플레이에도 그대로 적용돼야 하므로).
-const styledLive = new Map<string, Container>();
+// 노드를 키로 둔다 — 한 이름이 여러 자리에 되풀이되는 화면(카드덱 8칸)에서 모두 입혀야 하므로.
+const styledLive = new Map<Container, string>();
 let styleRaf = 0;
 
 /** 스타일만 바꾸는 경우에도 좌표를 먼저 확정한다.
@@ -189,16 +217,21 @@ function ensureCoords(name: string, c: Container): void {
 
 /** 컴포넌트를 프레임 루프에 올린다 — 적용은 다음 프레임부터(등록이 다 끝난 뒤) */
 function markStyled(name: string, node?: Container): void {
-  const c = node ?? visible.get(name);
-  if (!c || c.destroyed || !c.parent) return;
-  styledLive.set(name, c);
+  const list = node ? [node] : instancesOf(name);
+  let any = false;
+  for (const c of list) {
+    if (c.destroyed || !c.parent) continue;
+    styledLive.set(c, name);
+    any = true;
+  }
+  if (!any) return;
   if (!styleRaf) styleRaf = requestAnimationFrame(pumpStyles);
 }
 
 function pumpStyles(): void {
   styleRaf = 0;
-  for (const [name, c] of styledLive) {
-    if (c.destroyed || !c.parent) { styledLive.delete(name); continue; } // 화면에서 사라진 것 정리
+  for (const [c, name] of styledLive) {
+    if (c.destroyed || !c.parent) { styledLive.delete(c); continue; } // 화면에서 사라진 것 정리
     applyStoredStyle(name, c);
   }
   if (styledLive.size > 0) styleRaf = requestAnimationFrame(pumpStyles);
@@ -243,29 +276,34 @@ function clearHighlight(): void {
 function paintHighlight(): void {
   hlRaf = requestAnimationFrame(paintHighlight);
   if (!on || !selected) { highlight?.clear(); return; }
-  const c = visible.get(selected);
-  if (!c || c.destroyed || !c.parent) { highlight?.clear(); return; }
-  let root: Container = c;
+  const list = instancesOf(selected);
+  const head = list[0];
+  if (!head) { highlight?.clear(); return; }
+  let root: Container = head;
   while (root.parent) root = root.parent as Container;
   if (!highlight || highlight.destroyed) {
     highlight = new Graphics();
     highlight.eventMode = "none"; // 입력을 가로채지 않는다
   }
   root.addChild(highlight); // 이미 자식이어도 다시 addChild — 매 프레임 최상단으로 재부상시킨다
-  const b = c.getBounds();
   highlight.clear();
-  if (b.width <= 0 || b.height <= 0) return;
-  // getBounds()는 전역(화면) 좌표 — 테두리는 root 안에 그리므로 root 로컬로 되돌려야 한다.
-  // (스테이지가 화면 비율에 맞춰 스케일/이동돼 있어, 변환 없이 그리면 배율이 한 번 더 먹는다)
-  const tl = root.toLocal(new Point(b.x, b.y));
-  const br = root.toLocal(new Point(b.x + b.width, b.y + b.height));
-  const x = tl.x - 2, y = tl.y - 2;
-  const w = br.x - tl.x + 4, h = br.y - tl.y + 4;
-  highlight
-    .rect(x, y, w, h)
-    .fill({ color: 0xff2d2d, alpha: 0.06 })
-    .rect(x, y, w, h)
-    .stroke({ width: 2, color: 0xff2d2d, alpha: 0.95 });
+  // 같은 키를 되풀이해 쓰는 화면은 모든 자리에 테두리를 그린다 — 한 번의 조정이
+  // 어디까지 함께 움직이는지 눈으로 보이게.
+  for (const c of list) {
+    const b = c.getBounds();
+    if (b.width <= 0 || b.height <= 0) continue;
+    // getBounds()는 전역(화면) 좌표 — 테두리는 root 안에 그리므로 root 로컬로 되돌려야 한다.
+    // (스테이지가 화면 비율에 맞춰 스케일/이동돼 있어, 변환 없이 그리면 배율이 한 번 더 먹는다)
+    const tl = root.toLocal(new Point(b.x, b.y));
+    const br = root.toLocal(new Point(b.x + b.width, b.y + b.height));
+    const x = tl.x - 2, y = tl.y - 2;
+    const w = br.x - tl.x + 4, h = br.y - tl.y + 4;
+    highlight
+      .rect(x, y, w, h)
+      .fill({ color: 0xff2d2d, alpha: 0.06 })
+      .rect(x, y, w, h)
+      .stroke({ width: 2, color: 0xff2d2d, alpha: 0.95 });
+  }
 }
 
 function select(name: string | null): void {
@@ -291,8 +329,11 @@ function mountShield(): void {
   let sx = 0, sy = 0, ox = 0, oy = 0;
   g.on("pointerdown", (e: FederatedPointerEvent) => {
     // 포인트를 포함하는 가장 작은 등록 컴포넌트 선택 (겹침 = 안쪽/작은 것 우선)
+    // 되풀이 인스턴스도 후보에 넣는다 — 두 번째 카드의 심볼을 눌러도 그 조각이 잡히게
+    const cands: Array<[string, Container]> = [...visible];
+    for (const [name, list] of clones) for (const c of list) cands.push([name, c]);
     let best: { name: string; c: Container; area: number } | null = null;
-    for (const [name, c] of visible) {
+    for (const [name, c] of cands) {
       if (c.destroyed || !c.parent) continue;
       const b = c.getBounds();
       if (b.width <= 0 || b.height <= 0) continue;
@@ -315,9 +356,11 @@ function mountShield(): void {
     // 가로는 화면에 그려진 격자와 같은 기준(중앙에서 뻗어 나감)을 써야 보이는 선에 붙는다.
     const snapTo = (v: number, origin: number): number =>
       e.altKey ? Math.round(v) : origin + Math.round((v - origin) / GRID_MINOR) * GRID_MINOR;
-    target.c.x = snapTo(ox + (e.globalX - sx), BASE_W / 2);
-    target.c.y = snapTo(oy + (e.globalY - sy), 0);
-    setPos(target.name, { x: target.c.x, y: target.c.y });
+    const nx = snapTo(ox + (e.globalX - sx), BASE_W / 2);
+    const ny = snapTo(oy + (e.globalY - sy), 0);
+    // 좌표는 이름 하나에 한 벌 — 되풀이 인스턴스는 전부 같은 값으로 따라 움직인다
+    for (const c of instancesOf(target.name)) { c.x = nx; c.y = ny; }
+    setPos(target.name, { x: nx, y: ny });
     refreshPanel();
   });
   const up = (): void => { target = null; };
@@ -561,6 +604,19 @@ function refreshPanel(): void {
   p.appendChild(save);
 }
 
+/** clipboard API가 막힌 컨텍스트(터널 http 등)용 복사 — 화면 밖 textarea + execCommand */
+function copyFallback(text: string): boolean {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.cssText = "position:fixed;left:-9999px;top:0";
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch { ok = false; }
+  ta.remove();
+  return ok;
+}
+
 /** 컴포넌트 한 줄 — 이름(선택) + x/y + 유형별 컨트롤(배율 / 폰트 크기·색) */
 function buildRow(name: string, c: Container): HTMLDivElement {
   const info = scan(c);
@@ -578,9 +634,30 @@ function buildRow(name: string, c: Container): HTMLDivElement {
   label.textContent = icon + name;
   label.title = "클릭하면 화면에서 빨간 테두리로 표시";
   label.style.cssText =
-    "flex:1;text-align:left;border:0;background:none;padding:2px 0;cursor:pointer;font:600 11.5px -apple-system,sans-serif;" +
+    // flex:1을 주지 않는다 — 라벨이 늘어나면 복사 버튼이 줄 끝까지 밀려 이름에서 멀어진다.
+    // 남는 폭은 뒤의 spacer가 먹고, 복사 버튼은 이름 바로 옆에 붙는다.
+    "min-width:0;text-align:left;border:0;background:none;padding:2px 0;cursor:pointer;font:600 11.5px -apple-system,sans-serif;" +
     "color:" + (isSel ? "#ff2d2d" : "#5b4a70") + ";overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
   label.onclick = () => select(isSel ? null : name);
+
+  // 이름 복사 — 컴포넌트가 많아져 이름을 눈으로 옮겨 적기 번거로워졌다.
+  // (선택은 라벨 클릭이므로, 복사 버튼은 선택을 건드리지 않게 이벤트를 멈춘다)
+  const copy = document.createElement("button");
+  copy.textContent = "⧉";
+  copy.title = "컴포넌트 이름 복사";
+  copy.style.cssText =
+    "flex-shrink:0;border:0;background:none;padding:2px 3px;cursor:pointer;font-size:11px;color:#c4b8d6";
+  copy.onclick = (e) => {
+    e.stopPropagation();
+    const done = (ok: boolean): void => {
+      copy.textContent = ok ? "✓" : "✕";
+      copy.style.color = ok ? "#3fb98a" : "#ff6f91";
+      setTimeout(() => { copy.textContent = "⧉"; copy.style.color = "#c4b8d6"; }, 900);
+    };
+    // clipboard API는 보안 컨텍스트(https·localhost)에서만 — 터널 http 접속을 위해 폴백을 둔다
+    navigator.clipboard?.writeText(name).then(() => done(true)).catch(() => done(copyFallback(name)))
+      ?? done(copyFallback(name));
+  };
 
   const mkNum = (v: number, tag: string, apply: (n: number) => void, step = 1): HTMLSpanElement => {
     const s = document.createElement("span");
@@ -598,10 +675,24 @@ function buildRow(name: string, c: Container): HTMLDivElement {
     return s;
   };
 
+  const spacer = document.createElement("span");
+  spacer.style.cssText = "flex:1";
+
   head.append(
     label,
-    mkNum(c.x, "x", (n) => { c.x = n; setPos(name, { x: n, y: Math.round(c.y) }); }),
-    mkNum(c.y, "y", (n) => { c.y = n; setPos(name, { x: Math.round(c.x), y: n }); }),
+    copy,
+    spacer,
+    // 되풀이 인스턴스(카드덱 8칸 등)도 같이 옮긴다 — 저장되는 좌표는 어차피 한 벌
+    mkNum(c.x, "x", (n) => {
+      const y = Math.round(c.y);
+      for (const t of instancesOf(name)) t.x = n;
+      setPos(name, { x: n, y });
+    }),
+    mkNum(c.y, "y", (n) => {
+      const x = Math.round(c.x);
+      for (const t of instancesOf(name)) t.y = n;
+      setPos(name, { x, y: n });
+    }),
   );
   wrap.appendChild(head);
 

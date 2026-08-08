@@ -454,6 +454,17 @@
           "slice": 24
         },
         {
+          "id": "end-panel-regress",
+          "label": "회귀 배경판 (붉은 섬광 — 눈을 뜨니 0시)",
+          "file": "",
+          "size": [
+            394,
+            402
+          ],
+          "mode": "9slice",
+          "slice": 24
+        },
+        {
           "id": "end-btn-fast",
           "label": "회귀 · ⚡ 빠른 모드 버튼",
           "file": "",
@@ -485,6 +496,28 @@
           ],
           "mode": "stretch",
           "small": true
+        },
+        {
+          "id": "end-panel-doom",
+          "label": "파멸 배경 프레임 (게이지 붕괴)",
+          "file": "assets/ui/end-panel-doom.webp",
+          "size": [
+            394,
+            340
+          ],
+          "mode": "9slice",
+          "slice": 24
+        },
+        {
+          "id": "end-btn-doom",
+          "label": "버튼 · 파멸 (다시 도전)",
+          "file": "",
+          "size": [
+            300,
+            56
+          ],
+          "mode": "stretch",
+          "small": true
         }
       ]
     },
@@ -502,6 +535,28 @@
           ],
           "mode": "stretch",
           "opacity": -0.5
+        },
+        {
+          "id": "train-frame",
+          "label": "공통 · 패널 테두리 라인 (배경 위에 덧그림)",
+          "file": "",
+          "size": [
+            394,
+            610
+          ],
+          "mode": "9slice",
+          "slice": 24
+        },
+        {
+          "id": "train-fail-panel",
+          "label": "공통 · 실패 화면 배경 프레임 (\"아쉬워요…\")",
+          "file": "assets/ui/train-fail-panel.webp",
+          "size": [
+            394,
+            610
+          ],
+          "mode": "stretch",
+          "vid": true
         },
         {
           "id": "train-head",
@@ -1515,6 +1570,17 @@
           "mode": "stretch",
           "small": true,
           "scale": 0.7
+        },
+        {
+          "id": "gate-fail-panel",
+          "label": "공통 · 실패 화면 배경 프레임 (\"아쉬워요…\")",
+          "file": "",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
         }
       ]
     },
@@ -1749,6 +1815,43 @@
           "small": true,
           "natural": true,
           "scale": 0.3
+        },
+        {
+          "id": "recheck-bg",
+          "label": "재심사 확인 배경판 (새 후보 없음 화면)",
+          "file": "assets/ui/recheck-bg.png",
+          "size": [
+            394,
+            600
+          ],
+          "mode": "stretch",
+          "vid": true
+        },
+        {
+          "id": "recheck-btn-go",
+          "label": "버튼 · 재심사 진행 — 1배율=원본 크기",
+          "file": "assets/ui/recheck-btn-go.png",
+          "size": [
+            200,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true,
+          "scale": 0.33
+        },
+        {
+          "id": "recheck-btn-back",
+          "label": "버튼 · 돌아가기 (진행권 유지) — 1배율=원본 크기",
+          "file": "assets/ui/recheck-btn-back.png",
+          "size": [
+            200,
+            52
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true,
+          "scale": 0.33
         }
       ]
     },

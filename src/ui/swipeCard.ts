@@ -27,7 +27,7 @@ const PIVOT_X = CARD_W / 2;
 // 선택 버튼 문구를 버튼 중앙에서 화면 **안쪽(중심선 방향)** 으로 당기는 양.
 // 좌 버튼 문구는 오른쪽으로, 우 버튼 문구는 왼쪽으로 이만큼 이동한다.
 // 버튼 아트를 넓힌 뒤 문구가 바깥으로 치우쳐 보여 모았다. 바깥으로 밀려면 음수로.
-const BTN_TEXT_IN = 30;
+const BTN_TEXT_IN = 10;
 
 export interface CardOpts {
   seen?: boolean; // 회귀 가속: 축약 카드로 표시
