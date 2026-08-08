@@ -337,7 +337,12 @@ function unmountShield(): void {
 // 색 판단이 흐려진다. 선은 대부분 픽셀을 원본 그대로 둔다.
 const GRID_MINOR = 10;
 const GRID_MAJOR = 50;
-const GRID_COLOR = 0x00ff6a; // 크로마키 초록 — 게임 팔레트(파스텔)와 겹치지 않아 눈에 띈다
+// 게임 화면이 밝은 파스텔이라 밝은 초록은 묻힌다. 채도 높은 진한 초록을 쓰고 농도를 올린다.
+const GRID_COLOR = 0x00c853;
+const A_MINOR = 0.3;
+const A_MAJOR = 0.6;
+const A_CENTER = 0.95;
+const A_EDGE = 0.85;
 let grid: Graphics | null = null;
 
 function mountGrid(root: Container): void {
@@ -354,15 +359,15 @@ function mountGrid(root: Container): void {
     if (y % GRID_MAJOR === 0) continue;
     g.moveTo(0, y).lineTo(BASE_W, y);
   }
-  g.stroke({ width: 1, color: GRID_COLOR, alpha: 0.12 });
+  g.stroke({ width: 1, color: GRID_COLOR, alpha: A_MINOR });
   for (let x = 0; x <= BASE_W; x += GRID_MAJOR) g.moveTo(x, top).lineTo(x, top + h);
   for (let y = Math.ceil(top / GRID_MAJOR) * GRID_MAJOR; y <= top + h; y += GRID_MAJOR) {
     g.moveTo(0, y).lineTo(BASE_W, y);
   }
-  g.stroke({ width: 1, color: GRID_COLOR, alpha: 0.3 });
+  g.stroke({ width: 1.5, color: GRID_COLOR, alpha: A_MAJOR });
   // 중앙선 — 가운데 정렬 확인용. 지금까지 반복해서 문제가 된 지점이라 가장 밝게 둔다
-  g.moveTo(BASE_W / 2, top).lineTo(BASE_W / 2, top + h).stroke({ width: 1, color: GRID_COLOR, alpha: 0.55 });
-  g.rect(0, top, BASE_W, h).stroke({ width: 2, color: GRID_COLOR, alpha: 0.45 });
+  g.moveTo(BASE_W / 2, top).lineTo(BASE_W / 2, top + h).stroke({ width: 2, color: GRID_COLOR, alpha: A_CENTER });
+  g.rect(0, top, BASE_W, h).stroke({ width: 3, color: GRID_COLOR, alpha: A_EDGE });
   root.addChild(g);
   grid = g;
 }
