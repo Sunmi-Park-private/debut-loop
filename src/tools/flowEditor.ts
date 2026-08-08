@@ -42,13 +42,32 @@ function validate(): string | null {
   return null;
 }
 
+// 타이핑 → 게임에 실시간 반영 (저장 아님). 문구만 보내고, 파일 기록은 💾가 담당한다.
+let previewTimer = 0;
+function sendPreview(): void {
+  const bt = beats[sel];
+  if (!bt) return;
+  const patch = {
+    [bt.id]: {
+      textKey: bt.textKey,
+      left: { label: bt.left.label, hint: bt.left.hint },
+      right: { label: bt.right.label, hint: bt.right.hint },
+    },
+  };
+  if (previewTimer) clearTimeout(previewTimer);
+  previewTimer = window.setTimeout(() => {
+    previewTimer = 0;
+    void fetch("/__beatspreview", { method: "POST", body: JSON.stringify(patch) }).catch(() => {});
+  }, 300);
+}
+
 async function save(): Promise<void> {
   const err = validate();
   if (err) { toast(`⚠ ${err}`, true); return; }
   sessionStorage.setItem("flow.scroll", String(window.scrollY));
   sessionStorage.setItem("flow.sel", String(sel));
   const res = await fetch("/__beats", { method: "POST", body: JSON.stringify(doc) });
-  if (res.ok) toast("💾 저장 완료 — 게임 페이지가 자동 리로드됩니다");
+  if (res.ok) toast("💾 저장 완료 — 게임 화면은 그대로 유지됩니다");
   else toast("저장 실패", true);
   dirty = false;
 }
@@ -221,9 +240,9 @@ function renderPanel(): void {
         if ((el as HTMLInputElement).checked) bt.training = true; else delete bt.training;
       } else if (f === "isConvergence") {
         if ((el as HTMLInputElement).checked) bt.isConvergence = true; else delete bt.isConvergence;
-      } else if (f === "textKey") bt.textKey = el.value;
-      else if (f === "left.label") bt.left.label = el.value;
-      else if (f === "right.label") bt.right.label = el.value;
+      } else if (f === "textKey") { bt.textKey = el.value; sendPreview(); }
+      else if (f === "left.label") { bt.left.label = el.value; sendPreview(); }
+      else if (f === "right.label") { bt.right.label = el.value; sendPreview(); }
       renderTimeline();
     });
   });
