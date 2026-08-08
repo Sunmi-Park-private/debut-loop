@@ -60,6 +60,15 @@ export interface BeatChoice {
   hint?: string;             // 기시감 등 연출 힌트
 }
 
+/** 2회차 회상 카드 전용 문구 — 지정하지 않으면 1회차 값을 그대로 쓴다.
+ *  공통 비트(loop 미지정)는 두 회차에 모두 나오는데, 회상에서는 압축된 문장이
+ *  어울릴 때가 있어 문구만 따로 둘 수 있게 한다. 효과(effects)는 나누지 않는다. */
+export interface BeatRecall {
+  textKey?: string;
+  leftLabel?: string;
+  rightLabel?: string;
+}
+
 export interface Beat {
   id: string;
   act: number;               // 1~5 (프롤로그=0)
@@ -72,6 +81,7 @@ export interface Beat {
   left: BeatChoice;
   right: BeatChoice;
   isConvergence?: boolean;   // 수렴 앵커
+  recall?: BeatRecall;       // 2회차 회상 문구(선택) — 없으면 위 값들을 그대로 쓴다
 }
 
 // 진행 엔진(progress.advance)이 반환하는 이벤트
