@@ -194,9 +194,12 @@ function layoutSavePlugin(): Plugin {
           return
         }
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
-        let body = ''
-        req.on('data', (d: Buffer) => { body += d.toString() })
+        // 청크를 모아 한 번에 디코딩한다 — 청크마다 toString()하면 UTF-8 멀티바이트(한글 3바이트)가
+        // 경계에서 잘려 그 글자가 깨진다. 큰 문서(beats)를 저장할 때마다 몇 글자씩 손상되던 원인.
+        const chunks: Buffer[] = []
+        req.on('data', (d: Buffer) => { chunks.push(d) })
         req.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8')
           try {
             // 속성 단위 패치가 온다. { 컴포넌트: { 바뀐속성: 값 | null } }
             // null = 그 속성 삭제(코드 기본값 복귀). 보내지 않은 속성은 파일 값 그대로 둔다.
@@ -247,9 +250,12 @@ function scaleSavePlugin(route: string, manifestFile: string,
     configureServer(server) {
       server.middlewares.use(route, (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
-        let body = ''
-        req.on('data', (d: Buffer) => { body += d.toString() })
+        // 청크를 모아 한 번에 디코딩한다 — 청크마다 toString()하면 UTF-8 멀티바이트(한글 3바이트)가
+        // 경계에서 잘려 그 글자가 깨진다. 큰 문서(beats)를 저장할 때마다 몇 글자씩 손상되던 원인.
+        const chunks: Buffer[] = []
+        req.on('data', (d: Buffer) => { chunks.push(d) })
         req.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8')
           try {
             const { slot, scale } = JSON.parse(body) as { slot: string; scale: number }
             // 세밀 배율 슬롯은 0.1배 축소까지 허용 (0.1 단위) — 범위 제한은 에디터 드롭다운이 담당
@@ -281,9 +287,12 @@ function opacitySavePlugin(route: string, manifestFile: string,
     configureServer(server) {
       server.middlewares.use(route, (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
-        let body = ''
-        req.on('data', (d: Buffer) => { body += d.toString() })
+        // 청크를 모아 한 번에 디코딩한다 — 청크마다 toString()하면 UTF-8 멀티바이트(한글 3바이트)가
+        // 경계에서 잘려 그 글자가 깨진다. 큰 문서(beats)를 저장할 때마다 몇 글자씩 손상되던 원인.
+        const chunks: Buffer[] = []
+        req.on('data', (d: Buffer) => { chunks.push(d) })
         req.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8')
           try {
             const { slot, opacity } = JSON.parse(body) as { slot: string; opacity: number }
             if (!/^[a-z0-9-]+$/.test(slot) || typeof opacity !== 'number' || opacity < -0.5 || opacity > 0.5) {
@@ -324,9 +333,12 @@ function editorSavePlugin(): Plugin {
             return
           }
           if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
-          let body = ''
-          req.on('data', (d: Buffer) => { body += d.toString() })
+          // 청크를 모아 한 번에 디코딩한다 — 청크마다 toString()하면 UTF-8 멀티바이트(한글 3바이트)가
+          // 경계에서 잘려 그 글자가 깨진다. beats처럼 큰 문서를 저장할 때마다 몇 글자씩 손상되던 원인.
+          const chunks: Buffer[] = []
+          req.on('data', (d: Buffer) => { chunks.push(d) })
           req.on('end', () => {
+            const body = Buffer.concat(chunks).toString('utf8')
             try {
               const parsed: unknown = JSON.parse(body) // 유효성 검증
               const abs = path.resolve(process.cwd(), file)

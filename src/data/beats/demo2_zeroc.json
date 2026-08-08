@@ -1349,7 +1349,7 @@
           "clue_astroturf"
         ]
       },
-      "textKey": "하루와 유월이 밤새 직접 악플 로���를 판다.\n\"이 IP랑 문체... {antiStaff}랑 겹쳐.\"",
+      "textKey": "하루와 유월이 밤새 직접 악플 로그를 판다.\n\"이 IP랑 문체... {antiStaff}랑 겹쳐.\"",
       "left": {
         "label": "끝까지 파본다",
         "effects": {
@@ -1464,7 +1464,7 @@
       "act": 3,
       "week": 14,
       "isConvergence": true,
-      "textKey": "스케줄 펑크에 자본난까지.\n��이 벼랑 끝이다.",
+      "textKey": "스케줄 펑크에 자본난까지.\n팀이 벼랑 끝이다.",
       "left": {
         "label": "패자부활권을 쓴다",
         "requires": {
@@ -1580,7 +1580,7 @@
       "id": "d2_w15_deja",
       "act": 3,
       "week": 15,
-      "textKey": "무대 조명 아래\n\"�� 장면... 어디서 봤��라.\" 파��이 몸서리치게 익숙하다.",
+      "textKey": "무대 조명 아래\n\"이 장면... 어디서 봤더라.\" 파편이 몸서리치게 익숙하다.",
       "requires": {
         "flags": [
           "memory_shadow"
@@ -1829,7 +1829,7 @@
       "id": "d2_w17_flash_mic",
       "act": 3,
       "week": 17,
-      "textKey": "환호 속에서\n꺼진 마���크가 데뷔 무대의 것과 정확히 겹친다.",
+      "textKey": "환호 속에서\n꺼진 마이크가 데뷔 무대의 것과 정확히 겹친다.",
       "requires": {
         "flags": [
           "memory_deep"
@@ -1914,7 +1914,7 @@
       "id": "d2_w18_yuwol_push",
       "act": 3,
       "week": 18,
-      "textKey": "유월: \"저 사람, 처음부터 이상했어. 이제 증명하��.\"",
+      "textKey": "유월: \"저 사람, 처음부터 이상했어. 이제 증명하자.\"",
       "requires": {
         "flags": [
           "seed_doubt"
@@ -2167,7 +2167,7 @@
       "id": "d2_w21_hari_dig",
       "act": 4,
       "week": 21,
-      "textKey": "{mentor}의 조사가 좁혀���다.\n\"��� 사람 경력, 만��어진 냄새가 나.\"",
+      "textKey": "{mentor}의 조사가 좁혀진다.\n\"이 사람 경력, 만들어진 냄새가 나.\"",
       "requires": {
         "flags": [
           "hari_probing"
@@ -2449,7 +2449,7 @@
       "id": "d2_w23_prepare",
       "act": 4,
       "week": 23,
-      "textKey": "저지를 ���비할까,\n아직 그를 믿고 싶은 마음이 남을까.",
+      "textKey": "저지를 준비할까,\n아직 그를 믿고 싶은 마음이 남을까.",
       "left": {
         "label": "막을 준비를 한다",
         "requires": {
@@ -2562,7 +2562,7 @@
       "id": "d2_w24_true",
       "act": 5,
       "week": 24,
-      "textKey": "무��가 무���히 이어진다.\n5명이 함께, 처음으로 끝까지. 데뷔 성공. 0시가 지나간다.",
+      "textKey": "무대가 무사히 이어진다.\n5명이 함께, 처음으로 끝까지. 데뷔 성공. 0시가 지나간다.",
       "requires": {
         "flags": [
           "blocked_true"
@@ -2577,7 +2577,7 @@
         }
       },
       "right": {
-        "label": "...��냈다",
+        "label": "...해냈다",
         "effects": {
           "flags": [
             "ending_true"
