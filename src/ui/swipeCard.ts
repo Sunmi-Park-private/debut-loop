@@ -1,6 +1,7 @@
 // ui/swipeCard.ts — 카드(대사) + 드래그 스와이프 + 좌/우 버튼 렌더 (Pixi v8).
 import { AnimatedSprite, BlurFilter, Container, Graphics, Sprite, Text, Texture, type FederatedPointerEvent } from "pixi.js";
 import type { Beat } from "../engine/types";
+import { recallOf } from "../engine/recall";
 import { pos } from "./layout";
 import { easeOut, easeInOut, lerp } from "./ease";
 import { pressable } from "./press";
@@ -134,9 +135,12 @@ export function renderCard(
   }
 
   const btnY = H - 80;
-  const raw = sub(beat.textKey, casting);
+  // 2회차 회상 카드는 비트에 적어둔 회상 문구를 쓴다 (없으면 1회차 문장 그대로).
+  // 예전엔 여기서 40자에서 잘라 문장이 중간에 끊겼다 — 자르지 않는다.
+  const rc = seen ? recallOf(beat) : null;
+  const raw = sub(rc ? rc.text : beat.textKey, casting);
   const line = new Text({
-    text: seen && raw.length > 40 ? raw.slice(0, 40) + "…" : raw,
+    text: raw,
     // align:center — 줄바꿈된 각 줄을 서로 가운데로 맞춘다(줄 길이가 제각각이라 왼쪽 정렬이면 들쭉날쭉).
     style: {
       fontSize: seen ? 14 : 17, fill: seen ? 0xa99bc0 : 0x5b4a70,
@@ -229,7 +233,7 @@ export function renderCard(
   };
   if (replay) {
     // 그때의 선택 + 탭 안내 (버튼 없음 — 카드 전체가 탭 타깃)
-    const chose = new Text({ text: `그때의 선택 — ${beat[replay].label}`, style: { fontSize: 13, fill: 0x8a76a8, fontWeight: "bold" } });
+    const chose = new Text({ text: `그때의 선택 — ${rc ? rc[replay] : beat[replay].label}`, style: { fontSize: 13, fill: 0x8a76a8, fontWeight: "bold" } });
     const pCh = pos("card_replay_choice", { x: 18, y: btnY + 4 });
     chose.x = pCh.x;
     chose.y = pCh.y;
@@ -260,8 +264,8 @@ export function renderCard(
     editable("card_replay_chips", chips);
   } else {
     // 방향은 버튼 아트가 표시한다 — 문구에 ←/→를 덧붙이지 않는다
-    mkBtn(beat.left.label, 18, 0x9a7fe0, "left");
-    mkBtn(beat.right.label, 198, 0xff7fb0, "right");
+    mkBtn(rc ? rc.left : beat.left.label, 18, 0x9a7fe0, "left");
+    mkBtn(rc ? rc.right : beat.right.label, 198, 0xff7fb0, "right");
   }
 
   // ── replay(빠른 모드): 탭·Space·→ 1회로 기록된 선택 재적용 — 드래그/버튼/방향키 없음 ──
