@@ -185,6 +185,15 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
 
     const nm = mkText(t?.name?.replace(" 카드", "") ?? "", 10, 0x5b4a70, true);
     igrp("card_deck_item_name", nm, (CW - nm.width) / 2, 66);
+    // 카드명 텍스트를 그룹과 별개로 등록 — 그룹은 카드 안에서의 위치, 텍스트는 크기·색·미세 위치.
+    // 기본값은 igrp가 잡아준 가운데 정렬이라 지금 배치는 그대로다.
+    if (!registered.has("card_deck_item_name_text")) {
+      registered.add("card_deck_item_name_text");
+      const q = pos("card_deck_item_name_text", { x: nm.x, y: nm.y });
+      nm.x = q.x;
+      nm.y = q.y;
+      editable("card_deck_item_name_text", nm);
+    }
 
     if (count > 1) {
       const bd = mkText(`×${count}`, 10, 0xc9527f, true);

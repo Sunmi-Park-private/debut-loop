@@ -312,9 +312,11 @@ function mountShield(): void {
     if (!target) return;
     // 격자에 붙인다 — Alt를 누른 채 끌면 붙지 않아 1px 단위로 다듬을 수 있다.
     // 이미 저장된 좌표는 건드리지 않는다. 다시 끌 때만 격자로 맞춰진다.
-    const snap = (v: number): number => (e.altKey ? Math.round(v) : Math.round(v / GRID_MINOR) * GRID_MINOR);
-    target.c.x = snap(ox + (e.globalX - sx));
-    target.c.y = snap(oy + (e.globalY - sy));
+    // 가로는 화면에 그려진 격자와 같은 기준(중앙에서 뻗어 나감)을 써야 보이는 선에 붙는다.
+    const snapTo = (v: number, origin: number): number =>
+      e.altKey ? Math.round(v) : origin + Math.round((v - origin) / GRID_MINOR) * GRID_MINOR;
+    target.c.x = snapTo(ox + (e.globalX - sx), BASE_W / 2);
+    target.c.y = snapTo(oy + (e.globalY - sy), 0);
     setPos(target.name, { x: target.c.x, y: target.c.y });
     refreshPanel();
   });
@@ -351,8 +353,18 @@ function mountGrid(root: Container): void {
   const h = stageHeight();
   const g = new Graphics();
   g.eventMode = "none"; // 입력을 가로채지 않는다 — 드래그는 실드가 처리
-  for (let x = 0; x <= BASE_W; x += GRID_MINOR) {
-    if (x % GRID_MAJOR === 0) continue;
+  // 세로선은 중앙(x=215)에서 좌우로 뻗어 나간다. 0에서 시작하면 50px 굵은선이 200·250에 서고
+  // 중앙선만 215에 홀로 서서, 중앙 옆 간격만 15px로 좁아 보인다(격자가 안 맞는 것처럼).
+  const cx = BASE_W / 2;
+  const colsAt = (step: number): number[] => {
+    const out: number[] = [];
+    for (let x = cx; x <= BASE_W; x += step) out.push(x);
+    for (let x = cx - step; x >= 0; x -= step) out.push(x);
+    return out;
+  };
+  const majorX = new Set(colsAt(GRID_MAJOR));
+  for (const x of colsAt(GRID_MINOR)) {
+    if (majorX.has(x)) continue;
     g.moveTo(x, top).lineTo(x, top + h);
   }
   for (let y = Math.ceil(top / GRID_MINOR) * GRID_MINOR; y <= top + h; y += GRID_MINOR) {
@@ -360,13 +372,16 @@ function mountGrid(root: Container): void {
     g.moveTo(0, y).lineTo(BASE_W, y);
   }
   g.stroke({ width: 1, color: GRID_COLOR, alpha: A_MINOR });
-  for (let x = 0; x <= BASE_W; x += GRID_MAJOR) g.moveTo(x, top).lineTo(x, top + h);
+  for (const x of majorX) {
+    if (x === cx) continue; // 중앙선은 아래에서 더 진하게 따로 그린다
+    g.moveTo(x, top).lineTo(x, top + h);
+  }
   for (let y = Math.ceil(top / GRID_MAJOR) * GRID_MAJOR; y <= top + h; y += GRID_MAJOR) {
     g.moveTo(0, y).lineTo(BASE_W, y);
   }
   g.stroke({ width: 1.5, color: GRID_COLOR, alpha: A_MAJOR });
   // 중앙선 — 가운데 정렬 확인용. 지금까지 반복해서 문제가 된 지점이라 가장 밝게 둔다
-  g.moveTo(BASE_W / 2, top).lineTo(BASE_W / 2, top + h).stroke({ width: 2, color: GRID_COLOR, alpha: A_CENTER });
+  g.moveTo(cx, top).lineTo(cx, top + h).stroke({ width: 2, color: GRID_COLOR, alpha: A_CENTER });
   g.rect(0, top, BASE_W, h).stroke({ width: 3, color: GRID_COLOR, alpha: A_EDGE });
   root.addChild(g);
   grid = g;
