@@ -19,6 +19,33 @@ const visible = new Map<string, Container>();
 
 export const editorEnabled = (): boolean => on;
 
+// ── 편집 모드 ⇄ 조작 모드 ────────────────────────────────────────────
+// 에디터를 켜면 실드가 게임 입력을 전부 삼켜, 확정·계속 같은 버튼이 눌리지 않아 화면을 진행할 수 없다.
+// 조작 모드는 패널·선택·미저장 편집을 그대로 둔 채 실드만 걷어 게임을 원래대로 돌린다.
+let interact = false;
+
+/** 게임 입력을 에디터가 가로채는 중인지 — 게임 쪽은 "에디터가 켜졌는지"가 아니라 이 값을 본다 */
+export const inputBlocked = (): boolean => on && !interact;
+
+export function setInteractMode(next: boolean): void {
+  if (!on || interact === next) return;
+  interact = next;
+  if (interact) { unmountShield(); unmountGrid(); }
+  else { mountShield(); }
+  refreshPanel();
+}
+
+// ` (백틱) = 모드 토글. 입력칸에 포커스가 있으면 무시 — 문구를 치다가 모드가 뒤집히지 않게.
+if (typeof window !== "undefined") {
+  window.addEventListener("keydown", (e) => {
+    if (!on || e.key !== "`" || e.metaKey || e.ctrlKey || e.altKey) return;
+    const a = document.activeElement;
+    if (a instanceof HTMLInputElement || a instanceof HTMLTextAreaElement || a instanceof HTMLSelectElement) return;
+    e.preventDefault();
+    setInteractMode(!interact);
+  });
+}
+
 // 토글 훅: 화면이 전체 리드로우 대신 자체 처리(게임 일시정지 등)할 때 등록 — true 반환 시 redraw 생략
 let toggleHook: ((on: boolean) => boolean) | null = null;
 export function setEditorToggleHook(fn: ((on: boolean) => boolean) | null): void {
@@ -27,11 +54,12 @@ export function setEditorToggleHook(fn: ((on: boolean) => boolean) | null): void
 
 export function setEditorMode(next: boolean): void {
   on = next;
+  interact = false; // 에디터를 껐다 켜면 항상 편집 모드부터
   panelEl().style.display = on ? "block" : "none";
   const handled = toggleHook?.(next) ?? false;
   if (!handled) redraw();
   if (on) { mountShield(); refreshPanel(); }
-  else { unmountShield(); clearHighlight(); }
+  else { unmountShield(); unmountGrid(); clearHighlight(); }
 }
 
 export function onRedraw(fn: () => void): void {
@@ -65,7 +93,7 @@ export function editable(name: string, c: Container): void {
   //  · 부모가 자식보다 먼저 등록되면 아직 자식 표식이 없어 남의 텍스트까지 집는다.
   // 한 프레임 뒤엔 그 화면의 등록이 모두 끝나 있어 소유 관계가 정확해진다.
   if (hasOverride(name)) markStyled(name, c);
-  if (on) { mountShield(); refreshPanel(); }
+  if (on) { if (!interact) mountShield(); refreshPanel(); }
 }
 
 // ── 컴포넌트 내용 분석 ──────────────────────────────────────────────
@@ -282,9 +310,12 @@ function mountShield(): void {
   });
   g.on("globalpointermove", (e: FederatedPointerEvent) => {
     if (!target) return;
-    target.c.x = ox + (e.globalX - sx);
-    target.c.y = oy + (e.globalY - sy);
-    setPos(target.name, { x: Math.round(target.c.x), y: Math.round(target.c.y) });
+    // 격자에 붙인다 — Alt를 누른 채 끌면 붙지 않아 1px 단위로 다듬을 수 있다.
+    // 이미 저장된 좌표는 건드리지 않는다. 다시 끌 때만 격자로 맞춰진다.
+    const snap = (v: number): number => (e.altKey ? Math.round(v) : Math.round(v / GRID_MINOR) * GRID_MINOR);
+    target.c.x = snap(ox + (e.globalX - sx));
+    target.c.y = snap(oy + (e.globalY - sy));
+    setPos(target.name, { x: target.c.x, y: target.c.y });
     refreshPanel();
   });
   const up = (): void => { target = null; };
@@ -292,12 +323,54 @@ function mountShield(): void {
   g.on("pointerupoutside", up);
   root.addChild(g);
   shield = g;
+  mountGrid(root);
 }
 
 function unmountShield(): void {
   shield?.parent?.removeChild(shield);
   shield?.destroy();
   shield = null;
+}
+
+// ── 정렬 그리드 — 편집 모드 표시 + 드래그 기준선 ──────────────────────
+// 흰색 베일 대신 선을 쓴다. 디자이너가 색상·농도를 조정하는 중이라, 화면 전체를 덮으면
+// 색 판단이 흐려진다. 선은 대부분 픽셀을 원본 그대로 둔다.
+const GRID_MINOR = 10;
+const GRID_MAJOR = 50;
+const GRID_COLOR = 0x00ff6a; // 크로마키 초록 — 게임 팔레트(파스텔)와 겹치지 않아 눈에 띈다
+let grid: Graphics | null = null;
+
+function mountGrid(root: Container): void {
+  unmountGrid();
+  const top = stageTop();
+  const h = stageHeight();
+  const g = new Graphics();
+  g.eventMode = "none"; // 입력을 가로채지 않는다 — 드래그는 실드가 처리
+  for (let x = 0; x <= BASE_W; x += GRID_MINOR) {
+    if (x % GRID_MAJOR === 0) continue;
+    g.moveTo(x, top).lineTo(x, top + h);
+  }
+  for (let y = Math.ceil(top / GRID_MINOR) * GRID_MINOR; y <= top + h; y += GRID_MINOR) {
+    if (y % GRID_MAJOR === 0) continue;
+    g.moveTo(0, y).lineTo(BASE_W, y);
+  }
+  g.stroke({ width: 1, color: GRID_COLOR, alpha: 0.12 });
+  for (let x = 0; x <= BASE_W; x += GRID_MAJOR) g.moveTo(x, top).lineTo(x, top + h);
+  for (let y = Math.ceil(top / GRID_MAJOR) * GRID_MAJOR; y <= top + h; y += GRID_MAJOR) {
+    g.moveTo(0, y).lineTo(BASE_W, y);
+  }
+  g.stroke({ width: 1, color: GRID_COLOR, alpha: 0.3 });
+  // 중앙선 — 가운데 정렬 확인용. 지금까지 반복해서 문제가 된 지점이라 가장 밝게 둔다
+  g.moveTo(BASE_W / 2, top).lineTo(BASE_W / 2, top + h).stroke({ width: 1, color: GRID_COLOR, alpha: 0.55 });
+  g.rect(0, top, BASE_W, h).stroke({ width: 2, color: GRID_COLOR, alpha: 0.45 });
+  root.addChild(g);
+  grid = g;
+}
+
+function unmountGrid(): void {
+  grid?.parent?.removeChild(grid);
+  grid?.destroy();
+  grid = null;
 }
 
 // ── 자동 저장 ───────────────────────────────────────────────────────
@@ -420,6 +493,21 @@ function refreshPanel(): void {
     "background:#f8f4fc;color:#a99bc0;font-weight:700;cursor:pointer;line-height:1";
   close.onclick = () => setEditorMode(false);
   p.appendChild(close);
+  // 모드 토글 — 편집(실드·그리드) ⇄ 조작(게임 정상 동작). 상태가 곧 설명이 되게 적는다
+  const mode = document.createElement("button");
+  mode.style.cssText =
+    "width:100%;margin:0 0 8px;padding:8px 10px;border:0;border-radius:9px;cursor:pointer;text-align:left;" +
+    "font:12px -apple-system,sans-serif;line-height:1.55;color:#fff;background:" +
+    (interact ? "#2fb573" : "#ff7fb0");
+  mode.innerHTML = interact
+    ? "<b>▶ 조작 중</b> — 화면이 선명합니다<br>" +
+      "<span style='opacity:.85;font-size:11px'>게임이 정상 동작합니다 · 드래그로는 못 옮겨요<br>" +
+      "<b>`</b> 또는 여기를 눌러 편집으로</span>"
+    : "<b>✋ 편집 중</b> — 초록 격자가 보입니다<br>" +
+      "<span style='opacity:.85;font-size:11px'>드래그로 옮기고 10px에 붙어요 (Alt = 1px)<br>" +
+      "<b>`</b> 또는 여기를 눌러 조작으로 (화면 진행)</span>";
+  mode.onclick = () => setInteractMode(!interact);
+  p.appendChild(mode);
   const rows = [...visible].filter(([, c]) => !c.destroyed && c.parent); // 화면에 남아있는 것만
   if (rows.length === 0) {
     const empty = document.createElement("div");

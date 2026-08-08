@@ -7,7 +7,7 @@ import { pressable } from "./press";
 import { buzz } from "./haptics";
 import { pairSpace } from "./keys";
 import { skinNode, skinTexTrim } from "./uiSkin";
-import { editable, editorEnabled } from "./editor";
+import { editable, inputBlocked } from "./editor";
 
 const sub = (t: string, casting: Record<string, string>): string =>
   t.replace(/\{(\w+)\}/g, (_, k: string) => casting[k] ?? k);
@@ -250,7 +250,7 @@ export function renderCard(
   }
 
   // ── replay(빠른 모드): 탭·Space·→ 1회로 기록된 선택 재적용 — 드래그/버튼/방향키 없음 ──
-  if (!editorEnabled() && replay) {
+  if (!inputBlocked() && replay) {
     card.eventMode = "static";
     card.cursor = "pointer";
     // 탭·Space·→ 공용 1회 실행 — 어느 쪽으로 진행해도 리스너 해제 (중복 발화 방지)
@@ -277,7 +277,7 @@ export function renderCard(
 
   // ── 드래그 스와이프 (목업 bindDrag 이식) ── 에디터 모드에선 비활성(위치 조정 드래그와 충돌)
   // 캐릭터는 카드와 분리된 오브젝트라 카드 히트영역 밖 — 캐릭터 위에서도 스와이프되도록 양쪽에 배선
-  if (!editorEnabled() && !replay) {
+  if (!inputBlocked() && !replay) {
     const dragTargets: Container[] = portraitSpr ? [card, portraitSpr] : [card];
     for (const t of dragTargets) {
       t.eventMode = "static";

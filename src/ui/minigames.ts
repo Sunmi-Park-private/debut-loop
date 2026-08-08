@@ -18,7 +18,7 @@ import { pressable, type PressOpts } from "./press";
 import { cardTemplates, tuning, beatmaps, tickets } from "../data";
 import { skinNode, skinTex, skinTexTrim, skinFit, skinNatural, skinCover, skinScale } from "./uiSkin";
 import { pos } from "./layout";
-import { editable, editorEnabled, setEditorToggleHook, setRedrawHook } from "./editor";
+import { editable, inputBlocked, setEditorToggleHook, setRedrawHook } from "./editor";
 import { buzz } from "./haptics";
 import { fullRect } from "./stage";
 import { playLevelUpFx } from "./levelUpFx";
@@ -1398,7 +1398,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
         cd.parent?.removeChild(cd);
         restartBgm(trackId); // 판마다 처음부터 (노트·음악 싱크)
         ticker.add(tick);
-        if (editorEnabled()) applyEditor(true); // 에디터 켠 채 시작 → 첫 프레임부터 일시정지
+        if (inputBlocked()) applyEditor(true); // 편집 모드로 시작 → 첫 프레임부터 일시정지 (조작 모드면 그대로 진행)
       };
       setTimeout(stepCd, 800);
     };
