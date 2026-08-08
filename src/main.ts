@@ -9,6 +9,8 @@ import { initAudioUnlock, playBgm } from "./ui/audio";
 import { setStageExtra } from "./ui/stage";
 import { triggerRedraw } from "./ui/editor";
 import { onHotAssetUpdate } from "./ui/hotAssets";
+import { beats } from "./data";
+import { initBeatsPreview } from "./ui/beatsPreview";
 
 // 배경 mp4(프롤로그·로딩·리듬 배경)는 항상 무한 루프·무음 재생 — BGM은 오디오 시스템이 담당
 VideoSource.defaultOptions = {
@@ -76,6 +78,7 @@ async function main(): Promise<void> {
       if (changed) triggerRedraw();
     });
   });
+  initBeatsPreview(beats); // 플로우 에디터 미저장 대사 실시간 반영 (dev 전용)
   mark("title");
   await showTitle(app, assets.title);                   // ③ 메인화면 (게임 시작)
   playBgm("main");                                      // 메인 BGM — 로비 진입부터 (프롤로그·로딩·타이틀은 무음)

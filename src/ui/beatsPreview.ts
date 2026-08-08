@@ -71,3 +71,43 @@ export function applyOverlay(beats: PreviewBeat[], overlay: BeatTextOverlay, bas
 export function commitBaseline(baseline: Baseline): void {
   baseline.clear();
 }
+
+// ── 게임 배선 (dev 전용) ────────────────────────────────────────────
+const baseline: Baseline = new Map();
+let badge: HTMLDivElement | null = null;
+
+function showBadge(n: number): void {
+  if (n === 0) { badge?.remove(); badge = null; return; }
+  if (!badge) {
+    const el = document.createElement("div");
+    el.style.cssText =
+      "position:fixed;top:10px;right:10px;z-index:1200;background:#ff7fb0;color:#fff;" +
+      "font:700 11px -apple-system,sans-serif;padding:5px 10px;border-radius:999px;cursor:pointer;" +
+      "box-shadow:0 2px 8px rgba(0,0,0,.25)";
+    el.title = "저장되지 않은 대사 수정 — 누르면 되돌립니다";
+    el.onclick = () => { void fetch("/__beatspreview", { method: "DELETE" }); };
+    document.body.appendChild(el);
+    badge = el;
+  }
+  badge.textContent = `✎ 미저장 ${n}`;
+}
+
+/** 게임 부팅 시 1회. dev 서버가 아니면 아무 일도 하지 않는다. */
+export function initBeatsPreview(beats: PreviewBeat[]): void {
+  if (!import.meta.hot) return;
+  const applyAndDraw = (overlay: BeatTextOverlay): void => {
+    applyOverlay(beats, overlay, baseline);
+    showBadge(Object.keys(overlay).length);
+    void import("./editor").then((e) => e.triggerRedraw());
+  };
+  // 새로고침해도 미저장 임시본이 그대로 보이도록 현재 오버레이를 받아온다
+  void fetch("/__beatspreview")
+    .then((r) => r.json() as Promise<{ overlay: BeatTextOverlay }>)
+    .then((d) => { if (Object.keys(d.overlay).length > 0) applyAndDraw(d.overlay); })
+    .catch(() => {});
+  import.meta.hot.on("beats-preview", (d: { overlay: BeatTextOverlay }) => { applyAndDraw(d.overlay); });
+  import.meta.hot.on("beats-committed", () => {
+    commitBaseline(baseline); // 화면 문구는 그대로 두고 배지만 내린다
+    showBadge(0);
+  });
+}
