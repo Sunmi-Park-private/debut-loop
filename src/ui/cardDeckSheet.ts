@@ -193,36 +193,30 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
     return f;
   };
   // 뒷면 — 앞면(train-result-card)과 짝을 이루는 train-result-card-back 슬롯, 미업로드면 벡터 폴백
-  const backFace = (): Container => {
-    const b = new Container();
-    const art = skinFit("train-result-card-back", CW, CH);
-    if (art) {
-      b.addChild(art);
-      return b;
-    }
-    b.addChild(
-      new Graphics().roundRect(0, 0, CW, CH, 12).fill(0x7a5fb0).stroke({ width: 2.5, color: 0xa78be6 }),
-      new Graphics().roundRect(7, 7, CW - 14, CH - 14, 8).stroke({ width: 1.5, color: 0x9b83d4 }),
-    );
-    const m = mkText("♪", 26, 0xd9cdeb, true);
-    m.x = (CW - m.width) / 2;
-    m.y = CH / 2 - 24;
-    b.addChild(m);
-    return b;
-  };
-  // 빈 슬롯 — 아직 모은 카드가 없을 때의 "?" 자리표시. 뒤집을 것이 없으므로 상호작용도 없다
+  // 뒷면 — 앞면(train-result-card)과 짝을 이루는 슬롯. 아트가 없으면 아무것도 그리지 않는다
+  // (임시 벡터를 깔면 아트가 올라온 줄 알기 쉬워서, 빈 슬롯은 비워 두는 편이 상태가 분명하다)
+  const backFace = (): Container | null => skinFit("train-result-card-back", CW, CH);
+
+  // 빈 슬롯 자리표시 — 그 화면의 기본 면을 따라간다.
+  // 로비는 뒷면으로 깔리므로 빈 칸도 뒷면, 스토리는 앞면이므로 앞면 프레임 + "?".
+  // 해당 면의 아트가 없으면 그 칸은 비워 둔다.
   const emptySlot = (i: number): void => {
     const x0 = colX(i);
     const y0 = rowY(i);
-    const art = skinFit("train-result-card", CW, CH);
-    if (art) {
-      art.x = x0;
-      art.y = y0;
-      content.addChild(art);
-    } else {
-      content.addChild(new Graphics().roundRect(x0, y0, CW, CH, 12)
-        .fill(0xf8f4fc).stroke({ width: 2, color: 0xece4f4 }));
+    if (tapMode === "flip") {
+      const b = backFace();
+      if (!b) return; // 뒷면 아트 미업로드 — 빈 칸
+      b.x = x0;
+      b.y = y0;
+      b.alpha = 0.5; // 카드가 있는 자리와 구분 — 같은 뒷면이되 흐리게
+      content.addChild(b);
+      return;
     }
+    const art = skinFit("train-result-card", CW, CH);
+    if (!art) return; // 앞면 아트 미업로드 — 빈 칸
+    art.x = x0;
+    art.y = y0;
+    content.addChild(art);
     const q = mkText("?", 20, 0xd9cdeb, true);
     q.x = x0 + CW / 2 - q.width / 2;
     q.y = y0 + CW * 0.5;
@@ -239,14 +233,16 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
     tile.y = homeY;
 
     const front = frontFace(card, count);
-    const back = backFace();
-    tile.addChild(back, front);
+    // 뒷면 아트가 없으면 뒤집을 면이 없으므로 앞면 고정으로 둔다 (빈 카드가 보이지 않게)
+    const back = tapMode === "flip" ? backFace() : null;
+    if (back) tile.addChild(back);
+    tile.addChild(front);
 
-    let faceUp = tapMode === "flip" ? revealed.has(key) : true;
+    let faceUp = back ? revealed.has(key) : true;
     let lifted = false;
     let busy = false;
     front.visible = faceUp;
-    back.visible = !faceUp;
+    if (back) back.visible = !faceUp;
 
     const flip = (): void => {
       busy = true;
@@ -255,7 +251,7 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
       tween(FLIP_HALF, (p) => { tile.scale.x = 1 - easeIn(p); }, () => {
         faceUp = !faceUp;
         front.visible = faceUp;
-        back.visible = !faceUp;
+        if (back) back.visible = !faceUp;
         if (faceUp) revealed.add(key);
         else revealed.delete(key);
         tween(FLIP_HALF, (p) => { tile.scale.x = easeOut(p); }, () => {
@@ -280,8 +276,8 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
     tile.cursor = "pointer";
     tile.on("pointertap", () => {
       if (busy) return;
-      if (tapMode === "flip") flip();
-      else lift();
+      if (back) flip();  // 뒷면 아트가 있을 때만 뒤집기
+      else lift();       // 스토리(앞면 고정)와 뒷면 아트 미업로드 상태는 떠오르기
     });
 
     content.addChild(tile);
