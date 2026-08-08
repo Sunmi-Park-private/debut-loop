@@ -131,9 +131,15 @@ export function renderCard(
   const raw = sub(beat.textKey, casting);
   const line = new Text({
     text: seen && raw.length > 40 ? raw.slice(0, 40) + "…" : raw,
-    style: { fontSize: seen ? 14 : 17, fill: seen ? 0xa99bc0 : 0x5b4a70, wordWrap: true, wordWrapWidth: 360, lineHeight: seen ? 21 : 26 },
+    // align:center — 줄바꿈된 각 줄을 서로 가운데로 맞춘다(줄 길이가 제각각이라 왼쪽 정렬이면 들쭉날쭉).
+    style: {
+      fontSize: seen ? 14 : 17, fill: seen ? 0xa99bc0 : 0x5b4a70,
+      wordWrap: true, wordWrapWidth: 360, lineHeight: seen ? 21 : 26, align: "center",
+    },
   });
-  line.x = 18;
+  // 패널 아트(game-card-frame, 폭 CARD_W) 기준 가로 가운데 — 실제 렌더 폭으로 계산해
+  // 대사 길이가 장면마다 달라도 항상 패널 중앙에 온다
+  line.x = Math.round((CARD_W - line.width) / 2);
   // 초상 카드: 대사를 버튼 바로 위(하단)에 배치 — 낮아진 패널에서 빈 공간 제거
   line.y = !seen && hasPortrait ? btnY - line.height - 16 : textY;
   card.addChild(line);
