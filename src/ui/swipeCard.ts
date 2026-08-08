@@ -121,9 +121,11 @@ export function renderCard(
   }
   if (seen) {
     const ff = new Text({ text: replay ? "▶▶ 기억 속 장면" : "▶▶ 기억 속 장면 — 빠르게 넘기기", style: { fontSize: 12, fill: 0xa78be6, fontWeight: "bold" } });
-    ff.x = 18;
-    ff.y = 16;
+    const pFf = pos("card_seen_note", { x: 18, y: 16 });
+    ff.x = pFf.x;
+    ff.y = pFf.y;
     card.addChild(ff);
+    editable("card_seen_note", ff); // 2회차에서만 보이는 머리말
     textY = 44;
   }
 
@@ -213,23 +215,34 @@ export function renderCard(
   if (replay) {
     // 그때의 선택 + 탭 안내 (버튼 없음 — 카드 전체가 탭 타깃)
     const chose = new Text({ text: `그때의 선택 — ${beat[replay].label}`, style: { fontSize: 13, fill: 0x8a76a8, fontWeight: "bold" } });
-    chose.x = 18;
-    chose.y = btnY + 4;
+    const pCh = pos("card_replay_choice", { x: 18, y: btnY + 4 });
+    chose.x = pCh.x;
+    chose.y = pCh.y;
     const tap = new Text({ text: "탭하여 넘기기 ▸", style: { fontSize: 12, fill: 0xc9b8e0 } });
-    tap.x = CARD_W - tap.width - 18;
-    tap.y = btnY + 28;
+    const pTap = pos("card_replay_tap", { x: Math.round(CARD_W - tap.width - 18), y: btnY + 28 });
+    tap.x = pTap.x;
+    tap.y = pTap.y;
     card.addChild(chose, tap);
+    editable("card_replay_choice", chose);
+    editable("card_replay_tap", tap);
     // 적용될 게이지 변화량 칩 — 탭 전에 미리 표시 (증가=초록, 감소=핑크: gaugeBar UP/DOWN과 동일)
+    // 칩은 개수가 비트마다 달라 하나씩 등록하지 않고, 묶음 하나를 옮길 수 있게 한다.
     const GL: Record<string, string> = { skill: "실력", mental: "멘탈", reputation: "평판", bond: "유대", capital: "자본" };
+    const chips = new Container();
+    const pChips = pos("card_replay_chips", { x: 0, y: 0 });
+    chips.x = pChips.x;
+    chips.y = pChips.y;
     let cx = 18;
     for (const [k, v] of Object.entries(beat[replay].effects.gauges ?? {})) {
       if (!v) continue;
       const chip = new Text({ text: `${GL[k] ?? k} ${v > 0 ? "+" : ""}${v}`, style: { fontSize: 12, fill: v > 0 ? 0x3fb98a : 0xff6f91, fontWeight: "bold" } });
       chip.x = cx;
       chip.y = btnY + 28;
-      card.addChild(chip);
+      chips.addChild(chip);
       cx += chip.width + 10;
     }
+    card.addChild(chips);
+    editable("card_replay_chips", chips);
   } else {
     // 방향은 버튼 아트가 표시한다 — 문구에 ←/→를 덧붙이지 않는다
     mkBtn(beat.left.label, 18, 0x9a7fe0, "left");
