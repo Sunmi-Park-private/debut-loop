@@ -73,3 +73,31 @@ describe("commitBaseline", () => {
     expect(beats[0]!.textKey).toBe("저장된 대사");
   });
 });
+
+describe("회상 문구(recall)", () => {
+  it("오버레이로 회상 문구를 실시간 반영한다", () => {
+    const beats = mk();
+    const base: Baseline = new Map();
+    applyOverlay(beats, { b1: { recall: { textKey: "그날이 다시 무너진다" } } }, base);
+    expect(beats[0]!.recall).toEqual({ textKey: "그날이 다시 무너진다" });
+    expect(beats[0]!.textKey).toBe("원본 대사"); // 1회차 대사는 그대로
+  });
+
+  it("오버레이에서 빠지면 원래 상태로 되돌린다", () => {
+    const beats = mk();
+    beats[0]!.recall = { textKey: "파일에 있던 회상" };
+    const base: Baseline = new Map();
+    applyOverlay(beats, { b1: { recall: { textKey: "임시본" } } }, base);
+    expect(beats[0]!.recall).toEqual({ textKey: "임시본" });
+    applyOverlay(beats, {}, base);
+    expect(beats[0]!.recall).toEqual({ textKey: "파일에 있던 회상" });
+  });
+
+  it("원래 없던 회상은 되돌릴 때 지워진다", () => {
+    const beats = mk();
+    const base: Baseline = new Map();
+    applyOverlay(beats, { b1: { recall: { leftLabel: "그때는" } } }, base);
+    applyOverlay(beats, {}, base);
+    expect(beats[0]!.recall).toBeUndefined();
+  });
+});
