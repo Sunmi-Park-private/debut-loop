@@ -284,7 +284,8 @@
           ],
           "mode": "stretch",
           "small": true,
-          "scale": 1.3
+          "scale": 1.3,
+          "opacity": -0.4
         },
         {
           "id": "game-btn-member",
@@ -296,7 +297,8 @@
           ],
           "mode": "stretch",
           "small": true,
-          "scale": 1.3
+          "scale": 1.3,
+          "opacity": -0.4
         }
       ]
     },

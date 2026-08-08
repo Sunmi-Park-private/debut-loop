@@ -28,8 +28,12 @@
     "y": 109
   },
   "backBtn": {
-    "x": 23,
-    "y": 108
+    "x": 22,
+    "y": 111,
+    "texts": [
+      "      로비"
+    ],
+    "color": "#ffefd8"
   },
   "lobby_star": {
     "x": 66,
@@ -126,14 +130,6 @@
   "lobby_bar_capital": {
     "x": 343,
     "y": 78
-  },
-  "card_btn_left_text": {
-    "x": 12,
-    "y": 15
-  },
-  "card_btn_right_text": {
-    "x": 22,
-    "y": 15
   },
   "card_portrait": {
     "x": -26,
@@ -233,7 +229,11 @@
   },
   "memberBtn": {
     "x": 317,
-    "y": 110
+    "y": 110,
+    "texts": [
+      "멤버"
+    ],
+    "color": "#ffffff"
   },
   "gate_exit": {
     "x": 4,
@@ -569,7 +569,12 @@
   },
   "bond_train_res_btn": {
     "x": 4,
-    "y": 72
+    "y": 72,
+    "texts": [
+      "계속 "
+    ],
+    "fontSize": 23,
+    "color": "#ffffff"
   },
   "bond_train_res_card": {
     "x": 5,
@@ -685,7 +690,7 @@
   },
   "bond_train_res_grade": {
     "x": 0,
-    "y": 55
+    "y": 3
   },
   "story_tab": {
     "x": 200,
@@ -724,8 +729,8 @@
     "y": 25
   },
   "card_btn_left": {
-    "x": 9,
-    "y": 121
+    "x": 16,
+    "y": 129
   },
   "card_deck_item_sym": {
     "x": 13,
@@ -734,5 +739,17 @@
   "lobby_cta_run": {
     "x": -33,
     "y": 46
+  },
+  "card_btn_right": {
+    "x": 198,
+    "y": 129
+  },
+  "audition_train_res_btn": {
+    "x": 1,
+    "y": -2,
+    "texts": [
+      "계속"
+    ],
+    "fontSize": 20
   }
 }
