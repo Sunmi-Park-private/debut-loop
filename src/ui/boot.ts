@@ -3,6 +3,7 @@
 import { AnimatedSprite, Application, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
 import type { GameAssets } from "./assets";
 import { openMetaMenu } from "./metaMenu";
+import { renderSidePanel, PIXI_TABS, type SideTab } from "./sidePanels";
 import { pos } from "./layout";
 import { fullRect, coverBg, stageTop, stageHeight } from "./stage";
 import { bgManifest } from "./bgSlots";
@@ -37,37 +38,7 @@ const mkText = (s: string, size: number, fill: number, bold = false): Text =>
     style: { fontSize: size, fill, fontWeight: bold ? "bold" : "normal", wordWrap: true, wordWrapWidth: W - 80, lineHeight: size * 1.7, align: "center" },
   });
 
-// ── ① 프롤로그: 데뷔 사고 → 회귀 (탭/자동 진행, 건너뛰기 가능) ──
-interface Slide { bg: number; lines: Array<[string, number, number]>; flash?: boolean; } // [text, size, color]
-
-const SLIDES: Slide[] = [
-  {
-    bg: 0x1a1430,
-    lines: [["그날 밤, 공중파 데뷔 생방송.", 19, 0xf3f2fa], ["5년의 꿈이 이뤄지는 순간이었다.", 15, 0xa99bc0]],
-  },
-  {
-    bg: 0x2a0a12,
-    flash: true,
-    lines: [["그때 — 붉은 섬광.", 21, 0xff5c5c], ["꺼진 마이크. 무너지는 무대.", 15, 0xd88b8b]],
-  },
-  {
-    bg: 0x120d1e,
-    lines: [["사고가 아니었다.", 19, 0xf3f2fa], ["누군가, 우리를 무너뜨렸다.", 16, 0xa99bc0]],
-  },
-  {
-    bg: 0x0d0b26,
-    lines: [["…눈을 뜨니, 3년 전 0시.", 20, 0xb39cff], ["이번엔 지킬 수 있을까.", 15, 0xa99bc0]],
-  },
-  { // 튜토리얼 직조 ①: 스와이프(선택) 개념 — "내 손끝이 정해"
-    bg: 0x120d24,
-    lines: [["이번 3년은 달라.", 19, 0xf3f2fa], ["운명이 갈림길을 내밀 때마다,", 15, 0xa99bc0], ["어느 쪽으로 기울지는 내 손끝이 정해.", 16, 0xcbb8e8]],
-  },
-  { // 튜토리얼 직조 ②: 게이지 5종 — 긍정톤 "다섯 개의 무기"
-    bg: 0x1a1226,
-    lines: [["실력, 멘탈, 평판, 유대, 자본.", 19, 0xffd884], ["이 다섯 개가 우리의 무기야.", 15, 0xa99bc0], ["차곡차곡 키워서 — 이번엔 꼭 데뷔하자!", 16, 0x7ef0c0]],
-  },
-];
-
+// ── ① 프롤로그: 데뷔 사고 → 회귀 영상 (2회차부터 건너뛰기 가능) ──
 const PROLOGUE_SEEN = "debutloop.prologueSeen"; // 1회차 완주 여부 — 치트 '데이터 초기화'가 debutloop.* 를 지우면 다시 1회차
 const PROLOGUE_VOLUME = 0.3; // 영상 원본 대비 −70% — 내레이션이 과하게 크다는 피드백
 
@@ -78,29 +49,27 @@ function videoElOf(tex: Texture): HTMLVideoElement | null {
   return res instanceof HTMLVideoElement ? res : null;
 }
 
-/** 프롤로그. bgPromise(backgrounds.json prologue-01)가 도착하면 **영상 모드**로 전환한다.
+/** 프롤로그. bgPromise(backgrounds.json prologue-01)의 영상을 재생한다.
  *  영상에 내레이션 자막과 소리가 모두 들어 있으므로 코드 텍스트·틴트는 그리지 않는다.
  *
  *  1회차 — 끝까지 재생하고 `ended`에서 자동으로 로딩 화면으로 넘어간다. 건너뛰기 없음.
  *  2회차 이후 — 건너뛰기 버튼과 탭 스킵이 열린다.
  *
- *  영상이 없거나 로드 실패면 기존 단색 슬라이드쇼로 폴백(문구는 여기 SLIDES가 SSOT).
- *  프롤로그는 즉시 시작이 원칙이라 영상을 기다리지 않고, 도착한 시점에 전환한다. */
+ *  단색 슬라이드쇼 폴백은 제거했다 — 영상 도착 직전·직후에 폴백 화면이 두세 번 깜빡이던 원인.
+ *  영상이 오기 전엔 어두운 단색 한 장만 깔고, 영상이 없거나 로드 실패면 프롤로그 없이 넘어간다. */
 export function playPrologue(app: Application, bgPromise?: Promise<Texture | null>): Promise<void> {
   return new Promise((resolve) => {
     const root = new Container();
     app.stage.addChild(root);
     const bgLayer = new Container();   // 영상 — 한 번 붙으면 유지
-    const slideLayer = new Container(); // 단색 슬라이드·건너뛰기 — 갈아끼움
-    root.addChild(bgLayer, slideLayer);
+    const slideLayer = new Container(); // 음소거·건너뛰기 오버레이 — 갈아끼움
+    root.addChild(fullRect(0x1a1430), bgLayer, slideLayer); // 영상 대기 중에도 흔들리지 않는 어두운 바탕 한 장
     const firstPlay = localStorage.getItem(PROLOGUE_SEEN) !== "1";
     let hasBg = false;
     let bgTex: Texture | null = null;
     let videoEl: HTMLVideoElement | null = null;
     let muteBtn: Text | null = null;
     let cancelAutoUnmute: (() => void) | null = null;
-    let idx = 0;
-    let flashTick: (() => void) | null = null;
     let done = false;
 
     // 화면 전체가 한 덩어리로 축소되므로 작은 기기일수록 버튼의 실제 크기도 같이 줄어든다
@@ -123,7 +92,6 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
     const finish = (): void => {
       if (done) return;
       done = true;
-      if (flashTick) app.ticker.remove(flashTick);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onResize);
       cancelAutoUnmute?.();
@@ -138,8 +106,9 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
       resolve();
     };
 
-    void bgPromise?.then((tex) => {
-      if (!tex || done || root.destroyed || hasBg) return;
+    void (bgPromise ?? Promise.resolve(null)).then((tex) => {
+      if (done || root.destroyed || hasBg) return;
+      if (!tex) { finish(); return; } // 영상 없음·로드 실패 — 폴백 없이 프롤로그 생략
       bgTex = tex;
       bgLayer.addChild(coverBg(tex));
       hasBg = true;
@@ -175,10 +144,7 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
     });
 
     const next = (): void => {
-      if (hasBg) { if (!firstPlay) finish(); return; } // 영상 모드: 1회차는 스킵 불가
-      idx++;
-      if (idx >= SLIDES.length) finish();
-      else show();
+      if (hasBg && !firstPlay) finish(); // 탭 스킵 — 1회차는 끝까지 시청 (영상 도착 전에는 무동작)
     };
     // 스페이스바 = 탭과 동일 (진행)
     const onKey = (e: KeyboardEvent): void => {
@@ -242,35 +208,11 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
     };
 
     const show = (): void => {
-      if (flashTick) { app.ticker.remove(flashTick); flashTick = null; }
       slideLayer.removeChildren();
       muteBtn = null;
-      if (hasBg) { // 영상 모드 — 좌상단 음소거, 2회차부터 우상단 건너뛰기
-        addMute();
-        if (!firstPlay) addSkip(0xe8e2f5);
-        return;
-      }
-      const s = SLIDES[idx];
-      if (!s) { finish(); return; }
-      slideLayer.addChild(fullRect(s.bg));
-      let y = 340;
-      for (const [text, size, color] of s.lines) {
-        slideLayer.addChild(center(mkText(text, size, color, size > 17), y));
-        y += size * 2.2;
-      }
-      if (s.flash) { // 붉은 섬광 펄스
-        const flash = fullRect(0xff2b2b, 0);
-        slideLayer.addChild(flash);
-        let el = 0;
-        flashTick = () => {
-          el += app.ticker.deltaMS / 1000;
-          flash.alpha = Math.max(0, 0.5 - el * 0.8);
-          if (el > 0.8 && flashTick) { app.ticker.remove(flashTick); flashTick = null; }
-        };
-        app.ticker.add(flashTick);
-      }
-      slideLayer.addChild(center(mkText("탭 또는 Space로 계속", 11, 0x6a628a), H - 70));
-      addSkip(0x8a82aa);
+      if (!hasBg) return; // 영상 대기 중 — 어두운 바탕만 (오버레이 없음)
+      addMute(); // 영상 모드 — 좌상단 음소거, 2회차부터 우상단 건너뛰기
+      if (!firstPlay) addSkip(0xe8e2f5);
     };
 
     root.eventMode = "static";
@@ -449,6 +391,13 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
     app.stage.addChild(root);
     let disposed = false;
     let refreshDeck: () => void = () => {}; // build마다 최신 buildContent로 교체
+    // 열린 사이드 팝업 — Pixi로 옮긴 탭만 여기에 담긴다(나머지는 기존 DOM 팝업).
+    // 다른 게임 화면과 같은 방식: 상태를 들고 build()가 그린다.
+    let sideTab: SideTab | null = null;
+    const openSide = (tab: SideTab): void => {
+      if (PIXI_TABS.has(tab)) { sideTab = tab; build(); return; }
+      openMetaMenu(tab); // 아직 DOM인 탭
+    };
     onDevDeckChange(() => { if (!disposed) refreshDeck(); }); // 카드 에디터 추가/삭제 → 실시간 갱신 (1회 등록)
 
     function build(): void { // 레이아웃 에디터 토글 시 재구축 (editable 등록/원복)
@@ -518,12 +467,20 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
       const icoSkin = skinFit(name.replace("lobby_", "lobby-icon-"), 48, 48);
       const art = icoSkin ?? skinFit("lobby-icon-frame", 48, 48)
         ?? new Graphics().circle(24, 24, 24).fill({ color: 0xffffff, alpha: 0.95 }).stroke({ width: 2, color: 0xece4f4 });
+      // 아트·이모지·라벨을 각각 등록 — 아직 아트가 없어도(목업 상태) 위치·크기를 잡을 수 있어야 한다.
+      // 버튼(name)은 아이콘 전체, 나머지는 버튼 안에서의 자리다.
+      const pBg = pos(`${name}_bg`, { x: 0, y: 0 });
+      art.x = pBg.x;
+      art.y = pBg.y;
       b.addChild(art);
+      editable(`${name}_bg`, art);
       if (!icoSkin) { // 전체 스킨이 이모지를 포함하므로, 프레임/벡터일 때만 이모지 표시
         const e = mkText(emoji, 19, 0x5b4a70);
-        e.x = 24 - e.width / 2;
-        e.y = 24 - e.height / 2;
+        const pIcon = pos(`${name}_icon`, { x: Math.round(24 - e.width / 2), y: Math.round(24 - e.height / 2) });
+        e.x = pIcon.x;
+        e.y = pIcon.y;
         b.addChild(e);
+        editable(`${name}_icon`, e);
       }
       // 아이콘 제목 — 아트의 실제 영역(배율 반영)을 재서 중앙 하단에 고정. 배율을 바꿔도 정렬이 유지된다
       const l = mkText(label, 9.5, 0x5b4a70, true);
@@ -535,16 +492,20 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
         l.x = 24 - l.width / 2;
         l.y = 50;
       }
+      const pLbl = pos(`${name}_text`, { x: Math.round(l.x), y: Math.round(l.y) });
+      l.x = pLbl.x;
+      l.y = pLbl.y;
       b.addChild(l);
       pressable(b, onTap);
       root.addChild(b);
       editable(name, b);
+      editable(`${name}_text`, l); // 버튼 등록 뒤 = 라벨이 자기 문구의 소유자
     };
     // 우측 레일: 데일리 → 앨범 → 상점 → 설정 (연습 버튼 제거 — 게임 내 연습하기·치트로 대체)
-    ico("lobby_daily", "🎁", "데일리", W - 64, 130, () => openMetaMenu("daily"));
-    ico("lobby_album", "📔", "앨범", W - 64, 210, () => openMetaMenu("album"));
-    ico("lobby_shop", "🛍", "상점", W - 64, 290, () => openMetaMenu("shop"));
-    ico("lobby_settings", "⚙️", "설정", W - 64, 370, () => openMetaMenu("settings"));
+    ico("lobby_daily", "🎁", "데일리", W - 64, 130, () => openSide("daily"));
+    ico("lobby_album", "📔", "앨범", W - 64, 210, () => openSide("album"));
+    ico("lobby_shop", "🛍", "상점", W - 64, 290, () => openSide("shop"));
+    ico("lobby_settings", "⚙️", "설정", W - 64, 370, () => openSide("settings"));
 
     // 덱 시트가 열리면 CTA를 잠근다 — 시트 몸통은 입력을 막지 않으므로(핸들 띠만 반응),
     // 열린 시트에 가려진 START가 그대로 눌려 런이 시작되던 문제를 여기서 끊는다.
@@ -609,6 +570,16 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
       if (open) resetPress(cta); // 누른 채로 덱이 열리면 축소 상태로 굳는다 — 원위치
     };
     lockCta(deckSheetOpen); // 리드로우 전 열려 있었으면 잠긴 채로 복원
+
+    // 사이드 팝업 — 로비 위에 얹는다 (딤이 뒤 화면을 덮으므로 마지막에)
+    if (sideTab) {
+      renderSidePanel(root, {
+        tab: sideTab,
+        ticker: app.ticker,
+        onClose: () => { sideTab = null; build(); },
+        onRedraw: () => build(),
+      });
+    }
 
     } // ── build() 끝 ──
     build();

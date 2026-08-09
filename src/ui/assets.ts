@@ -47,6 +47,8 @@ export interface CharAssets {
   stage: Texture | null; // 전신 무대의상 (char.html stage) — 안무 연습 거울 포즈 매칭 (stage-idle 알파 영상 업로드 시 비디오 텍스처)
   stageFrames: Texture[]; // 무대의상 시퀀스 (stage-idle) — 있으면 거울 매칭 애니 재생
   practiceFrames: Texture[]; // 연습복 시퀀스 (practice-idle) — 있으면 연습 보드 스탠딩 애니 재생
+  /** 연습 보드 주차 영상 5종 (practice-vid-1..5). 미업로드 칸은 null — 주차로 골라 쓴다 */
+  practiceVids: Array<Texture | null>;
   stand: Texture | null;
   idleFrames: Texture[]; // 비어있으면 idle 없음
   idleFps: number;
@@ -67,7 +69,7 @@ export interface GameAssets {
 /** 로딩 화면용 진행률 콜백 (done/total은 슬롯 단위) */
 export type AssetProgress = (done: number, total: number) => void;
 
-const EMPTY: CharAssets = { bust: null, daily: null, dailyFrames: [], stage: null, stageFrames: [], practiceFrames: [], stand: null, idleFrames: [], idleFps: 10, bustIdleFrames: [], profileFace: null, tiltLeft: [], tiltRight: [], scaleOf: () => 1 };
+const EMPTY: CharAssets = { bust: null, daily: null, dailyFrames: [], stage: null, stageFrames: [], practiceFrames: [], practiceVids: [], stand: null, idleFrames: [], idleFps: 10, bustIdleFrames: [], profileFace: null, tiltLeft: [], tiltRight: [], scaleOf: () => 1 };
 
 /** 개별 파일 시도 로드 — 404 등 실패는 null (플레이스홀더 폴백) */
 async function tryLoad(url: string | undefined): Promise<Texture | null> {
@@ -196,10 +198,14 @@ export async function loadGameAssets(onProgress?: AssetProgress, renderer?: Rend
     const [dailyV, stageV, standV] = await Promise.all([
       videoIfWebm("daily-idle", dailyFrames), videoIfWebm("stage-idle", stageFrames), videoIfWebm("practice-idle", practiceFrames),
     ]);
+    // 연습 보드 주차 영상 — 로딩 게이트를 막지 않도록 다른 에셋과 함께 병렬로만 받는다
+    const practiceVids = await Promise.all(
+      [1, 2, 3, 4, 5].map((n) => tryLoad(charSkinFile(id, `practice-vid-${n}`) ?? undefined)),
+    );
     const daily = dailyV ?? daily0;
     const stage = stageV ?? stage0;
     const stand = standV ?? stand0;
-    chars.set(id, { bust, daily, dailyFrames, stage, stageFrames, practiceFrames, stand, idleFrames, idleFps: slots.idle?.fps ?? 10, bustIdleFrames, profileFace, tiltLeft, tiltRight, scaleOf: (kind) => charSkinScale(id, kind) });
+    chars.set(id, { bust, daily, dailyFrames, stage, stageFrames, practiceFrames, practiceVids, stand, idleFrames, idleFps: slots.idle?.fps ?? 10, bustIdleFrames, profileFace, tiltLeft, tiltRight, scaleOf: (kind) => charSkinScale(id, kind) });
   };
   await Promise.all([
     (async () => { background = await tryLoad(manifest.background); tick(); })(),

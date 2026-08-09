@@ -4,6 +4,7 @@
 import { bgmVolume, setBgmVolume, bgmMuted, setBgmMuted } from "./audio";
 import { pairSpace } from "./keys";
 import { skinUrl } from "./uiSkin";
+import { inputBlocked, onEditorMode } from "./editor";
 
 // 업로드된 슬롯 아트를 CSS 배경으로 얹는다 (ui.html 「메인 로비 사이드」 그룹).
 // 매니페스트는 미업로드 슬롯도 플레이스홀더 경로를 들고 있어 URL만으로는 존재 여부를 알 수 없다.
@@ -77,9 +78,19 @@ function ensureCore(): void {
   skinBg(modal, "side-panel");
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-  overlay.onclick = (e) => { if (e.target === overlay) overlay.style.display = "none"; };
+  // 편집 모드에서는 오버레이가 입력을 통과시킨다. 오버레이가 캔버스를 통째로 덮고 있어서,
+  // 그대로 두면 화면 클릭이 Pixi 실드까지 닿지 않아 컴포넌트를 집거나 끌 수 없다.
+  // 모달 상자 자체는 계속 받는다 — ✕·스크롤이 살아 있어야 하므로.
+  modal.style.pointerEvents = "auto";
+  onEditorMode((editing) => { overlay.style.pointerEvents = editing ? "none" : "auto"; });
+  // 레이아웃 에디터 편집 모드에서는 바깥 탭·Space로 닫지 않는다.
+  // 오버레이가 화면 전체를 덮고 있어서, 컴포넌트를 고르려는 클릭이 전부 바깥 탭으로 잡혀
+  // 팝업이 닫혀버렸다. 편집 중에는 ✕ 로만 닫는다.
+  overlay.onclick = (e) => {
+    if (e.target === overlay && !inputBlocked()) overlay.style.display = "none";
+  };
   pairSpace(() => { // Space = 바깥 탭과 동일 (닫기) — 닫혀 있으면 게임으로 통과
-    if (overlay.style.display === "none") return false;
+    if (overlay.style.display === "none" || inputBlocked()) return false;
     overlay.style.display = "none";
     return true;
   }, () => true);
@@ -229,7 +240,7 @@ function ensureCore(): void {
     shopTop.append(shopName, purse);
     modal.appendChild(shopTop);
     const items: Array<[string, string, string, string]> = [
-      ["🎴", "카드팩", "랜덤 카드 3장", "⭐ 15"],
+      ["", "카드팩", "랜덤 카드 3장", "⭐ 15"],
       ["🎟", "패자부활권", "탈락 위기에서 한 번 부활", "⭐ 20"],
       ["✨", "스타터 부스트", "다음 런 시작 게이지 +5", "⭐ 10"],
       ["💎", "스페셜 팩", "에픽 확정 + 포토 1장", "₩3,300"],
@@ -257,7 +268,7 @@ function ensureCore(): void {
     modal.appendChild(section(`<b style='font-size:13px'>출석 보상</b> <small style='color:${SUB}'>· 매일 접속하고 보상을 받아요</small>`));
     const grid = document.createElement("div");
     grid.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px";
-    const rewards = ["⭐5", "⭐10", "🎴×1", "⭐15", "🎴×2", "⭐20", "🎴★★★"];
+    const rewards = ["⭐5", "⭐10", "카드×1", "⭐15", "카드×2", "⭐20", "카드★★★"];
     rewards.forEach((r, i) => {
       const day = i + 1;
       const done = day <= 3 || (day === 4 && mock.dailyClaimed);

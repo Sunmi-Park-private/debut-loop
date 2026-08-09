@@ -5,7 +5,7 @@ import type { GaugeId } from "../engine/types";
 import { skinTex, skinScale } from "./uiSkin";
 import { pos } from "./layout";
 import { editable } from "./editor";
-import { statusLine, ddayWeeks } from "./runStatus";
+import { statusLine, ddayDays } from "./runStatus";
 
 // ── lobby-gauge-bar.png 아트 좌표 — 원본 px 실측 (알파 bbox 기준) ──
 // ponytail: 이 아트 전용 하드코딩 좌표. 프레임 아트가 바뀌면 여기 숫자만 재실측.
@@ -53,13 +53,13 @@ export function renderLobbyStatusBar(parent: Container, d: LobbyStatusData): voi
   spr.y = -ART.by * s;
   panel.addChild(spr);
 
-  // 달력: 주차(소) · D-day(대, 주×7 일수 환산) · 현재 막(소)
+  // 달력: 주차(소) · D-day(대, 남은 주 × 7일) · 현재 막(소)
   const week = new Text({ text: `${d.week}주차`, style: { fontSize: 11, fill: 0xe0668e, fontWeight: "bold" } });
   week.anchor.set(0.5);
   week.x = ax(CAL_X);
   week.y = ay(470);
-  // D-day는 **주** 단위 — 본스토리 상단 탭과 같은 계산을 쓴다 (예전엔 여기만 ×7 일 단위라 두 화면이 어긋났다)
-  const dday = new Text({ text: `D-${ddayWeeks(d.debutWeek, d.week)}`, style: { fontSize: 22, fill: 0x4a3a5e, fontWeight: "bold" } });
+  // D-day는 **일** 단위 — 본스토리 상단 탭과 같은 계산(runStatus)을 쓴다
+  const dday = new Text({ text: `D-${ddayDays(d.debutWeek, d.week)}`, style: { fontSize: 22, fill: 0x4a3a5e, fontWeight: "bold" } });
   dday.anchor.set(0.5);
   dday.x = ax(CAL_X);
   dday.y = ay(555);

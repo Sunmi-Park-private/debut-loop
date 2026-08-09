@@ -34,6 +34,27 @@ export interface CardOps {
 }
 let cardOps: CardOps | null = null;
 
+// 게이지 조정: app이 컨트롤러 접근을 등록 (현재 런의 5게이지 직접 편집)
+export interface GaugeOps {
+  /** 현재 수치 — 런이 없으면 만들어서라도 돌려준다 (로비에서도 조정 가능) */
+  read: () => Array<{ id: string; label: string; value: number }>;
+  write: (id: string, value: number) => void;
+  min: number;
+  max: number;
+}
+let gaugeOps: GaugeOps | null = null;
+export function registerGaugeOps(ops: GaugeOps): void {
+  gaugeOps = ops;
+}
+
+// 회차 이동: app이 컨트롤러 조작을 등록 (회차·막 시작 지점으로 건너뛰기)
+/** 목표 지점으로 이동하고 결과 메시지를 돌려준다 (실패해도 메시지로 알린다) */
+export type JumpRun = (loop: 1 | 2, act: number) => string;
+let jumpRun: JumpRun | null = null;
+export function registerJumpOps(fn: JumpRun): void {
+  jumpRun = fn;
+}
+
 export function registerCardOps(ops: CardOps): void {
   cardOps = ops;
 }
@@ -87,17 +108,21 @@ export function initCheatMenu(): void {
   btn.textContent = "⚙️";
   btn.title = "치트 메뉴";
   btn.style.cssText =
-    "position:fixed;right:14px;bottom:14px;z-index:1001;width:46px;height:46px;border-radius:50%;" +
+    "position:fixed;right:14px;bottom:14px;z-index:1401;width:46px;height:46px;border-radius:50%;" +
     "border:2px solid #ece4f4;background:#fff;font-size:20px;cursor:pointer;" +
     "box-shadow:0 6px 18px rgba(167,139,230,.35)";
   document.body.appendChild(btn);
-  // 게임 화면(캔버스) 우측 하단 구석에 플로팅 — 뷰포트가 아니라 캔버스 기준
+  // 게임 화면(캔버스) **바깥 오른쪽**에 플로팅 — 화면 위 요소를 가리지 않는다.
+  // 레터박스 여백이 없는 좁은 창(모바일)에서는 밖에 자리가 없으므로 안쪽 구석으로 되돌린다.
+  const GAP = 10;
+  const SIZE = 46;
   const place = (): void => {
     const cv = document.querySelector("canvas");
     if (!cv) return;
     const r = cv.getBoundingClientRect();
-    btn.style.left = `${r.right - 54}px`;
-    btn.style.top = `${r.bottom - 54}px`;
+    const outside = r.right + GAP + SIZE <= window.innerWidth;
+    btn.style.left = `${outside ? r.right + GAP : r.right - SIZE - 8}px`;
+    btn.style.top = `${r.bottom - SIZE - 8}px`;
     btn.style.right = "auto";
     btn.style.bottom = "auto";
   };
@@ -107,7 +132,7 @@ export function initCheatMenu(): void {
   // 모달 레이어
   const overlay = document.createElement("div");
   overlay.style.cssText =
-    "position:fixed;inset:0;z-index:1002;background:rgba(91,74,112,.35);display:none;" +
+    "position:fixed;inset:0;z-index:1402;background:rgba(91,74,112,.35);display:none;" +
     "align-items:center;justify-content:center";
   const modal = document.createElement("div");
   modal.style.cssText =
@@ -377,7 +402,7 @@ export function initCheatMenu(): void {
 
   function renderCardEditor(): void {
     modal.innerHTML =
-      "<b>🎴 카드 구성 에디터</b> <small style='color:#a99bc0'>· 수치=★기준(등급 배율 자동)</small>" +
+      "<b>카드 구성 에디터</b> <small style='color:#a99bc0'>· 수치=★기준(등급 배율 자동)</small>" +
       "<hr style='border:none;border-top:1px solid #ece4f4'>";
 
     for (const t of cardTemplates) {
@@ -469,6 +494,95 @@ export function initCheatMenu(): void {
     modal.append(save, back);
   }
 
+  // ── 게이지 수치 조정 — 현재 시점의 5게이지를 직접 넣는다 ──
+  function renderGauges(): void {
+    modal.innerHTML = "<b>\ud83d\udcca 상태 게이지 조정</b><hr style='border:none;border-top:1px solid #ece4f4'>";
+    if (!gaugeOps) { modal.appendChild(item("\u2190 치트 메뉴로", () => render())); return; }
+    const ops = gaugeOps;
+    const note = document.createElement("div");
+    note.style.cssText = "margin:8px 0 10px;font-size:11.5px;color:#a99bc0;line-height:1.6";
+    note.textContent = `현재 런의 수치를 그대로 바꿉니다 (${ops.min}~${ops.max}). 슬라이더와 숫자 칸이 함께 움직입니다.`;
+    modal.appendChild(note);
+
+    for (const g of ops.read()) {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;gap:8px;align-items:center;margin:9px 0;font-size:12.5px";
+      const lbl = document.createElement("span");
+      lbl.textContent = g.label;
+      lbl.style.cssText = "width:38px;flex-shrink:0;font-weight:700";
+      const range = document.createElement("input");
+      range.type = "range";
+      range.min = String(ops.min);
+      range.max = String(ops.max);
+      range.value = String(g.value);
+      range.style.cssText = "flex:1;min-width:0;accent-color:#ff7fb0;cursor:pointer";
+      const num = document.createElement("input");
+      num.type = "number";
+      num.min = String(ops.min);
+      num.max = String(ops.max);
+      num.value = String(g.value);
+      num.style.cssText = "width:56px;flex-shrink:0;padding:6px 7px;border:1.5px solid #ece4f4;"
+        + "border-radius:8px;text-align:center;font:700 12.5px -apple-system,sans-serif;color:#5b4a70";
+      // 두 칸을 항상 함께 되쓴다 — 범위 밖 숫자를 친 칸에도 잘린 값이 보이게
+      const apply = (raw: number): void => {
+        const v = Math.max(ops.min, Math.min(ops.max, Math.round(raw) || 0));
+        ops.write(g.id, v);
+        range.value = String(v);
+        num.value = String(v);
+      };
+      range.oninput = () => apply(Number(range.value));
+      num.onchange = () => apply(Number(num.value));
+      row.append(lbl, range, num);
+      modal.appendChild(row);
+    }
+    modal.appendChild(item("\u2190 치트 메뉴로", () => render()));
+  }
+
+  // ── 회차 이동 — 회차(1·2) × 막(2~5)의 시작 지점으로 건너뛴다 ──
+  // 1막은 런의 시작이라 목록에 없다("↺ 새 런 시작"이 그 역할).
+  const JUMP_TARGETS: Array<{ loop: 1 | 2; act: number }> = [
+    { loop: 1, act: 2 }, { loop: 1, act: 3 }, { loop: 1, act: 4 }, { loop: 1, act: 5 },
+    { loop: 2, act: 2 }, { loop: 2, act: 3 }, { loop: 2, act: 4 }, { loop: 2, act: 5 },
+  ];
+  let jumpPick = 0; // 패널을 다시 열어도 마지막 선택을 유지
+
+  function renderJump(): void {
+    modal.innerHTML = "<b>\ud83d\ude80 회차 이동</b><hr style='border:none;border-top:1px solid #ece4f4'>";
+    const note = document.createElement("div");
+    note.style.cssText = "margin:8px 0 10px;font-size:11.5px;color:#a99bc0;line-height:1.6";
+    note.textContent = "선택한 회차·막의 첫 비트로 이동합니다. 지나온 비트는 좌측 선택으로 자동 진행하고 "
+      + "관문은 건너뜁니다. 도중에 게이지가 바닥나 런이 끝나지 않도록 게이지를 채워가며 갑니다.";
+    modal.appendChild(note);
+
+    const sel = document.createElement("select");
+    sel.style.cssText = "width:100%;padding:9px 10px;border:1.5px solid #ece4f4;border-radius:10px;"
+      + "background:#fff;color:#5b4a70;font:600 13px -apple-system,sans-serif;cursor:pointer";
+    JUMP_TARGETS.forEach((t, i) => {
+      const o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = `${t.loop}회차 \u2014 ${t.act}막 시작`;
+      sel.appendChild(o);
+    });
+    sel.value = String(jumpPick);
+    sel.onchange = () => { jumpPick = Number(sel.value); };
+    modal.appendChild(sel);
+
+    const status = document.createElement("div");
+    status.style.cssText = "margin:10px 0 0;font-size:11.5px;color:#c9527f;font-weight:700;min-height:16px";
+
+    const go = document.createElement("button");
+    go.textContent = "\ud83d\ude80 이동";
+    go.style.cssText =
+      "margin-top:10px;width:100%;padding:11px;border:0;border-radius:10px;background:#ff7fb0;color:#fff;font-weight:800;cursor:pointer";
+    go.onclick = () => {
+      const t = JUMP_TARGETS[jumpPick];
+      if (!t) return;
+      if (!jumpRun) { status.textContent = "이동 기능이 준비되지 않았어요"; return; }
+      status.textContent = jumpRun(t.loop, t.act);
+    };
+    modal.append(go, status, item("\u2190 치트 메뉴로", () => render()));
+  }
+
   function render(): void {
     modal.innerHTML = "<b>🛠 치트 메뉴</b><hr style='border:none;border-top:1px solid #ece4f4'>";
     const inGame = inGameCheck();
@@ -495,12 +609,14 @@ export function initCheatMenu(): void {
     );
     modal.appendChild(item("♻️ 회귀 생존 카드 설정", () => renderTuning()));
     modal.appendChild(item("⏱ 타이밍 튜닝", () => renderTiming()));
-    modal.appendChild(item("🎴 카드 구성 에디터", () => renderCardEditor()));
+    modal.appendChild(item("카드 구성 에디터", () => renderCardEditor()));
+    modal.appendChild(item("\ud83d\ude80 회차 이동", () => renderJump()));
     for (const c of cheats.filter((x) => !x.gameOnly)) {
       modal.appendChild(item(c.label, () => { c.run(); overlay.style.display = "none"; }));
     }
 
     section(inGame ? "🎮 게임 전용" : "🎮 게임 전용 (회차 진입 후 활성화)");
+    modal.appendChild(item("\ud83d\udcca 상태 게이지 조정", () => renderGauges()));
     for (const c of cheats.filter((x) => x.gameOnly)) {
       if (inGame) modal.appendChild(item(c.label, () => { c.run(); overlay.style.display = "none"; }));
       else disabledItem(c.label);

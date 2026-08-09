@@ -307,6 +307,46 @@
             "assets/char/skin/haru-tilt-right-idle_f017.webp"
           ],
           "scale": 1.6
+        },
+        {
+          "id": "haru-practice-vid-1",
+          "kind": "practice-vid-1",
+          "label": "연습 · 주차 영상 1",
+          "shape": "full",
+          "file": "assets/char/skin/haru-practice-vid-1.webm",
+          "vid": true
+        },
+        {
+          "id": "haru-practice-vid-2",
+          "kind": "practice-vid-2",
+          "label": "연습 · 주차 영상 2",
+          "shape": "full",
+          "file": "assets/char/skin/haru-practice-vid-2.webm",
+          "vid": true
+        },
+        {
+          "id": "haru-practice-vid-3",
+          "kind": "practice-vid-3",
+          "label": "연습 · 주차 영상 3",
+          "shape": "full",
+          "file": "assets/char/skin/haru-practice-vid-3.webm",
+          "vid": true
+        },
+        {
+          "id": "haru-practice-vid-4",
+          "kind": "practice-vid-4",
+          "label": "연습 · 주차 영상 4",
+          "shape": "full",
+          "file": "assets/char/skin/haru-practice-vid-4.webm",
+          "vid": true
+        },
+        {
+          "id": "haru-practice-vid-5",
+          "kind": "practice-vid-5",
+          "label": "연습 · 주차 영상 5",
+          "shape": "full",
+          "file": "assets/char/skin/haru-practice-vid-5.webm",
+          "vid": true
         }
       ]
     },

@@ -24,7 +24,8 @@
     "icon": "📸",
     "source": "promo",
     "baseGauges": {
-      "reputation": 6
+      "reputation": 6,
+      "bond": -1
     }
   },
   {
@@ -33,7 +34,8 @@
     "icon": "💰",
     "source": "funds",
     "baseGauges": {
-      "capital": 6
+      "capital": 6,
+      "mental": 2
     }
   },
   {
@@ -53,7 +55,8 @@
     "source": "bond",
     "baseGauges": {
       "mental": 5,
-      "bond": 8
+      "bond": 8,
+      "capital": -2
     }
   }
 ]

@@ -16,7 +16,7 @@
     "small": {
       "id": "small",
       "label": "소형 기획사 (고난도)",
-      "startGauges": { "skill": 30, "mental": 55, "reputation": 20, "bond": 40, "capital": 20 },
+      "startGauges": { "skill": 30, "mental": 45, "reputation": 20, "bond": 25, "capital": 20 },
       "capitalPressurePerWeek": 3
     },
     "big": {

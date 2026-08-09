@@ -9,12 +9,20 @@ import { execFileSync, spawn } from 'node:child_process'
 // iOS(WebKit)는 반대로 VP9 알파가 안 되므로 HEVC 알파(hvc1) .mov 사이블링을 함께 생성 (런타임 videoLoad.ts가 엔진별 선택)
 function movToAlphaWebm(abs: string): string | void {
   if (abs.endsWith('.webm')) { alphaMovSibling(abs, ['-c:v', 'libvpx-vp9']); return } // webm 직접 업로드 → iOS용 mov만 추가 생성
-  if (!abs.endsWith('.mov')) return
-  const out = abs.slice(0, -4) + '.webm'
+  // mov(알파 있음)·mp4(알파 없음) 모두 webm으로 통일한다. mp4는 알파 채널이 없지만
+  // yuva420p로 인코딩해도 전부 불투명으로 들어갈 뿐이라 재생·합성 경로가 같아진다.
+  // (한때 mp4의 단색 배경을 colorkey로 빼는 시도를 했으나, 인물의 어두운 부분까지 파먹어 되돌렸다 —
+  //  투명 배경이 필요하면 알파를 살린 mov/webm으로 올린다)
+  if (!abs.endsWith('.mov') && !abs.endsWith('.mp4')) return
+  const out = abs.slice(0, abs.lastIndexOf('.')) + '.webm'
   execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', abs,
     '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p', '-b:v', '0', '-crf', '32',
     '-cpu-used', '4', '-row-mt', '1', '-an', out]) // 인코딩 동안 dev 서버 블로킹 — 에디터가 대기 표시
-  if (!alphaMovSibling(abs)) fs.unlinkSync(abs) // HEVC 인코딩 실패 시 원본 mov 정리 (webm만 유지)
+  if (abs.endsWith('.mp4')) {
+    // iOS는 VP9 webm을 못 읽으므로 변환본에서 HEVC mov를 함께 만든다. 원본 mp4는 역할이 끝났으므로 정리
+    alphaMovSibling(out, ['-c:v', 'libvpx-vp9'])
+    fs.unlinkSync(abs)
+  } else if (!alphaMovSibling(abs)) fs.unlinkSync(abs) // HEVC 인코딩 실패 시 원본 mov 정리 (webm만 유지)
   return out
 }
 
@@ -74,6 +82,31 @@ function fitBgSize(abs: string): void {
     execFileSync('sips', ['--resampleHeightWidth', String(rh), String(rw), abs], { stdio: 'ignore' })
     execFileSync('sips', ['--cropToHeightWidth', String(BG_H), String(BG_W), abs], { stdio: 'ignore' })
   } catch { /* sips 미설치·실패 → 원본 그대로 유지 */ }
+}
+
+/** 업로드된 이미지의 픽셀 크기 (sips 미설치·영상이면 null) */
+function imgSize(abs: string): { w: number; h: number } | null {
+  if (!IMG_EXTS.some((e) => abs.endsWith('.' + e))) return null
+  try {
+    const info = execFileSync('sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', abs]).toString()
+    const w = Number(/pixelWidth: (\d+)/.exec(info)?.[1])
+    const h = Number(/pixelHeight: (\d+)/.exec(info)?.[1])
+    return w && h ? { w, h } : null
+  } catch { return null }
+}
+
+/** 슬롯 표시 박스를 올라온 이미지 비율에 맞춘다 — 가로는 그대로 두고 세로만 다시 잡는다.
+ *  목업이 직사각형인 슬롯에 정사각 이미지를 올리면 눌려 보이던 문제를 없앤다.
+ *  natural 슬롯(1배율=원본 크기)은 애초에 박스를 안 쓰므로 건드리지 않는다. */
+function fitSlotSize(entry: { size?: [number, number]; natural?: boolean }, abs: string): boolean {
+  if (entry.natural || !Array.isArray(entry.size)) return false
+  const dim = imgSize(abs)
+  const w = entry.size[0]
+  if (!dim || !w) return false
+  const h = Math.max(1, Math.round(w * (dim.h / dim.w)))
+  if (entry.size[1] === h) return false
+  entry.size = [w, h]
+  return true
 }
 
 function stripArtistTag(abs: string): void {
@@ -177,6 +210,7 @@ const SAVE_TARGETS: Record<string, string> = {
   '/__backgrounds': 'src/data/backgrounds.json', // 배경 에디터(bg.html)
   '/__uiskins': 'src/data/uiskins.json', // UI 스킨 에디터(ui.html)
   '/__beatmaps': 'src/data/beatmaps.json', // 박자 에디터(beat.html)
+  '/__charskins': 'src/data/charskins.json', // 캐릭터 에디터(char.html) — GET은 디스크 직독(캐시 우회)
 }
 // 개발용: 레이아웃 저장 — **바뀐 키만** 받아 파일에 병합한다.
 // 통째로 덮어쓰면, 페이지를 열 때 뜬 스냅샷이 그 사이 다른 사람이 저장한 좌표를 되돌린다.
@@ -330,6 +364,56 @@ function opacitySavePlugin(route: string, manifestFile: string,
 // 저장 전 임시본이라 파일에 쓰지 않고 서버 메모리에만 둔다 — dev 서버를 재시작하면 사라진다.
 // 설계: docs/superpowers/specs/2026-08-08-beats-live-preview-design.md
 let beatsOverlay: Record<string, unknown> = {}
+
+/** 화자 프로필 업로드 — 비트마다 다른 파일이라 슬롯 매니페스트가 없다.
+ *  파일명은 서버가 비트 id로 조립하므로 클라이언트가 경로를 넣을 수 없다(탈출 차단).
+ *  기록은 beats JSON의 speaker 필드가 갖고, 저장은 플로우 에디터의 💾가 담당한다. */
+function speakerUploadPlugin(): Plugin {
+  const DIR = 'assets/speaker'
+  return {
+    name: 'speaker-upload',
+    configureServer(server) {
+      server.middlewares.use('/__speakerupload', (req, res) => {
+        if (req.method !== 'POST' && req.method !== 'DELETE') { res.statusCode = 405; res.end(); return }
+        const q = new URL(req.url ?? '/', 'http://localhost').searchParams
+        const beat = q.get('beat') ?? ''
+        const ext = q.get('ext') ?? ''
+        if (!/^[A-Za-z0-9_-]+$/.test(beat)) { res.statusCode = 400; res.end('bad beat id'); return }
+        const absDir = path.resolve(process.cwd(), `public/${DIR}`)
+        fs.mkdirSync(absDir, { recursive: true })
+        if (req.method === 'DELETE') {
+          for (const e of [...IMG_EXTS]) {
+            const f = path.join(absDir, `${beat}.${e}`)
+            if (fs.existsSync(f)) fs.unlinkSync(f)
+          }
+          res.end('ok')
+          return
+        }
+        if (!IMG_EXTS.includes(ext)) { res.statusCode = 400; res.end('bad ext'); return }
+        const chunks: Buffer[] = []
+        let size = 0
+        req.on('data', (d: Buffer) => {
+          size += d.length
+          if (size > 10 * 1024 * 1024) { res.statusCode = 413; res.end('too large'); req.destroy(); return }
+          chunks.push(d)
+        })
+        req.on('end', () => {
+          if (res.writableEnded) return
+          const abs = path.join(absDir, `${beat}.${ext}`)
+          fs.writeFileSync(abs, Buffer.concat(chunks))
+          const converted = toWebp(abs) // 원본은 toWebp가 정리 — 항상 webp 한 벌만 남는다
+          const finalExt = typeof converted === 'string' ? path.extname(converted).slice(1) : ext
+          for (const e of IMG_EXTS) { // 같은 비트의 다른 확장자 잔재 제거
+            if (e === finalExt) continue
+            const f = path.join(absDir, `${beat}.${e}`)
+            if (fs.existsSync(f)) fs.unlinkSync(f)
+          }
+          res.end(`${DIR}/${beat}.${finalExt}`) // 최종 경로 — 변환으로 확장자가 바뀌므로 에디터가 추측하면 안 된다
+        })
+      })
+    },
+  }
+}
 
 function beatsPreviewPlugin(): Plugin {
   return {
@@ -501,7 +585,11 @@ function assetUploadPlugin(route: string, manifestFile: string, dir: string,
           const seqEntry = entry as { frames?: string[] }
           const hadFrames = seqEntry.frames !== undefined
           if (hadFrames) delete seqEntry.frames
-          if (entry.file !== rel || hadFrames) { entry.file = rel; fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n') }
+          // 표시 박스를 올라온 이미지 비율로 — 목업 크기에 맞춰 눌리지 않게
+          // 변환 후 경로로 잰다 — toWebp가 원본을 지우므로 absTarget은 이미 없을 수 있다
+          const finalAbs = typeof converted === 'string' ? converted : absTarget
+          const resized = fitSlotSize(entry as { size?: [number, number]; natural?: boolean }, finalAbs)
+          if (entry.file !== rel || hadFrames || resized) { entry.file = rel; fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n') }
           invalidate(manifestPath)
           notify(slot, entry.file)
           res.end(rel) // 최종 경로를 돌려준다 — 후처리로 확장자가 바뀔 수 있어 에디터가 추측하면 안 된다
@@ -634,6 +722,7 @@ export default defineConfig({
     uploadedAssetServePlugin(),
     layoutSavePlugin(), // /__layout — 키 단위 병합 (editorSavePlugin의 통짜 저장과 분리)
     beatsPreviewPlugin(),
+    speakerUploadPlugin(),
     editorSavePlugin(),
     scaleSavePlugin('/__charscale', 'src/data/charskins.json',
       (m) => (m as CharSkinManifest).chars.flatMap((c) => c.slots), 'char-scale-updated'),
@@ -651,7 +740,7 @@ export default defineConfig({
       (m) => (m as BgmManifest).tracks, AUDIO_EXTS, 25, stripArtistTag),
     assetUploadPlugin('/__charupload', 'src/data/charskins.json', 'assets/char/skin',
       (m) => (m as CharSkinManifest).chars.flatMap((c) => c.slots),
-      [...IMG_EXTS, 'mov', 'webm'], 4096, mediaPostProcess), // vid 슬롯 = 알파 영상 (mov는 자동 변환). 이미지는 webp로 변환
+      [...IMG_EXTS, 'mov', 'mp4', 'webm'], 4096, mediaPostProcess), // vid 슬롯 = 영상 (mov·mp4는 자동 webm 변환). 이미지는 webp로 변환
     seqUploadPlugin('/__bgseq', 'src/data/backgrounds.json', 'assets/bg',
       (m) => { const b = m as { story: SeqSlot[]; system: SeqSlot[] }; return [...b.story, ...b.system] }), // system=로딩 화면 시퀀스
     seqUploadPlugin('/__charseq', 'src/data/charskins.json', 'assets/char/skin',

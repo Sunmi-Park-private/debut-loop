@@ -5,7 +5,7 @@ import type { CharacterDef, MiniGameGrade, RoleId } from "../engine/types";
 import { candidatePool, FIXED_MEMBERS } from "../engine/members";
 import { characters } from "../data";
 import type { RunController } from "./runController";
-import { mountEngine, txt, btn, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
+import { mountEngine, txt, btn, btnText, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
 import { skinFit, skinNatural, skinNode, skinTex, skinTexTrim } from "./uiSkin";
 import { pos } from "./layout";
 import { editable, setRedrawHook } from "./editor";
@@ -42,13 +42,13 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
   parent.addChild(dim);
 
   const panel = new Container();
-  // 저장된 board 오프셋은 계속 적용하되 에디터에는 걸지 않는다 — 이 컨테이너는 화면 전체를
-  // 감싸서 board_bg와 경계가 거의 같고, 화면 어디를 눌러도 함께 잡혀 배경판을 따로 못 골랐다.
-  // (배경판은 board_bg, 나머지는 각 조각 그룹으로 옮긴다)
-  const p = pos("board", pos("training"));
+  // 보드 전체를 board_bg 한 키로 등록 — 배경판을 끌면 제목·버튼·격자가 통째로 따라온다.
+  // (개별 조각은 각자의 키로 계속 따로 움직인다 — 조각을 누르면 조각이, 빈 배경을 누르면 전체가 잡힘)
+  const p = pos("board_bg", pos("board", pos("training")));
   panel.x = p.x;
   panel.y = p.y;
   parent.addChild(panel);
+  editable("board_bg", panel);
 
   // 우상단 X — 다른 팝업(연습 등)과 동일한 닫기 관례 (ui-close-x 공용 스킨, 없으면 벡터)
   const xBtn = new Container();
@@ -70,10 +70,14 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
   panel.addChild(xBtn);
   editable("board_close_x", xBtn);
 
-  // 패널 프레임 — 오디션 → 연습 패널 → 공통 프레임(ui-frame) → 벡터 순 폴백 (이미지 삭제 시에도 프레임 유지)
-  const bg = skinNode("audition-panel", W, H) ?? skinNode("train-panel", W, H) ?? skinNode("ui-frame", W, H)
+  // 패널 프레임 = 점검 화면 배경판(board-bg). 다른 화면의 아트(train-panel)로 폴백하지 않는다.
+  // 자기 배경판을 따로 까는 화면(audition-recruit-bg·recheck-bg)은 이 프레임을 감춘다 —
+  // 안 감추면 배경판 뒤에서 프레임이 비쳐 남는다.
+  const bg = skinFit("board-bg", W, H) ?? skinNode("audition-panel", W, H) ?? skinNode("ui-frame", W, H)
     ?? new Graphics().roundRect(0, 0, W, H, 24).fill({ color: 0xffffff, alpha: 0.94 }).stroke({ width: 2, color: 0xece4f4 });
   panel.addChild(bg);
+  /** 자체 배경판을 깐 화면에서 프레임을 감춘다 — clear()가 매번 다시 켜므로 화면마다 선언적으로 부른다 */
+  const setFrame = (v: boolean): void => { bg.visible = v; };
 
   // 헤더 바 · 제목 · 회차 — 각각 독립 그룹으로 등록해 레이아웃 에디터에서 따로 움직인다
   const hgrp = (name: string, ...items: Container[]): Container => {
@@ -115,6 +119,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     killStage();
     body.removeChildren();
     panel.visible = true; // 오디션 무대에서 숨긴 멤버 점검 패널 복원 (안전망 — 정상 경로는 restore)
+    bg.visible = true;    // 화면마다 자기 배경판 유무에 따라 다시 끈다
   };
   const charOf = (id: string): CharacterDef | undefined => characters.find((c) => c.id === id);
 
@@ -137,7 +142,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
   /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다.
    *  기본값은 btn()이 잡아준 가운데 정렬이라 저장된 값이 없으면 지금 배치 그대로다. */
   const btnLabel = (name: string, b: Container): void => {
-    const t = b.children.find((c): c is Text => c instanceof Text);
+    const t = btnText(b); // pressable()의 inner 래핑 때문에 얕은 탐색으로는 못 찾는다
     if (!t) return;
     const q = pos(`${name}_text`, { x: Math.round(t.x), y: Math.round(t.y) });
     t.x = q.x;
@@ -207,9 +212,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
   const showBoard = (): void => {
     setRedrawHook(showBoard); // 배율·농도 변경 시 보드 밖으로 튕기지 않고 이 화면만 다시 그림
     clear();
-    // 점검 화면 전체 배경판 — 맨 뒤 레이어 (텍스트·버튼은 항상 그 위에 얹힘)
-    const bbg = skinFit("board-bg", W, H - 52);
-    if (bbg) body.setChildIndex(bgrp("board_bg", 0, 0, bbg), 0);
+    // 배경판(board-bg)은 패널 프레임이 담당한다 — 보드 전체(board_bg 키)와 함께 움직인다
     const s = ctrl.state;
     const cost = ctrl.auditionExchangeCost;
     const audCards = s.cards.filter((c) => c.templateId === "audition").length;
@@ -466,7 +469,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     clear();
     // 배경판 — 맨 뒤 레이어. 아트 미업로드면 아무것도 깔지 않는다(패널 프레임이 그대로 보인다)
     const rbg = skinFit("recheck-bg", W, H - 52);
-    if (rbg) bgrp("recheck_bg", 0, 0, rbg);
+    if (rbg) { bgrp("recheck_bg", 0, 0, rbg); setFrame(false); }
 
     const t = txt("새로 만날 후보가 없어요", 17, 0xffffff, true);
     t.x = (W - t.width) / 2;
@@ -591,7 +594,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     clear();
     // 영입(후보 결과) 화면 전체 배경판 — 맨 뒤 레이어
     const rbg = skinFit("audition-recruit-bg", W, H - 52);
-    if (rbg) body.setChildIndex(bgrp("board_recruit_bg", 0, 0, rbg), 0);
+    if (rbg) { body.setChildIndex(bgrp("board_recruit_bg", 0, 0, rbg), 0); setFrame(false); }
     const GN: Record<MiniGameGrade, string> = { perfect: "PERFECT ✨", good: "GOOD 👍", clear: "CLEAR ✔" };
     // 관문과 같은 grade-* 슬롯 공용 (심사표 스탬프)
     const stamp = skinFit(`grade-${grade}`, 180, 64);

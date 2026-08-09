@@ -16,6 +16,11 @@ import { slotIdOf, slotMeta, type UiSkinSlot } from "./uiSkin";
 let on = new URLSearchParams(location.search).has("editor");
 let redraw: () => void = () => {};
 const visible = new Map<string, Container>();
+// 개발용 검증 훅 — E2E에서 등록된 컴포넌트 목록을 조회 (게임 로직 미사용)
+if (typeof window !== "undefined") {
+  (window as unknown as { __layoutKeys?: () => string[] }).__layoutKeys =
+    () => [...visible.entries()].map(([k, c]) => `${k}${c.destroyed ? "!d" : ""}${c.parent ? "" : "!p"}`);
+}
 
 // 같은 레이아웃 키를 여러 자리에서 되풀이해 쓰는 화면이 있다 (카드덱 8칸의 심볼·별·이름…).
 // 좌표는 한 벌만 저장하는 게 맞지만, 대표 한 칸만 등록해 두면 나머지 칸을 눌렀을 때
@@ -42,11 +47,22 @@ let interact = false;
 /** 게임 입력을 에디터가 가로채는 중인지 — 게임 쪽은 "에디터가 켜졌는지"가 아니라 이 값을 본다 */
 export const inputBlocked = (): boolean => on && !interact;
 
+// 모드 변경 구독 — DOM 레이어(메타 팝업 등)가 편집 중인지 알아야 입력을 통과시킬 수 있다
+const modeSubs: Array<(editing: boolean) => void> = [];
+export function onEditorMode(cb: (editing: boolean) => void): void {
+  modeSubs.push(cb);
+  cb(inputBlocked()); // 구독 시점의 상태로 한 번 맞춘다
+}
+function notifyMode(): void {
+  for (const cb of modeSubs) cb(inputBlocked());
+}
+
 export function setInteractMode(next: boolean): void {
   if (!on || interact === next) return;
   interact = next;
   if (interact) { unmountShield(); unmountGrid(); }
   else { mountShield(); }
+  notifyMode();
   refreshPanel();
 }
 
@@ -75,6 +91,7 @@ export function setEditorMode(next: boolean): void {
   if (!handled) redraw();
   if (on) { mountShield(); refreshPanel(); }
   else { unmountShield(); unmountGrid(); clearHighlight(); }
+  notifyMode();
 }
 
 export function onRedraw(fn: () => void): void {
@@ -320,7 +337,13 @@ function mountShield(): void {
   if (!first) return;
   let root: Container = first;
   while (root.parent) root = root.parent as Container;
-  if (shield && shield.parent === root) { root.addChild(shield); return; } // 새 화면 요소 위로 재부상
+  if (shield && shield.parent === root) {
+    // 새 화면 요소 위로 재부상. 그리드도 **함께** 올린다 — 실드만 올리면 그리드가
+    // 실드와 새로 그려진 요소 밑에 깔려, 화면을 옮길 때마다 격자가 사라진 것처럼 보인다.
+    root.addChild(shield);
+    paintGrid(); // 화면이 바뀌며 캔버스 크기·위치가 달라졌을 수 있다
+    return;
+  }
   unmountShield();
   const g = new Graphics().rect(0, stageTop(), BASE_W, stageHeight()).fill({ color: 0xffffff, alpha: 0.001 });
   g.eventMode = "static";
@@ -368,7 +391,7 @@ function mountShield(): void {
   g.on("pointerupoutside", up);
   root.addChild(g);
   shield = g;
-  mountGrid(root);
+  mountGrid();
 }
 
 function unmountShield(): void {
@@ -388,14 +411,41 @@ const A_MINOR = 0.3;
 const A_MAJOR = 0.6;
 const A_CENTER = 0.95;
 const A_EDGE = 0.85;
-let grid: Graphics | null = null;
+// 그리드는 **DOM 오버레이**다. 예전엔 Pixi 스테이지 안에 그렸는데, 데일리·앨범 같은
+// 팝업이 DOM 레이어(z-index 1100)라 캔버스 안에서는 아무리 위로 올려도 그 밑에 깔렸다.
+// pointer-events:none 이라 입력은 그대로 실드가 받는다.
+const GRID_Z = 1250; // 게임 팝업(1100)·토스트(1200) 위, 에디터 패널(1300) 아래
+let gridEl: HTMLCanvasElement | null = null;
+let gridResize: (() => void) | null = null;
 
-function mountGrid(root: Container): void {
-  unmountGrid();
+const hexOf = (n: number, a: number): string =>
+  `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+
+/** 게임 캔버스 위에 정확히 겹치도록 크기·위치를 맞추고 격자를 다시 그린다 */
+function paintGrid(): void {
+  const el = gridEl;
+  const cv = document.querySelector("canvas");
+  if (!el || !cv) return;
+  const r = cv.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  el.style.left = `${r.left}px`;
+  el.style.top = `${r.top}px`;
+  el.style.width = `${r.width}px`;
+  el.style.height = `${r.height}px`;
+  el.width = Math.max(1, Math.round(r.width * dpr));
+  el.height = Math.max(1, Math.round(r.height * dpr));
+  const ctx = el.getContext("2d");
+  if (!ctx) return;
+  // 논리 좌표(430 × stageHeight) → 화면 픽셀
+  const sx = (r.width / BASE_W) * dpr;
+  const sy = (r.height / stageHeight()) * dpr;
   const top = stageTop();
-  const h = stageHeight();
-  const g = new Graphics();
-  g.eventMode = "none"; // 입력을 가로채지 않는다 — 드래그는 실드가 처리
+  const H = stageHeight();
+  ctx.clearRect(0, 0, el.width, el.height);
+  const line = (x1: number, y1: number, x2: number, y2: number): void => {
+    ctx.moveTo((x1 - 0) * sx, (y1 - top) * sy);
+    ctx.lineTo((x2 - 0) * sx, (y2 - top) * sy);
+  };
   // 세로선은 중앙(x=215)에서 좌우로 뻗어 나간다. 0에서 시작하면 50px 굵은선이 200·250에 서고
   // 중앙선만 215에 홀로 서서, 중앙 옆 간격만 15px로 좁아 보인다(격자가 안 맞는 것처럼).
   const cx = BASE_W / 2;
@@ -406,34 +456,63 @@ function mountGrid(root: Container): void {
     return out;
   };
   const majorX = new Set(colsAt(GRID_MAJOR));
+
+  ctx.beginPath();
   for (const x of colsAt(GRID_MINOR)) {
     if (majorX.has(x)) continue;
-    g.moveTo(x, top).lineTo(x, top + h);
+    line(x, top, x, top + H);
   }
-  for (let y = Math.ceil(top / GRID_MINOR) * GRID_MINOR; y <= top + h; y += GRID_MINOR) {
+  for (let y = Math.ceil(top / GRID_MINOR) * GRID_MINOR; y <= top + H; y += GRID_MINOR) {
     if (y % GRID_MAJOR === 0) continue;
-    g.moveTo(0, y).lineTo(BASE_W, y);
+    line(0, y, BASE_W, y);
   }
-  g.stroke({ width: 1, color: GRID_COLOR, alpha: A_MINOR });
+  ctx.strokeStyle = hexOf(GRID_COLOR, A_MINOR);
+  ctx.lineWidth = 1 * dpr;
+  ctx.stroke();
+
+  ctx.beginPath();
   for (const x of majorX) {
-    if (x === cx) continue; // 중앙선은 아래에서 더 진하게 따로 그린다
-    g.moveTo(x, top).lineTo(x, top + h);
+    if (x === cx) continue; // 중앙선은 아래에서 더 진하게 따로
+    line(x, top, x, top + H);
   }
-  for (let y = Math.ceil(top / GRID_MAJOR) * GRID_MAJOR; y <= top + h; y += GRID_MAJOR) {
-    g.moveTo(0, y).lineTo(BASE_W, y);
+  for (let y = Math.ceil(top / GRID_MAJOR) * GRID_MAJOR; y <= top + H; y += GRID_MAJOR) {
+    line(0, y, BASE_W, y);
   }
-  g.stroke({ width: 1.5, color: GRID_COLOR, alpha: A_MAJOR });
-  // 중앙선 — 가운데 정렬 확인용. 지금까지 반복해서 문제가 된 지점이라 가장 밝게 둔다
-  g.moveTo(cx, top).lineTo(cx, top + h).stroke({ width: 2, color: GRID_COLOR, alpha: A_CENTER });
-  g.rect(0, top, BASE_W, h).stroke({ width: 3, color: GRID_COLOR, alpha: A_EDGE });
-  root.addChild(g);
-  grid = g;
+  ctx.strokeStyle = hexOf(GRID_COLOR, A_MAJOR);
+  ctx.lineWidth = 1.5 * dpr;
+  ctx.stroke();
+
+  // 중앙선 — 가운데 정렬 확인용. 반복해서 문제가 된 지점이라 가장 밝게 둔다
+  ctx.beginPath();
+  line(cx, top, cx, top + H);
+  ctx.strokeStyle = hexOf(GRID_COLOR, A_CENTER);
+  ctx.lineWidth = 2 * dpr;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.rect(0, 0, BASE_W * sx, H * sy);
+  ctx.strokeStyle = hexOf(GRID_COLOR, A_EDGE);
+  ctx.lineWidth = 3 * dpr;
+  ctx.stroke();
+}
+
+function mountGrid(): void {
+  if (!gridEl) {
+    const el = document.createElement("canvas");
+    el.style.cssText = `position:fixed;z-index:${GRID_Z};pointer-events:none`;
+    document.body.appendChild(el);
+    gridEl = el;
+    gridResize = () => paintGrid();
+    window.addEventListener("resize", gridResize);
+  }
+  paintGrid();
 }
 
 function unmountGrid(): void {
-  grid?.parent?.removeChild(grid);
-  grid?.destroy();
-  grid = null;
+  if (gridResize) window.removeEventListener("resize", gridResize);
+  gridResize = null;
+  gridEl?.remove();
+  gridEl = null;
 }
 
 // ── 자동 저장 ───────────────────────────────────────────────────────
@@ -506,12 +585,17 @@ if (import.meta.hot) {
 // ── DOM 패널 ──
 let _panel: HTMLDivElement | null = null;
 
+/** 패널 레이어 — 게임 팝업(1100)·토스트(1200)보다 위, 치트(1401)보다 아래.
+ *  패널 DOM은 한 번만 만들고 재사용하므로, 값이 바뀌어도 반영되도록 꺼낼 때마다 다시 못 박는다.
+ *  (아래에 깔리면 패널을 누른 클릭이 팝업 오버레이에 떨어져 팝업이 닫혀버린다) */
+const PANEL_Z = "1300";
+
 function panelEl(): HTMLDivElement {
-  if (_panel) return _panel;
+  if (_panel) { _panel.style.zIndex = PANEL_Z; return _panel; }
   const p = document.createElement("div");
   // 폭은 화면을 넘어가도 무방 — 행마다 좌표·배율·폰트 컨트롤이 한 줄에 들어가야 한다
   p.style.cssText =
-    "position:fixed;top:64px;right:12px;z-index:1000;background:#fff;border:2px solid #ece4f4;" +
+    `position:fixed;top:64px;right:12px;z-index:${PANEL_Z};background:#fff;border:2px solid #ece4f4;` +
     "border-radius:12px;padding:10px 12px;font:12px -apple-system,sans-serif;color:#5b4a70;" +
     "box-shadow:0 8px 24px rgba(167,139,230,.3);width:470px;display:none;max-height:78vh;overflow-y:auto";
   document.body.appendChild(p);
@@ -524,6 +608,7 @@ const PALETTE: Array<[string, string]> = [
   ["#5b4a70", "잉크"], ["#a99bc0", "서브"], ["#ffffff", "흰색"], ["#000000", "검정"],
   ["#ff7fb0", "핑크"], ["#9a7fe0", "라벤더"], ["#c9527f", "진한 핑크"], ["#f0a93a", "주황"],
   ["#ffefd8", "별 노랑"], ["#f0c05a", "골드"], ["#ffe4f0", "연핑크"], ["#fff4c9", "크림"],
+  ["#ffeedb", "살구"], ["#dbefff", "하늘"], ["#ffdbe4", "벚꽃"],
 ];
 
 const css = {

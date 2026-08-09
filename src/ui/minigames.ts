@@ -46,6 +46,27 @@ let PH = MG_H;
 export const txt = (s: string, size: number, fill: number, bold = false): Text =>
   new Text({ text: s, style: { fontSize: size, fill, fontWeight: bold ? "bold" : "normal", wordWrap: true, wordWrapWidth: W - 40, lineHeight: size * 1.5 } });
 
+/** 연습 종목별 전체 배경판 슬롯 id — 게임 화면과 실패 화면이 같은 배경을 유지할 때 함께 쓴다.
+ *  SNS 홍보는 막에 따라 카드 수가 늘어나므로(6장=2×3, 9장 이상=3×3) 그리드에 맞는 배경판을 고른다 */
+export const miniBgId = (ns: string, act: number): string => {
+  const matchBgId = (MATCH_CARDS[act] ?? 6) <= 6 ? "gate-match-bg" : "gate-match-bg-3x3";
+  const MINI_BG: Record<string, string> = {
+    vocal: "gate-rec-bg", dance: "gate-mirror-bg", promo: matchBgId, funds: "gate-stop-bg", audition: "gate-rps-bg",
+  };
+  return MINI_BG[ns] ?? "";
+};
+
+/** 버튼 컨테이너 안의 라벨 Text — pressable()이 자식들을 눌림 애니메이션용 inner 컨테이너로
+ *  감싸므로 얕은 children 탐색으로는 못 찾는다(문구 분리 등록이 조용히 빠지던 원인). 깊이 우선 탐색 */
+export const btnText = (b: Container): Text | null => {
+  for (const c of b.children) {
+    if (c instanceof Text) return c;
+    const r = btnText(c);
+    if (r) return r;
+  }
+  return null;
+};
+
 export const btn = (label: string, w: number, color: number, onTap: () => void, skinId = "gate-btn", pressOpts?: PressOpts): Container => {
   const b = new Container();
   // 개별 스킨 → 관문 공통 → UI 공용 버튼(ui-btn) → 벡터 순 폴백
@@ -285,13 +306,8 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
   };
 
   // 연습 미니게임 전체 배경판 — 종목별 슬롯. 관문은 자체 배경(renderGate)을 쓰므로 연습(ns)에서만 적용
-  // SNS 홍보는 막에 따라 카드 수가 늘어나므로(6장=2×3, 9장 이상=3×3) 그리드에 맞는 배경판을 고른다
-  const matchBgId = (MATCH_CARDS[act] ?? 6) <= 6 ? "gate-match-bg" : "gate-match-bg-3x3";
-  const MINI_BG: Record<string, string> = {
-    vocal: "gate-rec-bg", dance: "gate-mirror-bg", promo: matchBgId, funds: "gate-stop-bg", audition: "gate-rps-bg",
-  };
   // contain-fit: 위아래가 잘리지 않고 아트 전체가 보인다 (cover는 넘치는 부분을 크롭해 상하가 잘림)
-  const miniBg = ns ? skinFit(MINI_BG[ns] ?? "", W, PH) : null;
+  const miniBg = ns ? skinFit(miniBgId(ns, act), W, PH) : null;
   if (miniBg) body.setChildIndex(grp("mini_bg", miniBg), 0); // 맨 뒤 레이어
   const onBg = (c: number): number => miniBg ? INK : c; // 배경판 위 문구는 종목 제목과 같은 색으로 통일
 
@@ -306,15 +322,12 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
   // ── A. 가위바위포즈 (3판 2선) ──
   const runRps = (): void => {
     desc("가위바위포즈 · 3판 2선 · 상대 직전 손을 읽어요");
-    let round = 0, wins = 0, last: RpsHand | null = null;
+    let round = 0, wins = 0, last: RpsHand | null = null, spinning = false;
     const HANDS: Array<[RpsHand, string, string]> = [[0, "✊", "바위"], [1, "✋", "보"], [2, "✌️", "가위"]];
     const info = txt("1/3 라운드 · 0승", 15, onBg(INK), true);
     info.x = 20;
     info.y = 96;
-    const lastT = txt("상대 직전 손: —", 13, onBg(SUB));
-    lastT.x = 20;
-    lastT.y = 128;
-    grp("rps_info", info, lastT);
+    grp("rps_info", info);
     const HAND_SLOT: Record<number, string> = { 0: "gate-rps-rock", 1: "gate-rps-paper", 2: "gate-rps-scissors" };
     const HAND_KEY: Record<number, string> = { 0: "rps_hand_rock", 1: "rps_hand_paper", 2: "rps_hand_scissors" };
     const HAND_W = 108, HAND_GAP = 7; // 손 사이 간격 (기존 14에서 절반)
@@ -340,16 +353,90 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       b.eventMode = "static";
       b.cursor = "pointer";
       b.on("pointertap", () => {
+        if (spinning) return; // 릴이 도는 동안 추가 입력 무시 — 사운드·연출 싱크 유지
+        playCue("slot"); // 손 선택 사운드 — bgm 에디터의 「슬롯 릴 사운드」 재활용 (약 2초)
         const opp = Math.floor(Math.random() * 3) as RpsHand;
         if (rpsBeats(hand, opp)) wins++;
         last = opp;
         round++;
-        if (round >= 3) { onFinish(rpsGrade(wins)); return; }
-        info.text = `${round + 1}/3 라운드 · ${wins}승`;
-        lastT.text = `상대 직전 손: ${HANDS[last]?.[1] ?? "—"}`;
+        startSpin(); // 릴 연출이 끝난 뒤 결과 확정 표시 (마지막 라운드 판정 포함)
       });
       grp(HAND_KEY[hand] ?? `rps_hand_${i}`, b); // 손마다 개별 그룹 — 레이아웃 에디터에서 따로 이동
     });
+
+    // 상대 직전 손 — 문구("상대 직전 손: —") 대신 프레임 + 손 아트로 표시 (유저 손 하단).
+    // 손 아트는 유저 손 3종 슬롯을 재활용하되, 레이아웃 키는 별도(rps_opp_*)라 유저 손과 독립 이동
+    const OPP_FW = 150, OPP_FH = 130, OPP_D = 76;
+    const oppFrame = new Container();
+    const frameArt = skinNatural("gate-rps-opp-frame", OPP_FW, OPP_FH); // 1배율=원본 크기
+    if (frameArt) oppFrame.addChild(frameArt);
+    else { // 목업: 라운드 박스 + 캡션 (아트 업로드 시 캡션은 아트에 포함 전제)
+      const g = new Graphics().roundRect(0, 0, OPP_FW, OPP_FH, 16).fill(0xf8f4fc).stroke({ width: 2, color: 0xece4f4 });
+      const cap = txt("상대 직전 손", 11, SUB, true);
+      cap.x = (OPP_FW - cap.width) / 2;
+      cap.y = 10;
+      oppFrame.addChild(g, cap);
+    }
+    oppFrame.x = Math.round((W - OPP_FW) / 2);
+    oppFrame.y = 310;
+    grp("rps_opp_frame", oppFrame);
+
+    // 상대 손 3종 — 유저 손과 같은 방식으로 손마다 별도 컴포넌트 등록 (rps_opp_rock/paper/scissors).
+    // 셋 다 미리 만들어 두고 상대가 낸 손만 보이게 토글 — 레이아웃 에디터에서 각각 따로 조정 가능
+    const OPP_KEY: Record<number, string> = { 0: "rps_opp_rock", 1: "rps_opp_paper", 2: "rps_opp_scissors" };
+    // placeholder 겸 캡션 — 기존 rps_opp_hand 키 유지 (디자이너가 texts 덮어쓰기로 "상대 직전 손모양" 캡션으로 쓰는 중)
+    const dash = txt("—", 22, SUB, true);
+    dash.x = Math.round(W / 2 - dash.width / 2);
+    dash.y = Math.round(310 + 74 - dash.height / 2);
+    grp("rps_opp_hand", dash);
+    const oppHands: Container[] = HANDS.map(([hand, emoji]) => {
+      const node = new Container();
+      const art = skinFit(HAND_SLOT[hand] ?? "", OPP_D, OPP_D);
+      if (art) {
+        art.x = -OPP_D / 2;
+        art.y = -OPP_D / 2;
+        node.addChild(art);
+      } else {
+        const e = txt(emoji, 34, INK);
+        e.x = -Math.round(e.width / 2);
+        e.y = -Math.round(e.height / 2);
+        node.addChild(e);
+      }
+      node.x = Math.round(W / 2); // 기준점=중심 — 세 손 모두 같은 기본 위치(프레임 안), 저장값으로 개별 이동
+      node.y = 310 + 74;
+      node.visible = false;
+      grp(OPP_KEY[hand] ?? `rps_opp_${hand}`, node);
+      return node;
+    });
+    const drawOppHand = (): void => {
+      // 문구가 "—" 그대로면 placeholder(첫 라운드 전만), 에디터에서 캡션으로 바꿨으면 상시 표시
+      dash.visible = last === null || dash.text !== "—";
+      oppHands.forEach((n, i) => { n.visible = last === i; });
+    };
+    drawOppHand();
+
+    // 슬롯 릴 스핀 — 릴 사운드(약 2초)에 맞춰 세 손을 빠르게 돌리다가 상대가 낸 손에서 멈춘다.
+    // 판정(승수·라운드)은 탭 즉시 끝나 있고, 화면 확정·다음 진행만 스핀이 끝난 뒤 한다.
+    const SPIN_MS = 2000, SPIN_STEP = 80;
+    const startSpin = (): void => {
+      spinning = true;
+      dash.visible = dash.text !== "—";
+      const t0 = performance.now();
+      const iv = window.setInterval(() => {
+        if (body.destroyed || !body.parent) { clearInterval(iv); return; } // 중도 이탈 — 뷰가 사라짐
+        const el = performance.now() - t0;
+        if (el < SPIN_MS) {
+          const idx = Math.floor(el / SPIN_STEP) % 3;
+          oppHands.forEach((n, i) => { n.visible = i === idx; });
+          return;
+        }
+        clearInterval(iv);
+        spinning = false;
+        drawOppHand(); // 상대가 낸 손으로 확정
+        if (round >= 3) { onFinish(rpsGrade(wins)); return; }
+        info.text = `${round + 1}/3 라운드 · ${wins}승`;
+      }, SPIN_STEP / 2);
+    };
   };
 
   // ── D. 타이밍 STOP (막 비례 다회전) ──
@@ -899,7 +986,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       syms.forEach((sp, k) => { if (sp) sp.visible = k === n; });
       if (syms[n]) { ic.visible = false; return; }
       ic.visible = true;
-      ic.text = ICONS[n] ?? "🎴";
+      ic.text = ICONS[n] ?? "";
       ic.x = cellCx(i) - ic.width / 2;
       ic.y = cellCy - ic.height / 2;
     };
@@ -968,7 +1055,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
         spr.y = (frame ? 73 : 65) - symT.height * ss;
         card.addChild(spr);
       } else {
-        const t = txt(ICONS[n] ?? "🎴", 28, INK);
+        const t = txt(ICONS[n] ?? "", 28, INK);
         t.x = (SHOT_W - t.width) / 2;
         t.y = 16;
         card.addChild(t);
@@ -1157,7 +1244,8 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     let LANE_X: number[] = [];
     let laneCs: Container[] = []; // 레인 컨테이너(링+라벨) — 레이아웃 에디터로 좌우 간격 조정, 노트 x가 따라감
     let editorPaused = false;     // 레이아웃 에디터 켜짐 = 판 일시정지 (노트·타이머·음악 정지)
-    let divG: Graphics | null = null; // 레인 구분선 — 드래그 시 재계산 (redrawDividers)
+    // 레인 사이 흰 구분선은 걷어냈다 — 무대 배경 아트 위에 코드가 그린 선이 겹쳐 보였다.
+    // (이지 1줄·하드 2줄) 레인 위치는 판정 링과 노트로 충분히 읽힌다.
     let trackId = "rhythm"; // begin()에서 로테이션으로 확정 — 노트 시계의 오디오 동기 기준
     const LANE_META: Array<{ icon: string; skin: string; key: string }> = [
       { icon: "🎤", skin: "gate-note-left", key: "F/←" },
@@ -1188,16 +1276,6 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     refreshHud();
 
     const laneY = (lane: number): number => laneCs[lane]?.y ?? 0; // 레인 세로 드래그 오프셋 (노트·이펙트 추종)
-    /** 레인 사이 세로 구분선 — 레인 드래그·좌표 입력에 맞춰 재계산 */
-    const redrawDividers = (): void => {
-      if (!divG) return;
-      divG.clear();
-      for (let i = 1; i < lanes; i++) {
-        const gx = ((LANE_X[i - 1] ?? 0) + (LANE_X[i] ?? 0)) / 2;
-        const gy = (laneY(i - 1) + laneY(i)) / 2;
-        divG.rect(gx - 0.5, TOP_Y - 14, 1, gy + HIT_Y - TOP_Y + 14).fill({ color: 0xd8cce8, alpha: 0.6 });
-      }
-    };
     const popFx = (lane: number, s: string, color: number): void => {
       const f = txt(s, 15, color, true);
       f.x = (LANE_X[lane] ?? 0) - f.width / 2;
@@ -1236,21 +1314,38 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       record(k === "perfect" ? "p" : "g", lane);
     };
 
+    /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다 */
+    const chromeLabel2 = (b: Container, key: string): void => {
+      const t = btnText(b); // pressable()의 inner 래핑 때문에 얕은 탐색으로는 못 찾는다
+      if (!t) return;
+      const q = pos(`${key}_text`, { x: Math.round(t.x), y: Math.round(t.y) });
+      t.x = q.x;
+      t.y = q.y;
+      editable(`${key}_text`, t);
+    };
+
     // 시작 대기: 모드 선택(이지 2열 / 하드 3열)으로 시작 — Space=이지
     let started = false;
     const startUi = new Container();
     // 오디션은 심사 테마 라벨 + 보너스 조건(good 이상 +3) 명시. 버튼 아트(스킨 id)는 기존 그대로.
     // Space 단축키(begin(2))는 코드 유지 — 라벨에서만 생략 (스펙 §7 verbatim)
     const easyBtn = btn(aud ? "🎪 쇼케이스 (2열)" : "▶ 이지 · 2열  (Space)", 220, PINK, () => begin(2), "gate-rhythm-easy");
-    easyBtn.y = 252;
     const hardBtn = btn(aud ? "🏆 본선 무대 (3열 · 집중 심사 +3)" : "🔥 하드 · 3열 + 보너스", 220, LAV, () => begin(3), "gate-rhythm-hard");
-    hardBtn.y = 316;
+    // 두 버튼을 따로 등록한다 — 한 묶음(rhythm_start)이면 둘이 함께만 움직여 간격·정렬을 못 잡는다.
+    // 기본 좌표는 예전 묶음 앵커 + 각자의 y라 지금 배치가 그대로다.
+    const BX = (MG_W - 220) / 2; // 고정 기준 폭 (관문별 W 무관)
+    const pEasy = pos("easy_start", { x: BX, y: 252 });
+    easyBtn.x = pEasy.x;
+    easyBtn.y = pEasy.y;
+    const pHard = pos("hard_start", { x: BX, y: 316 });
+    hardBtn.x = pHard.x;
+    hardBtn.y = pHard.y;
     startUi.addChild(easyBtn, hardBtn);
-    const startP = pos("rhythm_start", { x: (MG_W - 220) / 2, y: 0 }); // 버튼 묶음 앵커 — 고정 기준 폭 (관문별 W 무관)
-    startUi.x = startP.x;
-    startUi.y = startP.y;
     body.addChild(startUi);
-    editable("rhythm_start", startUi);
+    editable("easy_start", easyBtn);
+    editable("hard_start", hardBtn);
+    chromeLabel2(easyBtn, "easy_start");
+    chromeLabel2(hardBtn, "hard_start");
 
     const begin = (laneCount: number): void => {
       if (started) return;
@@ -1306,8 +1401,6 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       }
       body.addChild(lineGrp);
       editable(lineName, lineGrp);
-      divG = new Graphics(); // 레인 구분선 — 링 아래 z, 레인 위치 따라 재계산
-      body.addChild(divG);
       laneCs = [];
       for (let i = 0; i < lanes; i++) {
         const name = `rhythm${lanes}_lane${i + 1}`; // 모드별 저장 (이지 rhythm2_*, 하드 rhythm3_*)
@@ -1344,7 +1437,6 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
         laneCs.push(lc);
         LANE_X[i] = lc.x;
       }
-      redrawDividers();
 
       // 노트 계획: 곡 로테이션 → 박자표(beat.html) 있으면 사용, 없으면 자동 생성
       trackId = nextRhythmTrack();
@@ -1434,8 +1526,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     const tick = (): void => {
       if (!body.parent) { cleanup(); return; }
       for (let i = 0; i < laneCs.length; i++) LANE_X[i] = laneCs[i]!.x; // 에디터 드래그 실시간 반영 (노트·판정 이펙트 x)
-      if (editorPaused) { // 일시정지: 시간·스폰·미스 동결, 화면 위 노트·구분선만 레인 드래그를 따라감
-        redrawDividers();
+      if (editorPaused) { // 일시정지: 시간·스폰·미스 동결, 화면 위 노트만 레인 드래그를 따라감
         for (const n2 of live) {
           if (n2.done || !n2.el) continue;
           const prog = (now - (n2.t - travelMs)) / travelMs;
@@ -1499,18 +1590,24 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     eT.y = 78;
     const msgT = txt("밝은 타일 ✨에 올라타 반격하세요!", 11.5, SUB, true);
     msgT.y = 102;
-    // 전체 배경판(5×5 보드 아트) — 있으면 패널 전체에 깔고, 심볼 격자를 아트 칸 크기에 맞춘다.
+    // 전체 배경판(5×5 보드 아트) — 있으면 패널 전체에 깔고, 심볼을 아트에 그려진 칸 중심에 맞춘다.
     // (포토카드 배경판과 같은 용도 — 칸마다 타일을 찍지 않는다)
     const dodgeBoard = skinCover(opts.boardSkin ?? "", W, PH);
-    if (dodgeBoard) body.addChildAt(dodgeBoard, 0);
-    // 배경판이 있으면 아트의 보드 여백(좌우 5%)에 맞춰 칸 크기를 잡는다 — 미세 조정은 dodge_grid 키로
+    if (dodgeBoard) body.setChildIndex(grp("dodge_board", dodgeBoard), 0); // 맨 뒤 레이어 + 에디터 등록
+    // 배경판 아트(990×1625)의 실측 격자 — 열·행 중심 좌표(아트 픽셀, 스캔라인 측정).
+    // 패널이 아트 비율로 잡히므로(renderGate) W·PH에 비례 환산하면 화면 좌표가 된다. 마지막 행 = 주인공 행(분홍 띠)
+    const ART = { w: 990, h: 1625, colX: [130, 316, 495.5, 675.5, 861], rowY: [625.5, 792.5, 964, 1140.5, 1320] };
     const GP = dodgeBoard ? 2 : 5;
-    const CELL = dodgeBoard ? Math.round((W - Math.round(W * 0.1) - GP * (DODGE_COLS - 1)) / DODGE_COLS) : 56;
+    const CELL = dodgeBoard ? Math.round(((ART.colX[1] ?? 0) - (ART.colX[0] ?? 0)) * (W / ART.w)) : 56;
     const GRID_W = DODGE_COLS * CELL + (DODGE_COLS - 1) * GP;
-    const GX = (W - GRID_W) / 2, GY = dodgeBoard ? 175 : 170;
+    const GX = (W - GRID_W) / 2, GY = 170;
+    /** 칸(r,c)의 좌상단 — 배경판이 있으면 아트 실측 중심에서 역산, 없으면 벡터 격자 좌표 */
+    const cellXY = (r: number, c: number): { x: number; y: number } => dodgeBoard
+      ? { x: (ART.colX[c] ?? 0) / ART.w * W - CELL / 2, y: (ART.rowY[r] ?? 0) / ART.h * PH - CELL / 2 }
+      : { x: GX + c * (CELL + GP), y: GY + r * (CELL + GP) };
     const gridC = new Container();
     const pT = txt("", 15, INK, true);
-    pT.y = GY + DODGE_ROWS * CELL + (DODGE_ROWS - 1) * GP + 10;
+    pT.y = cellXY(DODGE_ROWS - 1, 0).y + CELL + 10;
     if (dodgeBoard) { // 어두운 보드 아트 위 가독성 — 문구를 흰색으로
       dodgeDesc.style.fill = 0xffffff;
       eT.style.fill = 0xffffff;
@@ -1528,8 +1625,10 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       pT.text = `${"❤️".repeat(Math.max(0, pH))}${"🤍".repeat(DODGE_P_HEARTS - Math.max(0, pH))}${shield ? "  🛡" : ""}`;
       pT.x = (W - pT.width) / 2;
       gridC.removeChildren();
+      const SYM = dodgeBoard ? Math.round(CELL * 0.62) : 40;  // 심볼 크기 — 배경판 있으면 아트 칸 크기에 비례
+      const PCS = dodgeBoard ? Math.round(CELL * 0.72) : 44;  // 주인공은 살짝 크게
       for (let r = 0; r < DODGE_ROWS; r++) for (let c = 0; c < DODGE_COLS; c++) {
-        const x = GX + c * (CELL + GP), y = GY + r * (CELL + GP);
+        const { x, y } = cellXY(r, c);
         // 배경판 아트에 칸이 이미 그려져 있으면 벡터 칸은 생략 — 없을 때만 기존 격자를 그린다
         if (!dodgeBoard) {
           gridC.addChild(new Graphics().roundRect(x, y, CELL, CELL, 9)
@@ -1538,10 +1637,10 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
         }
         const t = board[r]?.[c];
         if (t) {
-          const symSkin = skinNode(`gate-dodge-sym-${t}`, 40, 40); // 타일 심볼 스킨 (없으면 이모지)
+          const symSkin = skinNode(`gate-dodge-sym-${t}`, SYM, SYM); // 타일 심볼 스킨 (없으면 이모지)
           if (symSkin) {
-            symSkin.x = x + (CELL - 40) / 2;
-            symSkin.y = y + (CELL - 40) / 2;
+            symSkin.x = x + (CELL - SYM) / 2;
+            symSkin.y = y + (CELL - SYM) / 2;
             gridC.addChild(symSkin);
           } else {
             const ic = txt(ICON[t], 26, INK);
@@ -1551,15 +1650,16 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
           }
         }
       }
-      const pcSkin = skinNode("gate-dodge-sym-player", 44, 44); // 주인공 스킨 (없으면 이모지)
+      const pXY = cellXY(DODGE_ROWS - 1, px);
+      const pcSkin = skinNode("gate-dodge-sym-player", PCS, PCS); // 주인공 스킨 (없으면 이모지)
       if (pcSkin) {
-        pcSkin.x = GX + px * (CELL + GP) + (CELL - 44) / 2;
-        pcSkin.y = GY + (DODGE_ROWS - 1) * (CELL + GP) + (CELL - 44) / 2;
+        pcSkin.x = pXY.x + (CELL - PCS) / 2;
+        pcSkin.y = pXY.y + (CELL - PCS) / 2;
         gridC.addChild(pcSkin);
       } else {
         const pc = txt("👧", 28, INK);
-        pc.x = GX + px * (CELL + GP) + (CELL - pc.width) / 2;
-        pc.y = GY + (DODGE_ROWS - 1) * (CELL + GP) + (CELL - pc.height) / 2;
+        pc.x = pXY.x + (CELL - pc.width) / 2;
+        pc.y = pXY.y + (CELL - pc.height) / 2;
         gridC.addChild(pc);
       }
     };
@@ -1625,7 +1725,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     redraw();
   };
 
-  if (opts.engine === "rps") { playBgm(nextRhythmTrack()); runRps(); } // 가위바위보 = 리듬 트랙 로테이션 (종료 시 draw()가 메인 복귀)
+  if (opts.engine === "rps") runRps(); // 가위바위보 = BGM 전환 없음 (연습 곡 유지) — 탭마다 슬롯 릴 큐만 재생
   else if (opts.engine === "stop") runStop();
   else if (opts.engine === "match") runMatch();
   else if (opts.engine === "slot") runSlot();
@@ -1733,7 +1833,7 @@ export function renderGate(
 
   /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다 */
   const chromeLabel = (name: string, b: Container): void => {
-    const t = b.children.find((c): c is Text => c instanceof Text);
+    const t = btnText(b); // pressable()의 inner 래핑 때문에 얕은 탐색으로는 못 찾는다
     if (!t) return;
     const q = lpos(`${name}_text`, { x: Math.round(t.x), y: Math.round(t.y) });
     t.x = q.x;
@@ -1872,7 +1972,7 @@ export function renderGate(
           ic.x = -CW / 2;
           ic.y = -CH + 8;
         } else {
-          const e = txt(t?.icon ?? "🎴", 22, INK);
+          const e = txt(t?.icon ?? "", 22, INK);
           e.x = -e.width / 2;
           e.y = -CH + 12;
           ic = e;

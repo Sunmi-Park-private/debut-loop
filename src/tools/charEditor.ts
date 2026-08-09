@@ -1,7 +1,7 @@
 // tools/charEditor.ts — 캐릭터 스킨 그리드 에디터 (dev 전용, char.html).
 // 캐릭터당 2행: ①전신 3종+반신 ②표정 5종 × (org 단일 / idle 시퀀스) = 10칸.
 // 업로드 → /__charupload(단일) · /__charseq(시퀀스) → 게임 반영(반신=카드 초상·튜토리얼, 연습복=연습 스탠딩).
-import { charSkinChars, type CharSkinSlot } from "../ui/charSkins";
+import { charSkinChars, refreshCharSkins, type CharSkinSlot } from "../ui/charSkins";
 import { openSeqPreview } from "./seqPreview";
 
 const EXTS = ["png", "jpg", "webp"];
@@ -151,19 +151,20 @@ const showVideo = (cell: HTMLElement, src: string): void => {
   img.parentElement!.prepend(v);
 };
 
-const VID_EXTS = ["mov", "webm"];
+// mov(알파)·mp4(불투명) 모두 서버가 webm으로 변환한다
+const VID_EXTS = ["mov", "mp4", "webm"];
 
 const upload = async (slot: CharSkinSlot, file: File, cell: HTMLElement): Promise<void> => {
   const raw = (file.name.split(".").pop()?.toLowerCase() ?? "").replace("jpeg", "jpg");
   const isVid = VID_EXTS.includes(raw);
   if (isVid && !slot.vid) { alert("이 슬롯은 이미지 전용입니다"); return; }
-  const ext = isVid ? raw : validate(file); // 영상은 용량 제한 없음 (mov는 서버가 알파 webm으로 변환)
+  const ext = isVid ? raw : validate(file); // 영상은 용량 제한 없음 (mov·mp4는 서버가 webm으로 변환)
   if (!ext) return;
   cell.style.opacity = "0.5";
   const r = await fetch(`/__charupload?slot=${slot.id}&ext=${ext}`, { method: "POST", body: file });
   cell.style.opacity = "1";
   if (!r.ok) { alert(`업로드 실패: ${await r.text()}`); return; }
-  // 서버가 최종 경로를 돌려준다 — mov→webm, png/jpg→webp로 확장자가 바뀐다
+  // 서버가 최종 경로를 돌려준다 — mov·mp4→webm, png/jpg→webp로 확장자가 바뀐다
   slot.file = (await r.text()).trim() || `assets/char/skin/${slot.id}.${ext}`;
   if (isVid) {
     delete slot.frames; // 영상 = 시퀀스 대체 (서버도 동일 정리)
@@ -275,7 +276,7 @@ const makeCell = (slot: CharSkinSlot, small: boolean, scalable = false): HTMLEle
   };
   const input = document.createElement("input");
   input.type = "file";
-  input.accept = `image/png,image/jpeg,image/webp${slot.vid ? ",video/quicktime,video/webm,.mov,.webm" : ""}`;
+  input.accept = `image/png,image/jpeg,image/webp${slot.vid ? ",video/quicktime,video/webm,video/mp4,.mov,.mp4,.webm" : ""}`;
   input.multiple = !!slot.seq;
   input.style.display = "none";
   const handle = (fl: File[]): void => {
@@ -345,6 +346,10 @@ const makeCell = (slot: CharSkinSlot, small: boolean, scalable = false): HTMLEle
   return cell;
 };
 
+// 디스크의 최신 슬롯 목록으로 맞춘 뒤 그린다 — charskins.json은 dev 서버 감시에서 빠져 있어
+// Vite가 옛 모듈을 물고 있는 구간이 생긴다(새로 추가한 슬롯이 안 보이던 원인).
+await refreshCharSkins();
+
 charSkinChars.forEach((ch, idx) => {
   const sec = document.createElement("div");
   sec.innerHTML = `
@@ -354,13 +359,20 @@ charSkinChars.forEach((ch, idx) => {
       <h2 style="margin:0;font-size:16px">${ch.name}${ch.temp ? " (가칭)" : ""} <span style="color:#8a76a8;font-size:11px;font-weight:400">${ch.id}</span></h2>
     </div>
     <div data-row1 style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:12px"></div>
-    <div data-row2 style="display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px"></div>`;
+    <div data-row2 style="display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px"></div>
+    <div data-vidcap style="display:none;margin:18px 0 8px;font-size:12px;font-weight:800;color:#8fe3f0">
+      🎬 연습하기 주차 영상 <span style="font-weight:600;color:#5f8f99;font-size:10.5px">— 연습 메뉴 진입 시 주차에 따라 1→2→3→4→5 순환</span></div>
+    <div data-row3 style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px"></div>`;
   sections.appendChild(sec);
   const row1 = sec.querySelector("[data-row1]") as HTMLElement;
   const row2 = sec.querySelector("[data-row2]") as HTMLElement;
+  const row3 = sec.querySelector("[data-row3]") as HTMLElement;
+  const vidCap = sec.querySelector("[data-vidcap]") as HTMLElement;
   for (const slot of ch.slots) {
-    const isExp = slot.kind.startsWith("exp-") || slot.kind.startsWith("tilt-");
-    const scalable = ch.id === "haru" && SCALABLE.has(slot.kind); // 배율은 하루(메인)만
-    (isExp ? row2 : row1).appendChild(makeCell(slot, isExp, scalable));
+    const isVid = slot.kind.startsWith("practice-vid-"); // 주차 영상 — 마지막 줄에 모아 둔다
+    const isExp = !isVid && (slot.kind.startsWith("exp-") || slot.kind.startsWith("tilt-"));
+    const scalable = ch.id === "haru" && (SCALABLE.has(slot.kind) || isVid); // 배율은 하루(메인)만
+    if (isVid) vidCap.style.display = "block";
+    (isVid ? row3 : isExp ? row2 : row1).appendChild(makeCell(slot, false, scalable));
   }
 });

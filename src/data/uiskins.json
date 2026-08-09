@@ -235,7 +235,7 @@
         {
           "id": "side-panel",
           "label": "공통 · 팝업 배경판",
-          "file": "assets/ui/side-panel.png",
+          "file": "assets/ui/side-panel.webp",
           "size": [
             320,
             420
@@ -270,7 +270,7 @@
         {
           "id": "side-daily-cell-done",
           "label": "데일리 · 출석 칸 · 받음",
-          "file": "assets/ui/side-daily-cell-done.png",
+          "file": "assets/ui/side-daily-cell-done.webp",
           "size": [
             68,
             62
@@ -282,7 +282,7 @@
         {
           "id": "side-daily-cell-today",
           "label": "데일리 · 출석 칸 · 오늘",
-          "file": "assets/ui/side-daily-cell-today.png",
+          "file": "assets/ui/side-daily-cell-today.webp",
           "size": [
             68,
             62
@@ -294,7 +294,7 @@
         {
           "id": "side-daily-cell-lock",
           "label": "데일리 · 출석 칸 · 예정",
-          "file": "assets/ui/side-daily-cell-lock.png",
+          "file": "assets/ui/side-daily-cell-lock.webp",
           "size": [
             68,
             62
@@ -530,7 +530,7 @@
           "file": "assets/ui/train-panel.webp",
           "size": [
             394,
-            610
+            612
           ],
           "mode": "stretch",
           "opacity": -0.5
@@ -541,7 +541,7 @@
           "file": "",
           "size": [
             394,
-            610
+            612
           ],
           "mode": "stretch"
         },
@@ -551,7 +551,7 @@
           "file": "assets/ui/train-fail-panel.webp",
           "size": [
             394,
-            610
+            606
           ],
           "mode": "stretch",
           "vid": true
@@ -830,10 +830,11 @@
           "file": "assets/ui/gate-rec-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
-          "vid": true
+          "vid": true,
+          "scale": 1
         },
         {
           "id": "gate-rec-wave",
@@ -875,7 +876,7 @@
           "file": "assets/ui/gate-mirror-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true
@@ -934,7 +935,7 @@
           "file": "assets/ui/gate-match-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true
@@ -945,7 +946,7 @@
           "file": "assets/ui/gate-match-bg-3x3.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true
@@ -956,7 +957,7 @@
           "file": "assets/ui/gate-stop-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true,
@@ -1002,7 +1003,7 @@
           "file": "assets/ui/gate-rps-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true
@@ -1044,12 +1045,24 @@
           "scale": 0.5
         },
         {
+          "id": "gate-rps-opp-frame",
+          "label": "오디션 대비 · 상대방 손 프레임 (직전 손 표시) — 1배율=원본 크기",
+          "file": "assets/ui/gate-rps-opp-frame.webp",
+          "size": [
+            150,
+            130
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true
+        },
+        {
           "id": "train-rest-bg",
           "label": "휴식 · 배경판 (결과 화면 전체)",
           "file": "assets/ui/train-rest-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true
@@ -1572,10 +1585,10 @@
         {
           "id": "gate-fail-panel",
           "label": "공통 · 실패 화면 배경 프레임 (\"아쉬워요…\")",
-          "file": "",
+          "file": "assets/ui/gate-fail-panel.webp",
           "size": [
             394,
-            600
+            606
           ],
           "mode": "stretch",
           "vid": true

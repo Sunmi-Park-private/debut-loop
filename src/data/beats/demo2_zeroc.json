@@ -20,9 +20,9 @@
       "week": 0,
       "loop": 1,
       "isConvergence": true,
-      "textKey": "공중파 데뷔 무대. 조명이 터지고 붉은 섬광,\n꺼진 마이크, 무너지는 스텔라.\n눈앞이 하얗게 지워진다.",
+      "textKey": "공중파 데뷔 무대.\n조명이 터지고 붉은 섬광, 꺼진 마이크,\n무너지는 스텔라. 눈앞이 하얗게 지워진다.",
       "left": {
-        "label": "...무슨 일이",
+        "label": "  ...무슨 일이?",
         "effects": {}
       },
       "right": {
@@ -37,7 +37,7 @@
       "loop": 1,
       "textKey": "눈을 뜨니 3년 전, 작은 기획사 문 앞.\n손에 남은 건 '붉은 섬광' 한 조각의 기억뿐.",
       "left": {
-        "label": "이게 무슨...",
+        "label": "  이게 무슨...",
         "effects": {
           "flags": [
             "rewound"
@@ -59,9 +59,9 @@
       "act": 0,
       "week": 0,
       "loop": 2,
-      "textKey": "다시 기획사 문 앞. 이번엔 전부 선명하다. 붉은 섬광, 꺼진 마이크,\n그리고 무대 뒤 누군가의 그림자. 이번엔 반드시 범인을 찾는다.",
+      "textKey": "다시 기획사 문 앞.\n붉은 섬광과 꺼진 마이크, 무대 뒤 그림자까지.\n이번엔 반드시 범인을 찾는다.\n",
       "left": {
-        "label": "차분히 되짚는다",
+        "label": "  차분히 되짚는다",
         "effects": {}
       },
       "right": {
@@ -76,7 +76,7 @@
       "isConvergence": true,
       "textKey": "{antiStaff}이 환하게 손을 내민다.\n\"내가 너희 꼭 데뷔시킬게. 믿어도 돼.\"",
       "left": {
-        "label": "고맙게 받는다",
+        "label": "  고맙게 받는다",
         "effects": {
           "gauges": {
             "bond": 5
@@ -93,7 +93,8 @@
             "capital": -3
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w0_staff_intro.webp"
     },
     {
       "id": "d2_w1_start",
@@ -124,7 +125,7 @@
       "week": 1,
       "textKey": "유월이 팔짱을 낀 채.\n\"방출당한 나까지 데려온 이유가 뭐야?\n여긴 왜 왔냐고.\"",
       "left": {
-        "label": "네 실력이 필요해",
+        "label": "  네 실력이 필요해",
         "effects": {
           "gauges": {
             "skill": 4,
@@ -150,7 +151,8 @@
             "stat": 70
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w1_yuwol.webp"
     },
     {
       "id": "d2_w1_ticket",
@@ -158,7 +160,7 @@
       "week": 1,
       "textKey": "{antiStaff}이 서류 봉투를 내민다.\n\"첫 오디션은 내가 준비했어.\n남은 자리, 네 눈으로 직접 골라 봐.\"",
       "left": {
-        "label": "고마워요",
+        "label": "  고마워요",
         "effects": {
           "gauges": {
             "bond": 2
@@ -179,7 +181,8 @@
           ]
         },
         "hint": "지나친 친절"
-      }
+      },
+      "speaker": "assets/speaker/d2_w1_ticket.webp"
     },
     {
       "id": "d2_w1_rent",
@@ -187,7 +190,7 @@
       "week": 1,
       "textKey": "월세가 밀렸다.\n{antiStaff}이 조용히 사비로 연습실을 대신 내준다.",
       "left": {
-        "label": "정말 고마워요",
+        "label": "  정말 고마워요",
         "effects": {
           "gauges": {
             "capital": 4,
@@ -310,7 +313,8 @@
             "stat": 60
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w3_bora.webp"
     },
     {
       "id": "d2_w3_care",
@@ -343,7 +347,7 @@
       "id": "d2_w3_eval1",
       "act": 1,
       "week": 3,
-      "textKey": "첫 월말 평가.\n소형사라 지원이 열악하다.",
+      "textKey": "첫 월말 평가.\n소형 소속사라 지원이 열악하다.",
       "left": {
         "label": "전력을 다한다",
         "effects": {
@@ -368,7 +372,7 @@
       "id": "d2_w3_warn",
       "act": 1,
       "week": 3,
-      "textKey": "평가 결과 하위권.\n{antiStaff}이 다가와 어깨를 두드린다. \"괜찮아, 내가 있잖아.\"",
+      "textKey": "평가 결과 하위권.\n{antiStaff}이 다가와 어깨를 두드린다.\n\"괜찮아, 내가 있잖아.\"",
       "left": {
         "label": "힘이 난다",
         "effects": {
@@ -386,7 +390,8 @@
           }
         },
         "hint": "왜 이렇게 잘해주지?"
-      }
+      },
+      "speaker": "assets/speaker/d2_w3_warn.webp"
     },
     {
       "id": "d2_w4_name",
@@ -418,7 +423,7 @@
       "act": 1,
       "week": 4,
       "loop": 1,
-      "textKey": "기분 탓인가? {antiStaff}이 보라의 스케줄만 유독 몰아넣는다. ",
+      "textKey": "기분 탓일까?\n{antiStaff}이 보라의 스케줄만 유독 몰아넣는다. ",
       "left": {
         "label": "뭔가 걸린다",
         "effects": {
@@ -475,7 +480,7 @@
       "id": "d2_w4_yuwol_doubt",
       "act": 1,
       "week": 4,
-      "textKey": "유월이 낮게 말한다.\n\"저 {antiStaff} 너무 잘해주지 않아? 난 저런 사람 많이 봤어.\"",
+      "textKey": "유월이 낮게 말한다.\n\"저 {antiStaff} 너무 잘해주지 않아?\n난 저런 사람 많이 봤어.\"",
       "left": {
         "label": "의심이 남는다",
         "effects": {
@@ -491,7 +496,8 @@
             "bond": 2
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w4_yuwol_doubt.webp"
     },
     {
       "id": "d2_w4_photo",
@@ -500,7 +506,7 @@
       "isConvergence": true,
       "textKey": "팀의 뼈대가 모였다.\n첫 팀 사진 남은 자리는 우리 눈으로 채운다.",
       "left": {
-        "label": "우리 진짜 시작이야",
+        "label": "  우리 진짜 시작이야",
         "effects": {
           "gauges": {
             "bond": 3,
@@ -523,7 +529,7 @@
       "week": 5,
       "textKey": "{antiStaff}이 지하 무대를 잡아왔다.\n\"작지만 시작이야.\"",
       "left": {
-        "label": "고마워요!",
+        "label": " 고마워요!",
         "effects": {
           "gauges": {
             "reputation": 4,
@@ -540,13 +546,14 @@
           }
         },
         "hint": "인맥이… 넓네"
-      }
+      },
+      "speaker": "assets/speaker/d2_w5_stage_deal.webp"
     },
     {
       "id": "d2_w5_prep",
       "act": 2,
       "week": 5,
-      "textKey": "무대 준비로 밤낮이 없다. 다들 예민해진다.",
+      "textKey": "무대 준비로 밤낮이 없다.\n다들 예민해진다.",
       "left": {
         "label": "몰아붙인다",
         "effects": {
@@ -593,15 +600,16 @@
         "castRoles": [
           "helper2"
         ]
-      }
+      },
+      "speaker": "assets/speaker/d2_w5_cyan_online.webp"
     },
     {
       "id": "d2_w6_broke",
       "act": 2,
       "week": 6,
-      "textKey": "통장이 바닥났다. 강등 위험이 있어.\n이대로면 팀이 멈춘다.",
+      "textKey": "통장이 바닥났다.\n강등 위험이 있어. 이대로면 팀이 멈춘다.",
       "left": {
-        "label": "허리띠를 조인다",
+        "label": "  허리띠를 조인다",
         "effects": {
           "gauges": {
             "capital": 3,
@@ -610,7 +618,7 @@
         }
       },
       "right": {
-        "label": "무리해서 밀어붙인다",
+        "label": "무리해 밀어붙인다",
         "effects": {
           "gauges": {
             "reputation": 3,
@@ -623,7 +631,7 @@
       "id": "d2_w6_staff_fix",
       "act": 2,
       "week": 6,
-      "textKey": "{antiStaff}:\n\"돈 문제는 내가 해결할게. 대신 이 계약서에 사인만.\"",
+      "textKey": "{antiStaff}\n\"돈 문제는 내가 해결할게.\n대신 이 계약서에 사인만.\"",
       "left": {
         "label": "믿고 사인",
         "effects": {
@@ -644,7 +652,8 @@
             "mental": -1
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w6_staff_fix.webp"
     },
     {
       "id": "d2_w6_hari_tip",
@@ -681,7 +690,7 @@
       "week": 6,
       "textKey": "관객 0명의 리허설 무대.\n목소리가 텅 빈 객석에 흩어진다.",
       "left": {
-        "label": "그래도 최선을",
+        "label": " 그래도 최선을",
         "effects": {
           "gauges": {
             "skill": 2,
@@ -705,7 +714,7 @@
       "week": 7,
       "textKey": "2차 월말 평가\n안무 리듬이 조금은 나아졌을까? ",
       "left": {
-        "label": "승부수",
+        "label": " 승부수",
         "effects": {
           "gauges": {
             "skill": 4,
@@ -729,7 +738,7 @@
       "week": 7,
       "textKey": "보라가 무대 앞에서 처음으로 얼어붙는다.\n보라의 목소리가 안 나온다...!",
       "left": {
-        "label": "손을 잡아준다",
+        "label": "  손을 잡아준다",
         "effects": {
           "gauges": {
             "bond": 4
@@ -747,7 +756,8 @@
             "bond": -3
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w7_bora_fear.webp"
     },
     {
       "id": "d2_w7_yuwol_night",
@@ -755,7 +765,7 @@
       "week": 7,
       "textKey": "유월이 말없이 새벽 연습에 남는다. \n\"...같이 할래?\"",
       "left": {
-        "label": "함께 남는다",
+        "label": " 함께 남는다",
         "effects": {
           "gauges": {
             "bond": 4,
@@ -771,7 +781,8 @@
             "mental": 2
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w7_yuwol_night.webp"
     },
     {
       "id": "d2_w7_flash2",
@@ -806,7 +817,7 @@
       "week": 8,
       "textKey": "첫 포토카드 촬영.\n어색한 포즈에 다들 웃음이 터진다.",
       "left": {
-        "label": "제대로 뽑아보자",
+        "label": "  제대로 뽑아보자",
         "effects": {
           "gauges": {
             "reputation": 4,
@@ -914,7 +925,7 @@
       "week": 9,
       "textKey": "지하 첫 단독 무대 D-day.\n긴장과 설렘이 뒤섞인다.",
       "left": {
-        "label": "끝까지 연습",
+        "label": " 끝까지 연습",
         "effects": {
           "gauges": {
             "skill": 3,
@@ -935,7 +946,7 @@
       "id": "d2_w9_staff_change",
       "act": 2,
       "week": 9,
-      "textKey": "{antiStaff}가 막판 스케줄을 갑자기 바꾼다.\n\"더 뜰 수 있는 좋은 기회야.\" 뭔가 걸린다.",
+      "textKey": "{antiStaff}이 막판 스케줄을 갑자기 바꾼다.\n\"더 뜰 수 있는 좋은 기회야.\"\n뭔가 걸린다.",
       "left": {
         "label": "따져 묻는다",
         "effects": {
@@ -953,16 +964,17 @@
             "capital": -2
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w9_staff_change.webp"
     },
     {
       "id": "d2_w9_stage",
       "act": 2,
       "week": 9,
       "isConvergence": true,
-      "textKey": "지하 첫 무대.\n반응은 뜨거운데, 음향 사고, 조명 미스가 이상하게 자꾸 겹친다.",
+      "textKey": "지하 첫 무대.\n반응은 뜨거운데, 음향 사고,\n조명 미스가 이상하게 자꾸 겹친다.",
       "left": {
-        "label": "그래도 해냈다",
+        "label": " 그래도 해냈다",
         "effects": {
           "gauges": {
             "reputation": 5,
@@ -985,9 +997,9 @@
       "id": "d2_w10_luna",
       "act": 2,
       "week": 10,
-      "textKey": "무대 후, 한 소녀가 다가온다.\n\"제로시… 제 최애예요.\" 첫 진짜 팬, 루나.",
+      "textKey": "무대 후, 한 소녀가 다가온다.\n\"제로시… 제 최애예요.\"\n첫 진짜 팬, 루나.",
       "left": {
-        "label": "울컥한다",
+        "label": " 울컥한다",
         "effects": {
           "gauges": {
             "mental": 4,
@@ -1036,7 +1048,8 @@
         "castRoles": [
           "mentor"
         ]
-      }
+      },
+      "speaker": "assets/speaker/d2_w10_hari_warn.webp"
     },
     {
       "id": "d2_w10_callback_yuwol",
@@ -1049,7 +1062,7 @@
         ]
       },
       "left": {
-        "label": "우린 팀이야",
+        "label": " 우린 팀이야",
         "effects": {
           "gauges": {
             "bond": 5
@@ -1063,7 +1076,8 @@
             "bond": 3
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w10_callback_yuwol.webp"
     },
     {
       "id": "d2_w11_album_prep",
@@ -1071,7 +1085,7 @@
       "week": 11,
       "textKey": "첫 미니앨범 준비.\n진짜 우리 색을 담고 싶다.",
       "left": {
-        "label": "야심차게",
+        "label": " 야심차게",
         "effects": {
           "gauges": {
             "skill": 3,
@@ -1093,9 +1107,9 @@
       "id": "d2_w11_concept",
       "act": 3,
       "week": 11,
-      "textKey": "{antiStaff}가 콘셉트를 강하게 밀어붙인다.\n\"시키는 대로 하면 떠. 개성? 그건 나중에.\"",
+      "textKey": "{antiStaff}이 콘셉트를 강하게 밀어붙인다.\n\"시키는 대로 하면 떠. 개성? 그건 나중에.\"",
       "left": {
-        "label": "우리 색을 지킨다",
+        "label": "  우리 색을 지킨다",
         "effects": {
           "gauges": {
             "bond": 3,
@@ -1114,7 +1128,8 @@
             "bond": -2
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w11_concept.webp"
     },
     {
       "id": "d2_w11_cyan_rap",
@@ -1150,7 +1165,7 @@
       "week": 12,
       "textKey": "SNS 밈전. 어떤 콘텐츠로 화제를 노릴까.",
       "left": {
-        "label": "과감한 밈",
+        "label": " 과감한 밈",
         "effects": {
           "gauges": {
             "reputation": 6,
@@ -1172,9 +1187,9 @@
       "id": "d2_w12_hate",
       "act": 3,
       "week": 12,
-      "textKey": "이게 뭐지? 갑자기 악플이 쏟아진다.",
+      "textKey": "이게 뭐지?\n갑자기 악플이 쏟아진다.",
       "left": {
-        "label": "정면 대응",
+        "label": " 정면 대응",
         "effects": {
           "gauges": {
             "reputation": -2,
@@ -1198,7 +1213,7 @@
       "week": 12,
       "textKey": "보라가 악플에 무너져 운다.\n\"미안해...나 때문인가 봐.\"",
       "left": {
-        "label": "네 잘못 아냐",
+        "label": " 네 잘못 아냐",
         "effects": {
           "gauges": {
             "bond": 4
@@ -1222,9 +1237,9 @@
       "id": "d2_w12_staff_handle",
       "act": 3,
       "week": 12,
-      "textKey": "{antiStaff}: \"악플 대응은 내게 맡겨.\" ",
+      "textKey": "{antiStaff}\n\"악플 대응은 내게 맡겨.\" ",
       "left": {
-        "label": "맡긴다",
+        "label": " 맡긴다",
         "effects": {
           "gauges": {
             "mental": 2
@@ -1249,14 +1264,14 @@
       "id": "d2_w12_luna_cheer",
       "act": 3,
       "week": 12,
-      "textKey": "루나가 팬아트와 응원을 보낸다. \"우린 언니들 편이에요.\"",
+      "textKey": "루나가 팬아트와 응원을 보낸다.\n\"우린 언니들 편이에요.\"",
       "requires": {
         "flags": [
           "met_luna"
         ]
       },
       "left": {
-        "label": "힘이 난다",
+        "label": " 힘이 난다",
         "effects": {
           "gauges": {
             "mental": 4,
@@ -1272,7 +1287,8 @@
             "reputation": 1
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w12_luna_cheer.webp"
     },
     {
       "id": "d2_w13_obs3",
@@ -1415,7 +1431,7 @@
         ]
       },
       "left": {
-        "label": "누구였지?",
+        "label": "  누구였지?",
         "effects": {
           "gauges": {
             "mental": -2
@@ -1466,7 +1482,7 @@
       "isConvergence": true,
       "textKey": "스케줄 펑크에 자본난까지.\n팀이 벼랑 끝이다.",
       "left": {
-        "label": "패자부활권을 쓴다",
+        "label": "  패자부활권을 쓴다",
         "requires": {
           "ownTickets": [
             "revive"
@@ -1557,7 +1573,7 @@
       "week": 15,
       "textKey": "첫 음방 무대.\n카메라 앞, 심장이 터질 것 같다.",
       "left": {
-        "label": "다 쏟아붓는다",
+        "label": " 다 쏟아붓는다",
         "effects": {
           "gauges": {
             "reputation": 5,
@@ -1580,7 +1596,7 @@
       "id": "d2_w15_deja",
       "act": 3,
       "week": 15,
-      "textKey": "무대 조명 아래\n\"이 장면... 어디서 봤더라.\" 파편이 몸서리치게 익숙하다.",
+      "textKey": "무대 조명 아래\n이 장면... 어디서 봤더라?\n파편이 몸서리치게 익숙하다.",
       "requires": {
         "flags": [
           "memory_shadow"
@@ -1618,7 +1634,7 @@
         ]
       },
       "left": {
-        "label": "곧 해낼 거야",
+        "label": "  곧 해낼 거야",
         "effects": {
           "gauges": {
             "bond": 3
@@ -1635,15 +1651,16 @@
             "bond": 2
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w15_bora_sign.webp"
     },
     {
       "id": "d2_w15_staff_odd",
       "act": 3,
       "week": 15,
-      "textKey": "{antiStaff}의 친절이 과하다 싶은 순간이 늘어나는데?",
+      "textKey": "{antiStaff}의 친절이\n과하다 싶은 순간이 늘어나는데?",
       "left": {
-        "label": "불신이 자란다",
+        "label": "  불신이 자란다",
         "effects": {
           "flags": [
             "distrust_staff"
@@ -1658,7 +1675,8 @@
             "bond": 2
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w15_staff_odd.webp"
     },
     {
       "id": "d2_w16_album_drop",
@@ -1667,7 +1685,7 @@
       "isConvergence": true,
       "textKey": "드디어 첫 미니앨범 발매!\n작지만 진짜 성공. 차트에 이름이 뜬다.",
       "left": {
-        "label": "우리가 해냈어!",
+        "label": " 우리가 해냈어!",
         "effects": {
           "gauges": {
             "reputation": 6,
@@ -1693,7 +1711,7 @@
       "week": 16,
       "textKey": "대형사 '문라이트'가 견제를 시작한다.\n방송, 행사에서 묘하게 밀린다.",
       "left": {
-        "label": "정면 돌파",
+        "label": " 정면 돌파",
         "effects": {
           "gauges": {
             "reputation": 2,
@@ -1715,9 +1733,9 @@
       "id": "d2_w16_staff_promo",
       "act": 3,
       "week": 16,
-      "textKey": "{antiStaff}가 어디선가 승진 제안을 받았다며 웃는다. \n대체 어디서...?",
+      "textKey": "{antiStaff}가 어디선가\n승진 제안을 받았다며 웃는다. \n대체 어디서...?",
       "left": {
-        "label": "수상하다",
+        "label": "  수상하다",
         "effects": {
           "flags": [
             "distrust_staff"
@@ -1732,7 +1750,8 @@
             "bond": 2
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w16_staff_promo.webp"
     },
     {
       "id": "d2_w17_fancam",
@@ -1745,7 +1764,7 @@
         ]
       },
       "left": {
-        "label": "보라를 믿는다",
+        "label": "  보라를 믿는다",
         "effects": {
           "gauges": {
             "skill": 3,
@@ -1768,7 +1787,8 @@
             "mental": 1
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w17_fancam.webp"
     },
     {
       "id": "d2_w17_awaken",
@@ -1781,7 +1801,7 @@
         ]
       },
       "left": {
-        "label": "소름 돋는다",
+        "label": "  소름 돋는다",
         "effects": {
           "gauges": {
             "reputation": 5,
@@ -1806,7 +1826,7 @@
       "week": 17,
       "textKey": "보라 직캠이 바이럴을 탄다.\n조회수가 폭발한다.",
       "left": {
-        "label": "기세를 몰자",
+        "label": " 기세를 몰자",
         "effects": {
           "gauges": {
             "reputation": 6,
@@ -1823,20 +1843,21 @@
             "mental": 2
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w17_viral.webp"
     },
     {
       "id": "d2_w17_flash_mic",
       "act": 3,
       "week": 17,
-      "textKey": "환호 속에서\n꺼진 마이크가 데뷔 무대의 것과 정확히 겹친다.",
+      "textKey": "환호 속에서 꺼진 마이크가\n데뷔 무대의 것과 정확히 겹친다.",
       "requires": {
         "flags": [
           "memory_deep"
         ]
       },
       "left": {
-        "label": "확신이 든다",
+        "label": " 확신이 든다",
         "effects": {
           "gauges": {
             "mental": -2
@@ -1856,9 +1877,9 @@
       "id": "d2_w18_defend_staff",
       "act": 3,
       "week": 18,
-      "textKey": "멤버 하나가 {antiStaff}를 감싼다.\n\"그분 없었으면 우린 없었어!\" 너와 부딪힌다.",
+      "textKey": "멤버 시안이 {antiStaff}를 감싼다.\n\"그분 없었으면 우린 없었어!\"\n시안이와 부딪힌다.",
       "left": {
-        "label": "증거를 모으자고 설득",
+        "label": "  증거 모으자고 설득",
         "effects": {
           "gauges": {
             "bond": -2
@@ -1876,7 +1897,8 @@
             "mental": -1
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w18_defend_staff.webp"
     },
     {
       "id": "d2_w18_callback_hate",
@@ -1889,7 +1911,7 @@
         ]
       },
       "left": {
-        "label": "역시 방치됐었다",
+        "label": "  역시 방치됐었다",
         "effects": {
           "gauges": {
             "reputation": -4
@@ -1914,7 +1936,7 @@
       "id": "d2_w18_yuwol_push",
       "act": 3,
       "week": 18,
-      "textKey": "유월: \"저 사람, 처음부터 이상했어. 이제 증명하자.\"",
+      "textKey": "유월\n\"저 사람, 처음부터 이상했어. 이제 증명하자.\"",
       "requires": {
         "flags": [
           "seed_doubt"
@@ -1938,7 +1960,8 @@
             "mental": -1
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w18_yuwol_push.webp"
     },
     {
       "id": "d2_w18_mood",
@@ -1946,7 +1969,7 @@
       "week": 18,
       "textKey": "데뷔조 확정이 임박했다.\n무거운 기대와 불안이 공존한다.",
       "left": {
-        "label": "각오를 다진다",
+        "label": "  각오를 다진다",
         "effects": {
           "gauges": {
             "mental": 2,
@@ -1970,7 +1993,7 @@
       "week": 19,
       "textKey": "공중파 데뷔가 확정됐다!\n드디어 3년 전 그날로 다시 왔다.",
       "left": {
-        "label": "이번엔 다르다",
+        "label": " 이번엔 다르다",
         "effects": {
           "gauges": {
             "mental": 4,
@@ -1992,9 +2015,9 @@
       "id": "d2_w19_trap",
       "act": 4,
       "week": 19,
-      "textKey": "{antiStaff}: \"데뷔 무대, 내가 완벽하게 세팅해뒀어. 다 맡겨.\"",
+      "textKey": "{antiStaff}\n\"너희 데뷔 무대,\n완벽하게 세팅해뒀어. 믿고 따라와.\"",
       "left": {
-        "label": "이상한데? 확인한다",
+        "label": "  수상해. 확인한다",
         "effects": {
           "gauges": {
             "mental": -1
@@ -2015,7 +2038,8 @@
           ]
         },
         "hint": "정말 괜찮을까"
-      }
+      },
+      "speaker": "assets/speaker/d2_w19_trap.webp"
     },
     {
       "id": "d2_w19_hari_probe",
@@ -2056,7 +2080,7 @@
       "week": 19,
       "textKey": "데뷔곡 연습.\n완성도가 오른다. 손끝이 떨린다.",
       "left": {
-        "label": "완벽하게",
+        "label": " 완벽하게",
         "effects": {
           "gauges": {
             "skill": 4,
@@ -2078,9 +2102,9 @@
       "id": "d2_w20_replace",
       "act": 4,
       "week": 20,
-      "textKey": "⚠️ {antiStaff}: \"보라는 아직 불안해. 완벽한 새 멤버로 바꾸자. 데뷔는 안전이 최고야.\"",
+      "textKey": "{antiStaff}\n\"보라는 아직 불안해.\n완벽한 새 멤버로 바꾸자. 데뷔는 안전이 최고야.\"",
       "left": {
-        "label": "보라를 지킨다",
+        "label": "  보라를 지킨다",
         "effects": {
           "gauges": {
             "bond": 5
@@ -2116,7 +2140,7 @@
         ]
       },
       "left": {
-        "label": "우린 5명이야",
+        "label": " 우린 5명이야",
         "effects": {
           "gauges": {
             "bond": 5,
@@ -2144,7 +2168,7 @@
         ]
       },
       "left": {
-        "label": "이번엔 막는다",
+        "label": " 이번엔 막는다",
         "effects": {
           "gauges": {
             "mental": 2
@@ -2210,7 +2234,7 @@
         ]
       },
       "left": {
-        "label": "다 같이 간다",
+        "label": " 다 같이 간다",
         "effects": {
           "gauges": {
             "bond": 5
@@ -2268,9 +2292,9 @@
       "id": "d2_w21_sabotage",
       "act": 4,
       "week": 21,
-      "textKey": "{antiStaff}가 리허설을 은근히 방해한다.\n자꾸 무언가 어긋난다.",
+      "textKey": "{antiStaff}이 리허설을 은근히 방해한다.\n자꾸 무언가 어긋난다.",
       "left": {
-        "label": "티 안 내고 대비",
+        "label": "  티 안 내고 대비",
         "effects": {
           "gauges": {
             "skill": 2,
@@ -2286,7 +2310,8 @@
             "reputation": -1
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w21_sabotage.webp"
     },
     {
       "id": "d2_w22_obs4",
@@ -2483,7 +2508,7 @@
       "week": 23,
       "textKey": "{antiStaff}의 마지막 회유.\n\"내가 여기까지 만들어줬잖아. 배신할 거야?\"",
       "left": {
-        "label": "흔들리지 않는다",
+        "label": "  흔들리지 않는다",
         "effects": {
           "gauges": {
             "bond": 3,
@@ -2498,7 +2523,8 @@
             "mental": -3
           }
         }
-      }
+      },
+      "speaker": "assets/speaker/d2_w23_last_lure.webp"
     },
     {
       "id": "d2_w23_resolve",
@@ -2506,7 +2532,7 @@
       "week": 23,
       "textKey": "이제 미래를 안다.\n이번엔 그 무대를, 우리 손으로 지킨다.",
       "left": {
-        "label": "각오를 굳힌다",
+        "label": "  각오를 굳힌다",
         "effects": {
           "gauges": {
             "mental": 3,

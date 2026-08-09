@@ -9,11 +9,17 @@ export interface RunStatus {
   clues?: number;    // 단서 (0이면 미표시)
 }
 
-/** 데뷔까지 남은 **주**. 게임이 주차로 진행하므로 D-day도 주 단위다 */
+/** 데뷔까지 남은 **주** — 게임 진행 단위 */
 export const ddayWeeks = (debutWeek: number, week: number): number => Math.max(0, debutWeek - week);
+
+/** 데뷔까지 남은 **일**. 화면의 "D-"는 날짜 표기이므로 주를 일로 환산한다.
+ *  (예전엔 D- 뒤에 주 수를 그대로 넣어 `0주차 · D-24`처럼 두 값이 서로 어긋나 보였다) */
+export const DAYS_PER_WEEK = 7;
+export const ddayDays = (debutWeek: number, week: number): number =>
+  ddayWeeks(debutWeek, week) * DAYS_PER_WEEK;
 
 /** 상단 진행 표기 한 줄 — "N회차 · Wn · D-n · 카드 N (· 🔍 n/4)" */
 export function statusLine(s: RunStatus): string {
   const clue = s.clues && s.clues > 0 ? ` · 🔍 ${s.clues}/4` : "";
-  return `${s.loop}회차 · W${s.week} · D-${ddayWeeks(s.debutWeek, s.week)} · 카드 ${s.cards}${clue}`;
+  return `${s.loop}회차 · W${s.week} · D-${ddayDays(s.debutWeek, s.week)} · 카드 ${s.cards}${clue}`;
 }

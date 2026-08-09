@@ -8,7 +8,7 @@ import { templateGauges } from "../engine/cards";
 import { pressable } from "./press";
 import { TRAIN_DRAIN, TRAIN_GRADE_TO_CARD, resolveTraining } from "../engine/training";
 import { MATCH_CARDS } from "../engine/minigames";
-import { mountEngine, txt, btn, fxConfetti, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
+import { mountEngine, txt, btn, btnText, miniBgId, fxConfetti, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
 import { skinNode, skinFit, skinNatural, skinTexTrim, skinScale } from "./uiSkin";
 import { cardTemplates } from "../data";
 import { pos } from "./layout";
@@ -46,7 +46,7 @@ const ACT_NAME: Record<TrainingId, string> = {
   vocal: "보컬 연습", dance: "안무 연습", promo: "SNS 홍보", funds: "알바", audition: "오디션 대비", bond: "휴식",
 };
 
-/** 커맨드 목록의 카드 표기 — "🎴 유대 카드 2장 (유대·멘탈)".
+/** 커맨드 목록의 카드 표기 — "유대 카드 2장 (유대·멘탈)".
  *  원형이 올리는 게이지마다 한 장씩 주므로 이름만 적으면 실제 장수와 어긋난다. */
 const cardChipLabel = (id: TrainingId): string => {
   const t = cardTemplates.find((c) => c.id === id);
@@ -54,7 +54,7 @@ const cardChipLabel = (id: TrainingId): string => {
   const gauges = templateGauges(t);
   const names = gauges.map((g) => GLBL[g] ?? g).join("·");
   const count = gauges.length > 1 ? ` ${gauges.length}장` : "";
-  return `🎴 ${t.name}${count} (${names})`;
+  return `${t.name}${count} (${names})`;
 };
 
 const drainLabel = (id: TrainingId): string => {
@@ -172,7 +172,7 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
   /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다.
    *  기본값은 btn()이 잡아준 가운데 정렬이라 저장된 값이 없으면 지금 배치 그대로다. */
   const btnLabel = (name: string, b: Container): void => {
-    const t = b.children.find((c): c is Text => c instanceof Text);
+    const t = btnText(b); // pressable()의 inner 래핑 때문에 얕은 탐색으로는 못 찾는다
     if (!t) return;
     const key = ns ? `${ns}_${name}_text` : `${name}_text`;
     const q = pos(key, { x: Math.round(t.x), y: Math.round(t.y) });
@@ -271,8 +271,27 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     const ca = opts.charAssets;
     const FIG = { x: 20, y: 20, w: 180, h: 380 }; // 표시 영역 — 대사가 하단으로 내려간 만큼 위로
     const fit = (sprW: number, sprH: number): number => Math.min(FIG.w / sprW, FIG.h / sprH);
+    // 주차 영상 — 연습 메뉴에 들어올 때마다 주차로 골라 다른 영상을 튼다 (1주차=1번 … 6주차=1번).
+    // 업로드된 칸만 후보로 삼아, 5개를 다 채우지 않아도 있는 것들이 순서대로 돌아간다.
+    const weekVid = ((): { tex: Texture; kind: string } | null => {
+      const vids = ca?.practiceVids ?? [];
+      const filled = vids.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
+      if (filled.length === 0) return null;
+      const idx = filled[(Math.max(1, opts.week) - 1) % filled.length];
+      const tex = idx === undefined ? null : vids[idx];
+      // 배율은 **실제로 고른 슬롯**의 것 — 빈 칸이 섞이면 주차 번호와 슬롯 번호가 어긋난다
+      return tex ? { tex, kind: `practice-vid-${(idx ?? 0) + 1}` } : null;
+    })();
     const standSeq = ca && ca.practiceFrames.length > 1 ? ca.practiceFrames : ca?.idleFrames ?? [];
-    if (ca && standSeq.length > 1) { // 연습복 시퀀스(practice-idle) 우선 → 레거시 idle 시퀀스
+    if (weekVid) { // 주차 영상이 최우선 — 비율·발밑 기준은 스탠딩과 동일
+      const tex = weekVid.tex;
+      const spr = new Sprite(tex);
+      const s = fit(tex.width, tex.height) * (ca?.scaleOf(weekVid.kind) ?? 1);
+      spr.scale.set(s);
+      spr.x = FIG.x + (FIG.w - tex.width * s) / 2;
+      spr.y = FIG.y + FIG.h - tex.height * s;
+      charGrp.addChild(spr);
+    } else if (ca && standSeq.length > 1) { // 연습복 시퀀스(practice-idle) 우선 → 레거시 idle 시퀀스
       const first = standSeq[0];
       const fw = first?.width ?? 1;
       const fh = first?.height ?? 1;
@@ -299,6 +318,12 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
 
     // 명패는 캐릭터와 별도 그룹(독립 이동) — 캐릭터 뒤에 생성해 다리 위로 겹침 (목업과 동일)
     grp("train_bubble", ...(bubbleSkin ? [bubbleSkin, bubbleT] : [bubbleT]));
+    // 명패 안 문구를 따로 등록 — 명패 아트를 바꾸면 글자 자리가 달라져 문구만 옮겨야 한다.
+    // (그룹은 명패 전체 위치, 이 컴포넌트는 글자 크기·색·명패 안에서의 자리)
+    const pBub = pos("train_bubble_text", { x: Math.round(bubbleT.x), y: Math.round(bubbleT.y) });
+    bubbleT.x = pBub.x;
+    bubbleT.y = pBub.y;
+    editable("train_bubble_text", bubbleT);
 
     // 우측: 커맨드 리스트 — 캐릭터를 감싸는 긴 타원의 우측 곡선 배치 (가운데 행이 가장 바깥쪽)
     const rowsGrp = grp("train_rows");
@@ -353,6 +378,19 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
       chip.x = tx;
       chip.y = banner ? 38 : 46;
       row.addChild(nm, fx, chip);
+      if (a.id === "bond") {
+        // 휴식 행만 문구 3종을 개별 컴포넌트로 등록 — 행 전체 색 덮어쓰기가 세 줄을 한꺼번에
+        // 물들이던 문제. 줄마다 문구·색·위치를 따로 조정한다 (행 위치는 train_row_bond 그대로)
+        const reg = (suffix: string, t2: Text): void => {
+          const q = pos(`train_row_bond_${suffix}`, { x: Math.round(t2.x), y: Math.round(t2.y) });
+          t2.x = q.x;
+          t2.y = q.y;
+          editable(`train_row_bond_${suffix}`, t2);
+        };
+        reg("name", nm);
+        reg("info", fx);
+        reg("card", chip);
+      }
       // 터치 영역을 패널 안쪽까지로 제한 — 마스크는 표시만 자르고 히트테스트는 못 막음
       // (hitArea는 row 자신에 남으므로 pressable이 내용물을 감싸도 판정 범위는 그대로다)
       const bw = banner ? 246 : 166;
@@ -486,7 +524,7 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
           ic = sym;
           ic.y = 28;
         } else {
-          const e = txt(t?.icon ?? "🎴", 36, INK);
+          const e = txt(t?.icon ?? "", 36, INK);
           e.x = (CW2 - e.width) / 2;
           e.y = 30;
           ic = e;
@@ -539,13 +577,18 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     go.y = 330;
     grp("train_res_drain", drain);
     grp("train_res_btn", go);
+    btnLabel("train_res_btn", go); // 버튼 문구("계속 →")를 별도 키(train_res_btn_text)로 — 아트 교체 시 문구만 미세조정
   };
 
   const showFail = (a: Activity): void => {
     clear();
     setNs(a.id, () => showFail(a)); // 활동별 전용 키 + 배율 변경 시 이 화면만 재렌더
-    setChrome(true); // 실패 화면도 패널 복원
-    // 실패 화면 배경 프레임 — 맨 뒤. 미업로드면 깔지 않는다(연습 패널이 그대로 보인다)
+    // 미니게임이 깔았던 종목 배경판을 실패 화면에서도 그대로 유지 — 안 깔면 뒤로 연습 메뉴가 비쳐 보인다.
+    // 재도전·종료를 누르면 다음 화면이 clear()로 body를 비우므로 실패 창과 함께 사라진다.
+    const mini = skinFit(miniBgId(a.id, opts.act), W, H);
+    if (mini) grp("mini_bg", mini); // 게임 화면과 같은 키(<종목>_mini_bg) — 위치 조정도 공유
+    setChrome(!mini); // 배경판이 있으면 게임 화면과 동일하게 패널 프레임 숨김
+    // 실패 화면 배경 프레임 — 배경판 위. 미업로드면 깔지 않는다
     const fbg = skinFit("train-fail-panel", W, H);
     if (fbg) grp("train_fail_bg", fbg);
     const t1 = txt("아쉬워요…", 22, INK, true);

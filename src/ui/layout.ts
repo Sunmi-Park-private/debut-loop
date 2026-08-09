@@ -19,10 +19,32 @@ export interface Pos {
 
 const layout: Record<string, Pos> = { ...(layoutJson as Record<string, Pos>) };
 
+// 이번 세션에 건드린 키 → 건드린 속성 이름 (부팅 동기화가 덮지 않도록 먼저 선언한다)
+const dirty = new Map<string, Set<string>>();
+
+// dev 서버는 layout.json을 감시 대상에서 빼두었다(저장할 때마다 게임이 리로드되면 런이 날아가므로).
+// 그 탓에 Vite가 옛 모듈을 물고 있는 구간이 생기고, 새로고침하면 저장한 좌표가 아니라
+// 서버 캐시의 옛 값이 뜬다. 부팅 때 디스크를 직접 읽어(/__layout GET) 덮어써 맞춘다.
+if (import.meta.hot) {
+  void fetch("/__layout")
+    .then((r) => (r.ok ? (r.json() as Promise<Record<string, Pos>>) : null))
+    .then((disk) => {
+      if (!disk) return;
+      let n = 0;
+      for (const [k, v] of Object.entries(disk)) {
+        // 이번 세션에 이미 편집한 키는 건드리지 않는다 — 디스크 값이 더 낡았을 수 있다
+        if (dirty.has(k)) continue;
+        if (JSON.stringify(layout[k]) !== JSON.stringify(v)) n++;
+        layout[k] = v;
+      }
+      if (n > 0) void import("./editor").then((e) => e.triggerRedraw());
+    })
+    .catch(() => {});
+}
+
 // 이번 세션에 실제로 건드린 키 → 그 안에서 건드린 **속성 이름**까지 기록한다.
 // 키 단위로만 보내면, 같은 컴포넌트를 A는 위치·B는 색으로 만졌을 때
 // A가 들고 있던 낡은 색까지 함께 실려 나가 B의 색을 되돌린다.
-const dirty = new Map<string, Set<string>>();
 
 // 값이 바뀔 때마다 알린다 — 에디터가 이걸 받아 자동 저장을 예약한다.
 // 편집 경로가 여러 곳(드래그·입력칸·팔레트·슬라이더)이라, 각자 부르는 대신 여기 한 곳에 건다.

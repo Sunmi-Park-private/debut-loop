@@ -2,6 +2,7 @@
 import { AnimatedSprite, BlurFilter, Container, Graphics, Sprite, Text, Texture, type FederatedPointerEvent } from "pixi.js";
 import type { Beat } from "../engine/types";
 import { recallOf } from "../engine/recall";
+import { speakerNode, SPEAKER_D } from "./speakerIcon";
 import { pos } from "./layout";
 import { easeOut, easeInOut, lerp } from "./ease";
 import { pressable } from "./press";
@@ -29,6 +30,9 @@ const PIVOT_X = CARD_W / 2;
 // 좌 버튼 문구는 오른쪽으로, 우 버튼 문구는 왼쪽으로 이만큼 이동한다.
 // 버튼 아트를 넓힌 뒤 문구가 바깥으로 치우쳐 보여 모았다. 바깥으로 밀려면 음수로.
 const BTN_TEXT_IN = 10;
+/** 대사(card_text)를 card 중앙에 맞춘 뒤 더하는 고정 세로 오프셋.
+ *  장면·글자 수와 무관해야 하므로 상수다 (레이아웃 에디터로 잡으면 그 값이 우선). */
+const CARD_TEXT_DY = 0;
 
 export interface CardOpts {
   seen?: boolean; // 회귀 가속: 축약 카드로 표시
@@ -68,7 +72,6 @@ export function renderCard(
     ?? new Graphics().roundRect(0, 0, CARD_W, H, 24).fill(0xffffff).stroke({ width: 2, color: 0xece4f4 });
   card.addChild(bg);
 
-  let textY = 20;
   // 초상 (seen 축약 카드엔 생략) — 패널에 종속되지 않고 패널 위로 떠서 뒤 배경이 보임.
   // 기본은 숨쉬기 idle 재생, 드래그 시 갸웃 시퀀스로 스크럽
   const P_W = 300; // 캐릭터 표시 폭 — 카드보다 좁게 해 배경이 좌우로 드러남
@@ -124,6 +127,17 @@ export function renderCard(
     portraitSpr = spr;
     portraitBase = idleFrames[0] ?? opts.portrait ?? null;
   }
+  // 화자 프로필 — 카드 상단 가운데의 원형 아이콘(지름 30). 지금 말을 건네는 상대를 알려준다.
+  // 아직 이미지가 도착하지 않았으면 그리지 않고, 도착하는 순간 화면이 다시 그려진다.
+  const spk = speakerNode(beat.speaker);
+  if (spk) {
+    const pSpk = pos("card_speaker", { x: Math.round((CARD_W - SPEAKER_D) / 2), y: -Math.round(SPEAKER_D / 2) });
+    spk.x = pSpk.x;
+    spk.y = pSpk.y;
+    card.addChild(spk);
+    editable("card_speaker", spk);
+  }
+
   if (seen) {
     const ff = new Text({ text: replay ? "▶▶ 기억 속 장면" : "▶▶ 기억 속 장면 — 빠르게 넘기기", style: { fontSize: 12, fill: 0xa78be6, fontWeight: "bold" } });
     const pFf = pos("card_seen_note", { x: 18, y: 16 });
@@ -131,7 +145,6 @@ export function renderCard(
     ff.y = pFf.y;
     card.addChild(ff);
     editable("card_seen_note", ff); // 2회차에서만 보이는 머리말
-    textY = 44;
   }
 
   const btnY = H - 80;
@@ -147,16 +160,19 @@ export function renderCard(
       wordWrap: true, wordWrapWidth: 360, lineHeight: seen ? 21 : 26, align: "center",
     },
   });
-  // 세로는 **상단 기준**으로 고정한다. 예전엔 `btnY - line.height`로 아래를 맞춰서,
-  // 3줄짜리는 안정적인데 1·2줄짜리는 위쪽에 빈 공간이 생기고 문단이 아래로 내려앉았다.
-  // 3줄이 지금과 같은 자리에 오도록 그 높이만큼 위에서 시작한다.
-  const bodyLH = seen ? 21 : 26;
-  const bodyTop = btnY - bodyLH * 3 - 16;
-  // 가로는 패널 아트(game-card-frame, 폭 CARD_W) 기준 가운데 — 실제 렌더 폭으로 계산해
-  // 대사 길이가 장면마다 달라도 항상 패널 중앙에 온다
+  // 대화창은 **card 프레임의 실제 렌더 영역**을 기준으로 중앙 정렬한다.
+  // 화면·뷰포트가 아니라 카드 좌표계다 — line은 card의 자식이고, CARD_W×H가 카드의
+  // 실제 크기다(H는 업로드 아트의 원본 비율에서 도출되므로 아트를 바꾸면 자동으로 따라온다).
+  // 문단 자신의 중심(width/2, height/2)을 카드 중심(CARD_W/2, H/2)에 맞추는 계산이라,
+  // 줄 수가 1·2·3줄로 달라져도 중심은 그대로고 위아래로만 자란다.
+  // 세로 미세조정이 필요하면 CARD_TEXT_DY 하나만 움직인다 — 장면·글자 수와 무관한 고정값.
+  // 앵커를 문단 중심으로 옮긴다(AE의 Ctrl+Alt+Home) — 그러면 저장 좌표가 곧 "중심점"이라
+  // 줄 수가 1·2·3줄로 달라져도 중심이 그대로 있고 위아래로만 자란다.
+  // 기본값은 card 중심(AE의 Ctrl+Home). 에디터로 옮기면 그 중심점이 저장된다.
+  line.anchor.set(0.5);
   const pLine = pos("card_text", {
-    x: Math.round((CARD_W - line.width) / 2),
-    y: !seen && hasPortrait ? bodyTop : textY,
+    x: Math.round(CARD_W / 2),
+    y: Math.round(H / 2 + CARD_TEXT_DY),
   });
   line.x = pLine.x;
   line.y = pLine.y;
