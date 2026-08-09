@@ -163,9 +163,11 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       cell.x = cp.x;
       cell.y = cp.y;
 
-      // 배경은 상태별로 다른 슬롯을 쓰므로 컴포넌트 이름도 상태별로 나눈다.
-      // 한 이름으로 묶으면 패널에 슬롯이 하나만 잡혀(첫 칸=done) 나머지 상태의
-      // 아트를 파일 교체로 올릴 수 없다.
+      // 상자 그림은 상태별 슬롯(done·today·lock)에서 가져오지만, **위치는 칸마다 따로**다.
+      // 예전엔 그림 노드를 상태 이름으로 등록해, 그림 하나를 세 칸이 쓰는 탓에
+      // 한 칸을 옮기면 같은 상태의 세 칸이 함께 움직였다. 이제 칸(side_daily_dN)이
+      // 유일한 등록 단위 — 일곱 칸을 하나씩 옮긴다. 파일 교체는 칸을 선택하면
+      // 매핑 패널에 그 칸이 쓴 슬롯이 그대로 떠서 거기서 한다.
       const state = done ? "done" : today ? "today" : "lock";
       // 아트 위에선 칸 안쪽 빈 영역(DAY 라벨 아래)에만 상자를 넣는다 — 라벨은 배경판이 이미 갖고 있다
       const inX = onArt ? 6 : 0;
@@ -176,40 +178,28 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
         ?? new Graphics().roundRect(0, 0, inW, inH, 12)
           .fill(done ? 0xf2fbf8 : today ? 0xfff2f9 : 0xf8f4fc)
           .stroke({ width: today ? 2.5 : 2, color: done ? 0x6fd8c4 : today ? PINK : LINE });
-      const bgName = `side_daily_cell_${state}`;
-      const pArt = pos(bgName, { x: inX, y: inY });
-      art.x = pArt.x;
-      art.y = pArt.y;
+      art.x = inX;
+      art.y = inY;
       cell.addChild(art);
-      reg(bgName, art);
 
       // D1·D2… 라벨은 배경판 아트에 이미 "DAY 1"로 그려져 있다 — 아트가 있으면 코드 라벨은 생략
       if (!onArt) {
         const dayT = txt(`D${day}`, 11, done ? 0x2e9a80 : today ? 0xc9527f : SUB, true);
-        const pDay = pos("side_daily_cell_day", { x: Math.round((cw - dayT.width) / 2), y: 10 });
-        dayT.x = pDay.x;
-        dayT.y = pDay.y;
+        dayT.x = Math.round((cw - dayT.width) / 2);
+        dayT.y = 10;
         cell.addChild(dayT);
-        reg("side_daily_cell_day", dayT);
       }
 
       const rw = txt(done ? "✓" : r, onArt ? 11 : 15, done ? 0x2e9a80 : today ? 0xc9527f : SUB, true);
-      const pRw = pos("side_daily_cell_reward", onArt
-        ? { x: Math.round((cw - rw.width) / 2), y: inY + inH - 15 } // 보상 박스 아래쪽
-        : { x: Math.round((cw - rw.width) / 2), y: 30 });
-      rw.x = pRw.x;
-      rw.y = pRw.y;
+      rw.x = Math.round((cw - rw.width) / 2);
+      rw.y = onArt ? inY + inH - 15 : 30; // 보상 박스 아래쪽
       cell.addChild(rw);
-      reg("side_daily_cell_reward", rw);
 
       if (today) {
         const now = txt("오늘!", 9, 0xc9527f, true);
-        // 이름이 배경(side_daily_cell_today)과 겹치지 않게 — 같은 이름이면 둘이 서로를 덮는다
-        const pNow = pos("side_daily_cell_todaytag", { x: Math.round((cw - now.width) / 2), y: onArt ? 6 : 54 });
-        now.x = pNow.x;
-        now.y = pNow.y;
+        now.x = Math.round((cw - now.width) / 2);
+        now.y = onArt ? 6 : 54;
         cell.addChild(now);
-        reg("side_daily_cell_todaytag", now);
         pressable(cell, () => {
           mock.dailyClaimed = true;
           toast("⭐15 획득! 내일 또 만나요 🎁");

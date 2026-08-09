@@ -1484,5 +1484,21 @@
     "x": 25,
     "y": 30,
     "hidden": true
+  },
+  "side_daily_cell_done": {
+    "x": 25,
+    "y": 40
+  },
+  "side_daily_note": {
+    "x": 95,
+    "y": 90
+  },
+  "side_daily_head": {
+    "x": 85,
+    "y": 70
+  },
+  "side_daily_cell_reward": {
+    "x": 35,
+    "y": 80
   }
 }
