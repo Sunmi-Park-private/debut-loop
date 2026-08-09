@@ -38,37 +38,7 @@ const mkText = (s: string, size: number, fill: number, bold = false): Text =>
     style: { fontSize: size, fill, fontWeight: bold ? "bold" : "normal", wordWrap: true, wordWrapWidth: W - 80, lineHeight: size * 1.7, align: "center" },
   });
 
-// ── ① 프롤로그: 데뷔 사고 → 회귀 (탭/자동 진행, 건너뛰기 가능) ──
-interface Slide { bg: number; lines: Array<[string, number, number]>; flash?: boolean; } // [text, size, color]
-
-const SLIDES: Slide[] = [
-  {
-    bg: 0x1a1430,
-    lines: [["그날 밤, 공중파 데뷔 생방송.", 19, 0xf3f2fa], ["5년의 꿈이 이뤄지는 순간이었다.", 15, 0xa99bc0]],
-  },
-  {
-    bg: 0x2a0a12,
-    flash: true,
-    lines: [["그때 — 붉은 섬광.", 21, 0xff5c5c], ["꺼진 마이크. 무너지는 무대.", 15, 0xd88b8b]],
-  },
-  {
-    bg: 0x120d1e,
-    lines: [["사고가 아니었다.", 19, 0xf3f2fa], ["누군가, 우리를 무너뜨렸다.", 16, 0xa99bc0]],
-  },
-  {
-    bg: 0x0d0b26,
-    lines: [["…눈을 뜨니, 3년 전 0시.", 20, 0xb39cff], ["이번엔 지킬 수 있을까.", 15, 0xa99bc0]],
-  },
-  { // 튜토리얼 직조 ①: 스와이프(선택) 개념 — "내 손끝이 정해"
-    bg: 0x120d24,
-    lines: [["이번 3년은 달라.", 19, 0xf3f2fa], ["운명이 갈림길을 내밀 때마다,", 15, 0xa99bc0], ["어느 쪽으로 기울지는 내 손끝이 정해.", 16, 0xcbb8e8]],
-  },
-  { // 튜토리얼 직조 ②: 게이지 5종 — 긍정톤 "다섯 개의 무기"
-    bg: 0x1a1226,
-    lines: [["실력, 멘탈, 평판, 유대, 자본.", 19, 0xffd884], ["이 다섯 개가 우리의 무기야.", 15, 0xa99bc0], ["차곡차곡 키워서 — 이번엔 꼭 데뷔하자!", 16, 0x7ef0c0]],
-  },
-];
-
+// ── ① 프롤로그: 데뷔 사고 → 회귀 영상 (2회차부터 건너뛰기 가능) ──
 const PROLOGUE_SEEN = "debutloop.prologueSeen"; // 1회차 완주 여부 — 치트 '데이터 초기화'가 debutloop.* 를 지우면 다시 1회차
 const PROLOGUE_VOLUME = 0.3; // 영상 원본 대비 −70% — 내레이션이 과하게 크다는 피드백
 
@@ -79,29 +49,27 @@ function videoElOf(tex: Texture): HTMLVideoElement | null {
   return res instanceof HTMLVideoElement ? res : null;
 }
 
-/** 프롤로그. bgPromise(backgrounds.json prologue-01)가 도착하면 **영상 모드**로 전환한다.
+/** 프롤로그. bgPromise(backgrounds.json prologue-01)의 영상을 재생한다.
  *  영상에 내레이션 자막과 소리가 모두 들어 있으므로 코드 텍스트·틴트는 그리지 않는다.
  *
  *  1회차 — 끝까지 재생하고 `ended`에서 자동으로 로딩 화면으로 넘어간다. 건너뛰기 없음.
  *  2회차 이후 — 건너뛰기 버튼과 탭 스킵이 열린다.
  *
- *  영상이 없거나 로드 실패면 기존 단색 슬라이드쇼로 폴백(문구는 여기 SLIDES가 SSOT).
- *  프롤로그는 즉시 시작이 원칙이라 영상을 기다리지 않고, 도착한 시점에 전환한다. */
+ *  단색 슬라이드쇼 폴백은 제거했다 — 영상 도착 직전·직후에 폴백 화면이 두세 번 깜빡이던 원인.
+ *  영상이 오기 전엔 어두운 단색 한 장만 깔고, 영상이 없거나 로드 실패면 프롤로그 없이 넘어간다. */
 export function playPrologue(app: Application, bgPromise?: Promise<Texture | null>): Promise<void> {
   return new Promise((resolve) => {
     const root = new Container();
     app.stage.addChild(root);
     const bgLayer = new Container();   // 영상 — 한 번 붙으면 유지
-    const slideLayer = new Container(); // 단색 슬라이드·건너뛰기 — 갈아끼움
-    root.addChild(bgLayer, slideLayer);
+    const slideLayer = new Container(); // 음소거·건너뛰기 오버레이 — 갈아끼움
+    root.addChild(fullRect(0x1a1430), bgLayer, slideLayer); // 영상 대기 중에도 흔들리지 않는 어두운 바탕 한 장
     const firstPlay = localStorage.getItem(PROLOGUE_SEEN) !== "1";
     let hasBg = false;
     let bgTex: Texture | null = null;
     let videoEl: HTMLVideoElement | null = null;
     let muteBtn: Text | null = null;
     let cancelAutoUnmute: (() => void) | null = null;
-    let idx = 0;
-    let flashTick: (() => void) | null = null;
     let done = false;
 
     // 화면 전체가 한 덩어리로 축소되므로 작은 기기일수록 버튼의 실제 크기도 같이 줄어든다
@@ -124,7 +92,6 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
     const finish = (): void => {
       if (done) return;
       done = true;
-      if (flashTick) app.ticker.remove(flashTick);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onResize);
       cancelAutoUnmute?.();
@@ -139,8 +106,9 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
       resolve();
     };
 
-    void bgPromise?.then((tex) => {
-      if (!tex || done || root.destroyed || hasBg) return;
+    void (bgPromise ?? Promise.resolve(null)).then((tex) => {
+      if (done || root.destroyed || hasBg) return;
+      if (!tex) { finish(); return; } // 영상 없음·로드 실패 — 폴백 없이 프롤로그 생략
       bgTex = tex;
       bgLayer.addChild(coverBg(tex));
       hasBg = true;
@@ -176,10 +144,7 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
     });
 
     const next = (): void => {
-      if (hasBg) { if (!firstPlay) finish(); return; } // 영상 모드: 1회차는 스킵 불가
-      idx++;
-      if (idx >= SLIDES.length) finish();
-      else show();
+      if (hasBg && !firstPlay) finish(); // 탭 스킵 — 1회차는 끝까지 시청 (영상 도착 전에는 무동작)
     };
     // 스페이스바 = 탭과 동일 (진행)
     const onKey = (e: KeyboardEvent): void => {
@@ -243,35 +208,11 @@ export function playPrologue(app: Application, bgPromise?: Promise<Texture | nul
     };
 
     const show = (): void => {
-      if (flashTick) { app.ticker.remove(flashTick); flashTick = null; }
       slideLayer.removeChildren();
       muteBtn = null;
-      if (hasBg) { // 영상 모드 — 좌상단 음소거, 2회차부터 우상단 건너뛰기
-        addMute();
-        if (!firstPlay) addSkip(0xe8e2f5);
-        return;
-      }
-      const s = SLIDES[idx];
-      if (!s) { finish(); return; }
-      slideLayer.addChild(fullRect(s.bg));
-      let y = 340;
-      for (const [text, size, color] of s.lines) {
-        slideLayer.addChild(center(mkText(text, size, color, size > 17), y));
-        y += size * 2.2;
-      }
-      if (s.flash) { // 붉은 섬광 펄스
-        const flash = fullRect(0xff2b2b, 0);
-        slideLayer.addChild(flash);
-        let el = 0;
-        flashTick = () => {
-          el += app.ticker.deltaMS / 1000;
-          flash.alpha = Math.max(0, 0.5 - el * 0.8);
-          if (el > 0.8 && flashTick) { app.ticker.remove(flashTick); flashTick = null; }
-        };
-        app.ticker.add(flashTick);
-      }
-      slideLayer.addChild(center(mkText("탭 또는 Space로 계속", 11, 0x6a628a), H - 70));
-      addSkip(0x8a82aa);
+      if (!hasBg) return; // 영상 대기 중 — 어두운 바탕만 (오버레이 없음)
+      addMute(); // 영상 모드 — 좌상단 음소거, 2회차부터 우상단 건너뛰기
+      if (!firstPlay) addSkip(0xe8e2f5);
     };
 
     root.eventMode = "static";

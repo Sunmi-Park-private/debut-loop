@@ -248,7 +248,8 @@
   },
   "dance_mirror_info": {
     "x": -2,
-    "y": -93
+    "y": -93,
+    "color": "#ffffff"
   },
   "dance_mirror_track": {
     "x": -3,
@@ -684,12 +685,7 @@
   "train_row_bond": {
     "x": 222,
     "y": 390,
-    "color": "#ff7fb0",
-    "texts": [
-      null,
-      null,
-      "유대 카드 2장 (유대·멘탈)"
-    ]
+    "color": "#5b4a70"
   },
   "train_row_dance": {
     "x": 222,
@@ -987,7 +983,7 @@
     "scale": 0.35
   },
   "audition_rps_opp_hand": {
-    "x": 34,
+    "x": 30,
     "y": 52,
     "texts": [
       "상대 직전 손모양 "
