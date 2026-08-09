@@ -574,7 +574,13 @@ async function flushSave(): Promise<void> {
   setStatus(`저장 중… (${n}개)`);
   try {
     const r = await fetch("/__layout", { method: "POST", body: JSON.stringify(changed) });
-    if (!r.ok) { setStatus(`❌ 저장 실패 — ${await r.text()}`); retryPending = true; return; }
+    if (!r.ok) {
+      // 4xx = 서버가 이 패치를 거절한 것(알 수 없는 필드 등) — 다시 보내도 결과가 같다.
+      // 재시도를 걸면 600ms마다 "편집 중…"↔"저장 실패"가 무한히 깜빡이며 원인도 가려진다.
+      setStatus(`❌ 저장 실패 — ${await r.text()}`);
+      retryPending = r.status >= 500;
+      return;
+    }
     clearSent(changed); // 보낸 필드만 비운다 — 전송 중 새로 들어온 편집은 남겨 다음 저장에 실린다
     const t = new Date();
     const pad = (v: number): string => String(v).padStart(2, "0");

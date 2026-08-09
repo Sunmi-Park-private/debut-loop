@@ -355,8 +355,11 @@
     "y": 167
   },
   "gate_photo_pick_btn": {
-    "x": -1,
-    "y": -163
+    "x": -9,
+    "y": -163,
+    "texts": [
+      "확인"
+    ]
   },
   "gate_photo_pick_grade": {
     "x": -2,
@@ -379,33 +382,40 @@
     "y": -2
   },
   "gate_pick_btn": {
-    "x": -5,
-    "y": -40,
+    "x": 39,
+    "y": 60,
     "texts": [
       "확인"
-    ]
+    ],
+    "scale": 0.75
   },
   "gate_pick_desc": {
-    "x": -5,
-    "y": 50,
-    "color": "#5b4a70"
+    "x": 55,
+    "y": 400,
+    "color": "#5b4a70",
+    "scale": 0.75
   },
   "gate_pick_grade": {
-    "x": -5,
-    "y": 120
+    "x": 0,
+    "y": 180,
+    "scale": 1.1
   },
   "gate_pick_hand": {
     "x": 0,
     "y": -50
   },
   "gate_pick_sum": {
-    "x": -2,
-    "y": -41
+    "x": -4,
+    "y": -50,
+    "scale": 1.1
   },
   "gate_pick_ticket": {
-    "x": 15,
-    "y": -430,
-    "color": "#5b4a70"
+    "x": 115,
+    "y": -270,
+    "color": "#5b4a70",
+    "texts": [
+      "센터 대결 통과증 +3"
+    ]
   },
   "gate_title": {
     "x": 105,
@@ -478,7 +488,7 @@
     "fontSize": 22
   },
   "lobby_cta_sub": {
-    "x": -25,
+    "x": -24,
     "y": 27
   },
   "lobby_daily": {
