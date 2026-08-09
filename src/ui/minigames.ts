@@ -322,7 +322,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
   // ── A. 가위바위포즈 (3판 2선) ──
   const runRps = (): void => {
     desc("가위바위포즈 · 3판 2선 · 상대 직전 손을 읽어요");
-    let round = 0, wins = 0, last: RpsHand | null = null;
+    let round = 0, wins = 0, last: RpsHand | null = null, spinning = false;
     const HANDS: Array<[RpsHand, string, string]> = [[0, "✊", "바위"], [1, "✋", "보"], [2, "✌️", "가위"]];
     const info = txt("1/3 라운드 · 0승", 15, onBg(INK), true);
     info.x = 20;
@@ -353,14 +353,13 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       b.eventMode = "static";
       b.cursor = "pointer";
       b.on("pointertap", () => {
-        playCue("slot"); // 손 선택 사운드 — bgm 에디터의 「슬롯 릴 사운드」 재활용
+        if (spinning) return; // 릴이 도는 동안 추가 입력 무시 — 사운드·연출 싱크 유지
+        playCue("slot"); // 손 선택 사운드 — bgm 에디터의 「슬롯 릴 사운드」 재활용 (약 2초)
         const opp = Math.floor(Math.random() * 3) as RpsHand;
         if (rpsBeats(hand, opp)) wins++;
         last = opp;
         round++;
-        if (round >= 3) { onFinish(rpsGrade(wins)); return; }
-        info.text = `${round + 1}/3 라운드 · ${wins}승`;
-        drawOppHand();
+        startSpin(); // 릴 연출이 끝난 뒤 결과 확정 표시 (마지막 라운드 판정 포함)
       });
       grp(HAND_KEY[hand] ?? `rps_hand_${i}`, b); // 손마다 개별 그룹 — 레이아웃 에디터에서 따로 이동
     });
@@ -415,6 +414,29 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       oppHands.forEach((n, i) => { n.visible = last === i; });
     };
     drawOppHand();
+
+    // 슬롯 릴 스핀 — 릴 사운드(약 2초)에 맞춰 세 손을 빠르게 돌리다가 상대가 낸 손에서 멈춘다.
+    // 판정(승수·라운드)은 탭 즉시 끝나 있고, 화면 확정·다음 진행만 스핀이 끝난 뒤 한다.
+    const SPIN_MS = 2000, SPIN_STEP = 80;
+    const startSpin = (): void => {
+      spinning = true;
+      dash.visible = dash.text !== "—";
+      const t0 = performance.now();
+      const iv = window.setInterval(() => {
+        if (body.destroyed || !body.parent) { clearInterval(iv); return; } // 중도 이탈 — 뷰가 사라짐
+        const el = performance.now() - t0;
+        if (el < SPIN_MS) {
+          const idx = Math.floor(el / SPIN_STEP) % 3;
+          oppHands.forEach((n, i) => { n.visible = i === idx; });
+          return;
+        }
+        clearInterval(iv);
+        spinning = false;
+        drawOppHand(); // 상대가 낸 손으로 확정
+        if (round >= 3) { onFinish(rpsGrade(wins)); return; }
+        info.text = `${round + 1}/3 라운드 · ${wins}승`;
+      }, SPIN_STEP / 2);
+    };
   };
 
   // ── D. 타이밍 STOP (막 비례 다회전) ──
