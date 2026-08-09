@@ -16,6 +16,18 @@
           "mode": "stretch",
           "vid": true,
           "scale": 1
+        },
+        {
+          "id": "title-end-restart",
+          "label": "엔딩 버튼 · 처음부터 (트루 엔딩 영상 위) — 1배율=원본 크기",
+          "file": "",
+          "size": [
+            300,
+            56
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true
         }
       ]
     },

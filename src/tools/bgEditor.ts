@@ -4,7 +4,7 @@ import { bgManifest, type BgSlot } from "../ui/bgSlots";
 
 // 표시 그룹: ①프롤로그·로딩·타이틀 ②1~5막(스토리) ③게임 화면(관문·오디션) — 그룹 사이 구분선
 const GROUPS: Array<{ title: string; ids: string[] }> = [
-  { title: "🎬 인트로 (프롤로그 · 로딩 · 타이틀)", ids: ["prologue-01", "prologue-02", "loading", "title"] },
+  { title: "🎬 인트로 (프롤로그 · 로딩 · 타이틀)", ids: ["prologue-01", "prologue-02", "loading", "title", "true-ending"] },
   { title: "📖 스토리 (W0 · 1~5막)", ids: ["act0", "act1", "act2", "act3", "act4", "act5"] },
   { title: "🎮 게임 화면 (관문 · 오디션 · 연습)", ids: ["gate-act2", "gate-act3", "gate-act4", "gate-clue4", "gate-block", "audition", "training"] },
 ];
