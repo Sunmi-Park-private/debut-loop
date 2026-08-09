@@ -1501,6 +1501,16 @@
   },
   "side_daily_note": {
     "x": 98,
-    "y": 268
+    "y": 268,
+    "fontSize": 10,
+    "color": "#5b4a70"
+  },
+  "side_title_text": {
+    "x": 25,
+    "y": 30
+  },
+  "side_daily_head": {
+    "x": 25,
+    "y": 60
   }
 }

@@ -278,10 +278,10 @@
         {
           "id": "side-daily-bg",
           "label": "데일리 보너스 · 배경판 — 원본 비율 유지",
-          "file": "",
+          "file": "assets/ui/side-daily-bg.webp",
           "size": [
             360,
-            320
+            621
           ],
           "mode": "stretch"
         },

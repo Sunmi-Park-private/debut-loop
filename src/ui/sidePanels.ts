@@ -76,7 +76,9 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
   };
 
   // 탭마다 내용 높이가 다르다 — 앨범 4줄(132+9)·상점 4줄(56+9)이 들어가야 한다
-  const BODY_H: Record<SideTab, number> = { daily: 320, album: 664, shop: 362, settings: 330 };
+  // 데일리는 배경판 아트(955×1647) 비율에 맞춘 높이 — 폭 360 기준 621.
+  // 박스가 아트보다 낮으면 skinFit이 높이에 맞춰 축소해 패널이 반쪽만 차던 문제.
+  const BODY_H: Record<SideTab, number> = { daily: 621, album: 664, shop: 362, settings: 330 };
   const bodyH = BODY_H[opts.tab];
 
   // ── 공용 셸 ──
