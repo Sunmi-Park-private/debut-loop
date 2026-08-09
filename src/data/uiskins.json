@@ -6,6 +6,17 @@
       "label": "타이틀 화면",
       "slots": [
         {
+          "id": "title-end-restart",
+          "label": "엔딩 버튼 · 처음부터 (트루 엔딩 영상 위) — 1배율=원본 크기",
+          "file": "assets/ui/title-end-restart.webp",
+          "size": [
+            300,
+            56
+          ],
+          "mode": "stretch",
+          "natural": true
+        },
+        {
           "id": "title-hero",
           "label": "게임 타이틀 + 시작 버튼 통짜 (🎬 영상 · 화면 전체 cover · 권장 1080×2400)",
           "file": "assets/ui/title-hero.mp4",
@@ -16,18 +27,6 @@
           "mode": "stretch",
           "vid": true,
           "scale": 1
-        },
-        {
-          "id": "title-end-restart",
-          "label": "엔딩 버튼 · 처음부터 (트루 엔딩 영상 위) — 1배율=원본 크기",
-          "file": "",
-          "size": [
-            300,
-            56
-          ],
-          "mode": "stretch",
-          "small": true,
-          "natural": true
         }
       ]
     },

@@ -125,6 +125,21 @@ const upload = async (slot: BgSlot, file: File, cell: HTMLElement): Promise<void
   img.src = `${img.dataset["src"]}?v=${Date.now()}`;
 };
 
+// 슬롯 목록은 감시 제외라 Vite가 옛 모듈을 물고 있을 수 있다 — 디스크를 먼저 읽어 맞춘 뒤 그린다.
+// (안 하면 코드로 새로 추가한 슬롯이 에디터에 나타나지 않는다)
+async function syncFromDisk(): Promise<void> {
+  try {
+    const r = await fetch("/__backgrounds");
+    if (!r.ok) return;
+    const disk = await r.json() as Record<string, BgSlot[]>;
+    for (const k of ["story", "gates", "system"] as const) {
+      const next = disk[k];
+      if (Array.isArray(next)) bgManifest[k].splice(0, bgManifest[k].length, ...next);
+    }
+  } catch { /* dev 서버 없음 → 번들 값 그대로 */ }
+}
+
+function renderAll(): void {
 for (const [gi, group] of GROUPS.entries()) {
   const sec = document.createElement("div");
   sec.innerHTML = `
@@ -253,3 +268,6 @@ for (const [gi, group] of GROUPS.entries()) {
   grid.appendChild(cell);
   }
 }
+}
+
+void syncFromDisk().then(renderAll);
