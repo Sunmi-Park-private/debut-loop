@@ -538,7 +538,7 @@
         {
           "id": "train-frame",
           "label": "공통 · 패널 테두리 라인 (배경 위에 덧그림) — 원본 비율 유지",
-          "file": "assets/ui/train-frame.webp",
+          "file": "",
           "size": [
             394,
             612
