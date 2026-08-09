@@ -414,12 +414,15 @@ function shell(): void {
     .gate span{color:#a8863a;font-size:11px;margin-left:6px}
     .node{background:#241539;border:1.5px solid #3a2757;border-radius:12px;padding:9px 12px;margin:6px 0;cursor:pointer}
     .node:hover{border-color:#8b7bb0} .node.on{border-color:#ff5fa2;box-shadow:0 0 0 1px #c9427f}
-    .node.n-l1{background:#1b2140;border-color:#3d4a79} .node.n-l2{background:#2c1735;border-color:#5a3057}
+    .node.n-l1{background:#1b2140;border-color:#3d4a79}
+    /* 2회차 전용(포착) — 회상 비트와 한눈에 갈라지도록 연보라 판. 회상은 어두운 기본 판을 쓴다 */
+    .node.n-l2{background:#4b3573;border-color:#a78be6;box-shadow:inset 3px 0 0 #a78be6}
+    .node.n-l2 .nid{color:#f0e6ff} .node.n-l2 .nlr{color:#c9b6e6}
     .nid{font-size:11px;color:#cbb8e8;font-weight:700;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
     .ntxt{font-size:12.5px;margin:4px 0;line-height:1.45}
     .nlr{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;color:#8b7bb0;flex-wrap:wrap}
     .bdg{font-size:9.5px;padding:1px 7px;border-radius:9px;font-weight:800}
-    .bdg.l1{background:#3d4a79;color:#bcd0ff} .bdg.l2{background:#5a3057;color:#ffb8dd}
+    .bdg.l1{background:#3d4a79;color:#bcd0ff} .bdg.l2{background:#2a1c40;color:#e6c8ff}
     .bdg.tr{background:#2f4a3a;color:#9df0cf} .bdg.cv{background:#4a3d20;color:#ffd884}
     .bdg.rq{background:#3a2757;color:#cbb8e8} .bdg.gt{background:#4a3d20;color:#ffcf6b}
     .bdg.rc{background:#264a52;color:#8fe3f0} .bdg.same{background:#4a3d20;color:#ffd884;margin-left:6px}
