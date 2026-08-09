@@ -227,7 +227,7 @@ const isForced = (name: string): boolean => dynamicText.has(name) && pos(name).t
 function hasOverride(name: string): boolean {
   const e = pos(name);
   return e.scale !== undefined || e.fontSize !== undefined || e.color !== undefined || e.texts !== undefined
-    || e.hidden !== undefined;
+    || e.hidden !== undefined || e.center !== undefined;
 }
 
 // 덮어쓰기가 걸린 컴포넌트를 매 프레임 다시 입힌다 — 에디터를 꺼도 동작해야 한다
@@ -269,6 +269,7 @@ function pumpStyles(): void {
 function applyStoredStyle(name: string, c: Container): void {
   const e = pos(name);
   c.visible = e.hidden !== true;
+  if (c instanceof Text) c.anchor.x = e.center === true ? 0.5 : 0; // 가운데 정렬 스위치
   if (e.scale !== undefined && e.scale > 0) c.scale.set(e.scale);
   if (e.fontSize === undefined && e.color === undefined && e.texts === undefined) return;
   const { texts } = scan(c);
@@ -889,6 +890,33 @@ function buildRow(name: string, c: Container): HTMLDivElement {
       setStyle(name, { hidden: cb.checked || undefined });
       markStyled(name);
       c.visible = !cb.checked;
+    };
+    line.append(cb, lbl);
+    wrap.appendChild(line);
+  }
+
+  // 가운데 정렬 — 켜면 저장 x가 글자 중심을 뜻해, 문구 길이가 달라져도 그 자리에 머문다.
+  // 버튼 문구처럼 게임마다 라벨 길이가 다른 곳에 쓴다. 켜고 끌 때 좌표를 환산해 문구가 움직이지 않게 한다.
+  if (info.texts.length > 0 && c instanceof Text) {
+    const line = document.createElement("div");
+    line.style.cssText = "display:flex;gap:5px;align-items:center;margin-top:3px;padding-left:2px";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = pos(name).center === true;
+    cb.style.cssText = "accent-color:#ff7fb0;cursor:pointer";
+    const lbl = document.createElement("label");
+    lbl.textContent = "가운데 정렬";
+    lbl.style.cssText = "font-size:10.5px;color:#a99bc0;cursor:pointer";
+    lbl.onclick = () => cb.click();
+    cb.onchange = () => {
+      // 앵커가 바뀌면 같은 x가 다른 자리를 뜻한다 — 지금 보이는 위치를 유지하도록 x를 환산한다
+      const half = c.width / 2;
+      const nx = Math.round(cb.checked ? c.x + half : c.x - half);
+      c.anchor.x = cb.checked ? 0.5 : 0;
+      c.x = nx;
+      setPos(name, { x: nx, y: Math.round(c.y) });
+      setStyle(name, { center: cb.checked || undefined });
+      markStyled(name);
     };
     line.append(cb, lbl);
     wrap.appendChild(line);

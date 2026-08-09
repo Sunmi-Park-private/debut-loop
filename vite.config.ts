@@ -246,6 +246,7 @@ function layoutSavePlugin(): Plugin {
               texts: (v) => Array.isArray(v) && v.every((t) => t === null || typeof t === 'string'),
               textForce: (v) => typeof v === 'boolean', // 동적 문구 덮어쓰기를 의도적으로 허용한 표시
               hidden: (v) => typeof v === 'boolean', // 에디터 "숨김" 체크박스 (배경판 아트가 대신하는 폴백 끄기)
+              center: (v) => typeof v === 'boolean', // 에디터 "가운데 정렬" 체크박스 (저장 x를 글자 중심으로)
             }
             const patch = JSON.parse(body) as Record<string, Record<string, unknown>>
             for (const fields of Object.values(patch)) {
@@ -256,7 +257,7 @@ function layoutSavePlugin(): Plugin {
               }
             }
             const cur = JSON.parse(fs.readFileSync(abs, 'utf8')) as Record<string, Record<string, unknown>>
-            const STYLE_FIELDS = ['scale', 'fontSize', 'color', 'texts', 'textForce', 'hidden']
+            const STYLE_FIELDS = ['scale', 'fontSize', 'color', 'texts', 'textForce', 'hidden', 'center']
             for (const [name, fields] of Object.entries(patch)) {
               const existed = cur[name] !== undefined
               const isStylePatch = existed && Object.keys(fields).some((f) => STYLE_FIELDS.includes(f))

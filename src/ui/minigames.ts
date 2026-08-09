@@ -18,7 +18,7 @@ import { pressable, type PressOpts } from "./press";
 import { cardTemplates, tuning, beatmaps, tickets } from "../data";
 import { skinNode, skinTex, skinTexTrim, skinFit, skinNatural, skinCover, skinScale } from "./uiSkin";
 import { pos } from "./layout";
-import { btnText, centerBtnLabel, gateKeyPrefix } from "./btnLabel";
+import { btnText, registerBtnLabel, gateKeyPrefix } from "./btnLabel";
 import { editable, editableClone, inputBlocked, setEditorToggleHook, setRedrawHook } from "./editor";
 import { buzz } from "./haptics";
 import { fullRect } from "./stage";
@@ -1308,7 +1308,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
 
     /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다 */
     const chromeLabel2 = (b: Container, key: string): void => {
-      centerBtnLabel(`${key}_text`, b);
+      registerBtnLabel(`${key}_text`, b);
     };
 
     // 시작 대기: 모드 선택(이지 2열 / 하드 3열)으로 시작 — Space=이지
@@ -1836,7 +1836,7 @@ export function renderGate(
 
   /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다 */
   const chromeLabel = (name: string, b: Container): void => {
-    centerBtnLabel(lk(`${name}_text`), b);
+    registerBtnLabel(lk(`${name}_text`), b);
   };
 
   const drawTitle = (): void => {

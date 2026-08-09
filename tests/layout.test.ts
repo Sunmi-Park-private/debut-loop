@@ -48,3 +48,12 @@ describe("clearSent — flushSave 중 편집 경합", () => {
     expect(remaining!["scale"]).toBe(3.0);
   });
 });
+
+describe("center 플래그 — 가운데 정렬 체크박스", () => {
+  it("setStyle로 켜고 끌 수 있고, 끄면 키가 사라진다", () => {
+    setStyle("t_center_flag", { center: true });
+    expect(dirtyPos()["t_center_flag"]!["center"]).toBe(true);
+    setStyle("t_center_flag", { center: undefined }); // 체크 해제 = 키 삭제
+    expect(dirtyPos()["t_center_flag"]!["center"]).toBeNull(); // null = 서버에 삭제 요청
+  });
+});
