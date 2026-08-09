@@ -1500,5 +1500,37 @@
   "side_daily_cell_reward": {
     "x": 35,
     "y": 80
+  },
+  "side_daily_d1": {
+    "x": 25,
+    "y": 300
+  },
+  "side_daily_d2": {
+    "x": 135,
+    "y": 300
+  },
+  "side_daily_d3": {
+    "x": 245,
+    "y": 300
+  },
+  "side_daily_d4": {
+    "x": 25,
+    "y": 405
+  },
+  "side_daily_d5": {
+    "x": 135,
+    "y": 405
+  },
+  "side_daily_d6": {
+    "x": 245,
+    "y": 405
+  },
+  "side_daily_d7": {
+    "x": 41,
+    "y": 508
+  },
+  "side_daily_grid": {
+    "x": 0,
+    "y": 0
   }
 }

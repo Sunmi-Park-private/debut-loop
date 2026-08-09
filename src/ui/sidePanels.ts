@@ -45,8 +45,8 @@ export interface SidePanelOpts {
 
 export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
   const dim = fullRect(0x5b4a70, 0.4);
-  dim.eventMode = "static";
-  dim.on("pointertap", opts.onClose); // 딤 탭 = 닫기 (편집 모드에선 실드가 먼저 받는다)
+  dim.eventMode = "static"; // 뒤 화면(로비) 클릭 차단 — 닫기는 X 버튼으로만.
+  // 예전엔 딤 탭도 닫기였는데, 창 안을 조작하다 살짝 빗나가면 창이 닫혀버렸다.
   parent.addChild(dim);
 
   const panel = new Container();
@@ -129,7 +129,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
   function renderDaily(): void {
     const head = txt("출석 보상 · 매일 접속하고 보상을 받아요", 11, SUB);
     // 아트가 있으면 제목("DAILY BONUS") 아래 빈 영역으로 — 기본 위치는 아트 제목과 겹친다
-    grp("side_daily_head", onArt ? Math.round((W - head.width) / 2) : 18, onArt ? 104 : 58, head);
+    grp("side_daily_head", onArt ? Math.round((W - head.width) / 2) : 18, onArt ? 94 : 48, head);
 
     // 배경판 아트(955×1647)에 DAY 1~7 칸이 그려져 있다 — 그 칸 실측을 표시 좌표로 환산해 얹는다
     // (폭 360 기준 배율 0.377). 1~3 · 4~6 한 줄씩, 7일차는 가로 전체.
@@ -146,6 +146,9 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
     const CW = onArt ? 86 : 78, CH = onArt ? 81 : 74, GAP = 8, COLS = 4;
     const gx = onArt ? 0 : Math.round((W - COLS * CW - (COLS - 1) * GAP) / 2);
     const gridG = grp("side_daily_grid", gx, onArt ? 0 : 84);
+    // 보상 문구는 상자와 따로 움직여야 한다 — 칸 안에 넣으면 칸을 옮길 때 끌려가고,
+    // 문구만 다듬을 수가 없다. 일곱 칸의 문구를 한 묶음(side_daily_texts)으로 뺀다.
+    const textsG = grp("side_daily_texts", gx, onArt ? 0 : 84);
 
     const rewards = ["⭐5", "⭐10", "카드×1", "⭐15", "카드×2", "⭐20", "카드★★★"];
     rewards.forEach((r, i) => {
@@ -186,20 +189,20 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       if (!onArt) {
         const dayT = txt(`D${day}`, 11, done ? 0x2e9a80 : today ? 0xc9527f : SUB, true);
         dayT.x = Math.round((cw - dayT.width) / 2);
-        dayT.y = 10;
+        dayT.y = 0;
         cell.addChild(dayT);
       }
 
       const rw = txt(done ? "✓" : r, onArt ? 11 : 15, done ? 0x2e9a80 : today ? 0xc9527f : SUB, true);
-      rw.x = Math.round((cw - rw.width) / 2);
-      rw.y = onArt ? inY + inH - 15 : 30; // 보상 박스 아래쪽
-      cell.addChild(rw);
+      rw.x = cp.x + Math.round((cw - rw.width) / 2); // 묶음 기준 = 칸 좌표 + 칸 안 위치
+      rw.y = cp.y + (onArt ? inY + inH - 25 : 20);
+      textsG.addChild(rw);
 
       if (today) {
         const now = txt("오늘!", 9, 0xc9527f, true);
-        now.x = Math.round((cw - now.width) / 2);
-        now.y = onArt ? 6 : 54;
-        cell.addChild(now);
+        now.x = cp.x + Math.round((cw - now.width) / 2);
+        now.y = cp.y + (onArt ? -4 : 44);
+        textsG.addChild(now);
         pressable(cell, () => {
           mock.dailyClaimed = true;
           toast("⭐15 획득! 내일 또 만나요 🎁");
@@ -211,7 +214,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
     });
 
     const note = txt("7일 연속 출석하면 ★★★ 에픽 카드!", 11, SUB);
-    grp("side_daily_note", Math.round((W - note.width) / 2), onArt ? 550 : 268, note);
+    grp("side_daily_note", Math.round((W - note.width) / 2), onArt ? 540 : 258, note);
   }
 
   // ── 📔 포토앨범 ──
