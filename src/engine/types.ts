@@ -82,6 +82,9 @@ export interface Beat {
   right: BeatChoice;
   isConvergence?: boolean;   // 수렴 앵커
   recall?: BeatRecall;       // 2회차 회상 문구(선택) — 없으면 위 값들을 그대로 쓴다
+  /** 이 대사를 건네는 상대의 프로필 이미지 경로 (예: "assets/speaker/d2_w1_yuwol.webp").
+   *  카드 상단 가운데에 원형으로 작게 뜬다. 주인공(하루) 대사에는 넣지 않는다. */
+  speaker?: string;
 }
 
 // 진행 엔진(progress.advance)이 반환하는 이벤트

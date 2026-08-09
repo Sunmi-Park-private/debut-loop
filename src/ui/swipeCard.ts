@@ -2,6 +2,7 @@
 import { AnimatedSprite, BlurFilter, Container, Graphics, Sprite, Text, Texture, type FederatedPointerEvent } from "pixi.js";
 import type { Beat } from "../engine/types";
 import { recallOf } from "../engine/recall";
+import { speakerNode, SPEAKER_D } from "./speakerIcon";
 import { pos } from "./layout";
 import { easeOut, easeInOut, lerp } from "./ease";
 import { pressable } from "./press";
@@ -124,6 +125,17 @@ export function renderCard(
     portraitSpr = spr;
     portraitBase = idleFrames[0] ?? opts.portrait ?? null;
   }
+  // 화자 프로필 — 카드 상단 가운데의 원형 아이콘(지름 30). 지금 말을 건네는 상대를 알려준다.
+  // 아직 이미지가 도착하지 않았으면 그리지 않고, 도착하는 순간 화면이 다시 그려진다.
+  const spk = speakerNode(beat.speaker);
+  if (spk) {
+    const pSpk = pos("card_speaker", { x: Math.round((CARD_W - SPEAKER_D) / 2), y: -Math.round(SPEAKER_D / 2) });
+    spk.x = pSpk.x;
+    spk.y = pSpk.y;
+    card.addChild(spk);
+    editable("card_speaker", spk);
+  }
+
   if (seen) {
     const ff = new Text({ text: replay ? "▶▶ 기억 속 장면" : "▶▶ 기억 속 장면 — 빠르게 넘기기", style: { fontSize: 12, fill: 0xa78be6, fontWeight: "bold" } });
     const pFf = pos("card_seen_note", { x: 18, y: 16 });

@@ -76,6 +76,31 @@ function fitBgSize(abs: string): void {
   } catch { /* sips 미설치·실패 → 원본 그대로 유지 */ }
 }
 
+/** 업로드된 이미지의 픽셀 크기 (sips 미설치·영상이면 null) */
+function imgSize(abs: string): { w: number; h: number } | null {
+  if (!IMG_EXTS.some((e) => abs.endsWith('.' + e))) return null
+  try {
+    const info = execFileSync('sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', abs]).toString()
+    const w = Number(/pixelWidth: (\d+)/.exec(info)?.[1])
+    const h = Number(/pixelHeight: (\d+)/.exec(info)?.[1])
+    return w && h ? { w, h } : null
+  } catch { return null }
+}
+
+/** 슬롯 표시 박스를 올라온 이미지 비율에 맞춘다 — 가로는 그대로 두고 세로만 다시 잡는다.
+ *  목업이 직사각형인 슬롯에 정사각 이미지를 올리면 눌려 보이던 문제를 없앤다.
+ *  natural 슬롯(1배율=원본 크기)은 애초에 박스를 안 쓰므로 건드리지 않는다. */
+function fitSlotSize(entry: { size?: [number, number]; natural?: boolean }, abs: string): boolean {
+  if (entry.natural || !Array.isArray(entry.size)) return false
+  const dim = imgSize(abs)
+  const w = entry.size[0]
+  if (!dim || !w) return false
+  const h = Math.max(1, Math.round(w * (dim.h / dim.w)))
+  if (entry.size[1] === h) return false
+  entry.size = [w, h]
+  return true
+}
+
 function stripArtistTag(abs: string): void {
   try {
     const tmp = abs + '.strip' + path.extname(abs)
@@ -331,6 +356,56 @@ function opacitySavePlugin(route: string, manifestFile: string,
 // 설계: docs/superpowers/specs/2026-08-08-beats-live-preview-design.md
 let beatsOverlay: Record<string, unknown> = {}
 
+/** 화자 프로필 업로드 — 비트마다 다른 파일이라 슬롯 매니페스트가 없다.
+ *  파일명은 서버가 비트 id로 조립하므로 클라이언트가 경로를 넣을 수 없다(탈출 차단).
+ *  기록은 beats JSON의 speaker 필드가 갖고, 저장은 플로우 에디터의 💾가 담당한다. */
+function speakerUploadPlugin(): Plugin {
+  const DIR = 'assets/speaker'
+  return {
+    name: 'speaker-upload',
+    configureServer(server) {
+      server.middlewares.use('/__speakerupload', (req, res) => {
+        if (req.method !== 'POST' && req.method !== 'DELETE') { res.statusCode = 405; res.end(); return }
+        const q = new URL(req.url ?? '/', 'http://localhost').searchParams
+        const beat = q.get('beat') ?? ''
+        const ext = q.get('ext') ?? ''
+        if (!/^[A-Za-z0-9_-]+$/.test(beat)) { res.statusCode = 400; res.end('bad beat id'); return }
+        const absDir = path.resolve(process.cwd(), `public/${DIR}`)
+        fs.mkdirSync(absDir, { recursive: true })
+        if (req.method === 'DELETE') {
+          for (const e of [...IMG_EXTS]) {
+            const f = path.join(absDir, `${beat}.${e}`)
+            if (fs.existsSync(f)) fs.unlinkSync(f)
+          }
+          res.end('ok')
+          return
+        }
+        if (!IMG_EXTS.includes(ext)) { res.statusCode = 400; res.end('bad ext'); return }
+        const chunks: Buffer[] = []
+        let size = 0
+        req.on('data', (d: Buffer) => {
+          size += d.length
+          if (size > 10 * 1024 * 1024) { res.statusCode = 413; res.end('too large'); req.destroy(); return }
+          chunks.push(d)
+        })
+        req.on('end', () => {
+          if (res.writableEnded) return
+          const abs = path.join(absDir, `${beat}.${ext}`)
+          fs.writeFileSync(abs, Buffer.concat(chunks))
+          const converted = toWebp(abs) // 원본은 toWebp가 정리 — 항상 webp 한 벌만 남는다
+          const finalExt = typeof converted === 'string' ? path.extname(converted).slice(1) : ext
+          for (const e of IMG_EXTS) { // 같은 비트의 다른 확장자 잔재 제거
+            if (e === finalExt) continue
+            const f = path.join(absDir, `${beat}.${e}`)
+            if (fs.existsSync(f)) fs.unlinkSync(f)
+          }
+          res.end(`${DIR}/${beat}.${finalExt}`) // 최종 경로 — 변환으로 확장자가 바뀌므로 에디터가 추측하면 안 된다
+        })
+      })
+    },
+  }
+}
+
 function beatsPreviewPlugin(): Plugin {
   return {
     name: 'beats-preview',
@@ -501,7 +576,11 @@ function assetUploadPlugin(route: string, manifestFile: string, dir: string,
           const seqEntry = entry as { frames?: string[] }
           const hadFrames = seqEntry.frames !== undefined
           if (hadFrames) delete seqEntry.frames
-          if (entry.file !== rel || hadFrames) { entry.file = rel; fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n') }
+          // 표시 박스를 올라온 이미지 비율로 — 목업 크기에 맞춰 눌리지 않게
+          // 변환 후 경로로 잰다 — toWebp가 원본을 지우므로 absTarget은 이미 없을 수 있다
+          const finalAbs = typeof converted === 'string' ? converted : absTarget
+          const resized = fitSlotSize(entry as { size?: [number, number]; natural?: boolean }, finalAbs)
+          if (entry.file !== rel || hadFrames || resized) { entry.file = rel; fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n') }
           invalidate(manifestPath)
           notify(slot, entry.file)
           res.end(rel) // 최종 경로를 돌려준다 — 후처리로 확장자가 바뀔 수 있어 에디터가 추측하면 안 된다
@@ -634,6 +713,7 @@ export default defineConfig({
     uploadedAssetServePlugin(),
     layoutSavePlugin(), // /__layout — 키 단위 병합 (editorSavePlugin의 통짜 저장과 분리)
     beatsPreviewPlugin(),
+    speakerUploadPlugin(),
     editorSavePlugin(),
     scaleSavePlugin('/__charscale', 'src/data/charskins.json',
       (m) => (m as CharSkinManifest).chars.flatMap((c) => c.slots), 'char-scale-updated'),

@@ -9,6 +9,8 @@ export interface BeatTextPatch {
   right?: { label?: string; hint?: string };
   /** 2회차 회상 문구 — 통째로 교체한다 (항목별 병합은 에디터가 보내기 전에 끝낸다) */
   recall?: BeatRecallPatch;
+  /** 화자 프로필 경로 — 빈 문자열이면 "없음"(제거) */
+  speaker?: string;
 }
 export type BeatTextOverlay = Record<string, BeatTextPatch>;
 
@@ -19,6 +21,7 @@ export interface PreviewBeat {
   left: { label: string; hint?: string };
   right: { label: string; hint?: string };
   recall?: BeatRecallPatch;
+  speaker?: string;
 }
 
 interface BeatSnapshot {
@@ -28,6 +31,7 @@ interface BeatSnapshot {
   leftHint?: string;
   rightHint?: string;
   recall?: BeatRecallPatch;
+  speaker?: string;
 }
 /** 덮어쓰기 직전의 원본 문구 — 오버레이에서 빠진 필드를 되돌릴 때 쓴다 */
 export type Baseline = Map<string, BeatSnapshot>;
@@ -39,11 +43,18 @@ const snap = (b: PreviewBeat): BeatSnapshot => ({
   leftHint: b.left.hint,
   rightHint: b.right.hint,
   recall: b.recall ? { ...b.recall } : undefined,
+  speaker: b.speaker,
 });
 
 const setRecall = (b: PreviewBeat, v: BeatRecallPatch | undefined): void => {
   if (v === undefined) delete b.recall;
   else b.recall = { ...v };
+};
+
+// 빈 문자열 = 제거 — 에디터가 "없음"을 보내는 방법 (undefined는 "이 필드는 안 건드림"이라 구분이 필요하다)
+const setSpeaker = (b: PreviewBeat, v: string | undefined): void => {
+  if (v === undefined || v === "") delete b.speaker;
+  else b.speaker = v;
 };
 
 const setHint = (c: { hint?: string }, v: string | undefined): void => {
@@ -65,6 +76,7 @@ export function applyOverlay(beats: PreviewBeat[], overlay: BeatTextOverlay, bas
       setHint(b.left, s.leftHint);
       setHint(b.right, s.rightHint);
       setRecall(b, s.recall);
+      setSpeaker(b, s.speaker);
       baseline.delete(b.id);
       continue;
     }
@@ -76,6 +88,7 @@ export function applyOverlay(beats: PreviewBeat[], overlay: BeatTextOverlay, bas
     setHint(b.left, patch.left?.hint ?? s.leftHint);
     setHint(b.right, patch.right?.hint ?? s.rightHint);
     setRecall(b, patch.recall ?? s.recall);
+    setSpeaker(b, patch.speaker ?? s.speaker);
   }
 }
 

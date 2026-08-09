@@ -518,12 +518,20 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
       const icoSkin = skinFit(name.replace("lobby_", "lobby-icon-"), 48, 48);
       const art = icoSkin ?? skinFit("lobby-icon-frame", 48, 48)
         ?? new Graphics().circle(24, 24, 24).fill({ color: 0xffffff, alpha: 0.95 }).stroke({ width: 2, color: 0xece4f4 });
+      // 아트·이모지·라벨을 각각 등록 — 아직 아트가 없어도(목업 상태) 위치·크기를 잡을 수 있어야 한다.
+      // 버튼(name)은 아이콘 전체, 나머지는 버튼 안에서의 자리다.
+      const pBg = pos(`${name}_bg`, { x: 0, y: 0 });
+      art.x = pBg.x;
+      art.y = pBg.y;
       b.addChild(art);
+      editable(`${name}_bg`, art);
       if (!icoSkin) { // 전체 스킨이 이모지를 포함하므로, 프레임/벡터일 때만 이모지 표시
         const e = mkText(emoji, 19, 0x5b4a70);
-        e.x = 24 - e.width / 2;
-        e.y = 24 - e.height / 2;
+        const pIcon = pos(`${name}_icon`, { x: Math.round(24 - e.width / 2), y: Math.round(24 - e.height / 2) });
+        e.x = pIcon.x;
+        e.y = pIcon.y;
         b.addChild(e);
+        editable(`${name}_icon`, e);
       }
       // 아이콘 제목 — 아트의 실제 영역(배율 반영)을 재서 중앙 하단에 고정. 배율을 바꿔도 정렬이 유지된다
       const l = mkText(label, 9.5, 0x5b4a70, true);
@@ -535,10 +543,14 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
         l.x = 24 - l.width / 2;
         l.y = 50;
       }
+      const pLbl = pos(`${name}_text`, { x: Math.round(l.x), y: Math.round(l.y) });
+      l.x = pLbl.x;
+      l.y = pLbl.y;
       b.addChild(l);
       pressable(b, onTap);
       root.addChild(b);
       editable(name, b);
+      editable(`${name}_text`, l); // 버튼 등록 뒤 = 라벨이 자기 문구의 소유자
     };
     // 우측 레일: 데일리 → 앨범 → 상점 → 설정 (연습 버튼 제거 — 게임 내 연습하기·치트로 대체)
     ico("lobby_daily", "🎁", "데일리", W - 64, 130, () => openMetaMenu("daily"));

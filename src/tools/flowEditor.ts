@@ -65,6 +65,7 @@ function sendPreview(): void {
     left: { label: bt.left.label, hint: bt.left.hint },
     right: { label: bt.right.label, hint: bt.right.hint },
     recall: bt.recall,
+    speaker: bt.speaker ?? "", // 빈 문자열 = 제거 (undefined는 "안 건드림"이라 구분이 필요)
   };
   if (previewTimer) clearTimeout(previewTimer);
   previewTimer = window.setTimeout(() => {
@@ -264,6 +265,17 @@ function renderPanel(): void {
         <label><input type="checkbox" data-f="isConvergence" ${b.isConvergence ? "checked" : ""}> ⭐수렴</label>
       </span></label>
     </div>
+    <div class="spk">
+      <div class="spkhead">🗣 화자 프로필 <span>— 카드 상단에 지름 30px 원형으로 표시 (주인공 대사는 비워 둠)</span></div>
+      <div class="spkrow">
+        <div class="spkprev">${b.speaker ? `<img src="/${esc(b.speaker)}?t=${Date.now()}" alt="">` : "없음"}</div>
+        <div class="spkbtns">
+          <button class="mini" id="spkPick">📷 이미지 올리기</button>
+          <button class="mini danger" id="spkDel"${b.speaker ? "" : " disabled"}>🗑 제거</button>
+        </div>
+      </div>
+      <input type="file" id="spkFile" accept="image/png,image/jpeg,image/webp" style="display:none">
+    </div>
     ${fld("대사(textKey)", `<textarea data-f="textKey" rows="3">${esc(b.textKey)}</textarea>`)}
     ${recallBlock}
     ${side("left", "◀ 왼쪽 선택지")}
@@ -272,6 +284,43 @@ function renderPanel(): void {
       <textarea id="reqTa" rows="3">${esc(b.requires ? JSON.stringify(b.requires, null, 1) : "")}</textarea>
       <button class="mini" id="reqApply">적용 (비우면 제거)</button></details>
   `;
+
+  // 화자 프로필 업로드 — 파일은 서버가 비트 id로 저장하고 최종 경로를 돌려준다.
+  // beats JSON에는 그 경로만 적고, 파일 기록은 💾 저장이 담당한다.
+  const spkFile = $("spkFile") as HTMLInputElement | null;
+  if (spkFile) {
+    ($("spkPick") as HTMLButtonElement).onclick = () => spkFile.click();
+    spkFile.onchange = () => {
+      const f = spkFile.files?.[0];
+      const bt = beats[sel];
+      if (!f || !bt) return;
+      const ext = (f.name.split(".").pop() ?? "").toLowerCase();
+      if (!["png", "jpg", "jpeg", "webp"].includes(ext)) { toast("⚠ png·jpg·webp만 올릴 수 있어요", true); return; }
+      void fetch(`/__speakerupload?beat=${encodeURIComponent(bt.id)}&ext=${ext === "jpeg" ? "jpg" : ext}`,
+        { method: "POST", body: f })
+        .then(async (r) => {
+          if (!r.ok) { toast("⚠ 업로드 실패 (dev 서버 전용)", true); return; }
+          bt.speaker = await r.text();
+          dirty = true;
+          sendPreview();
+          renderPanel();
+          renderTimeline();
+          toast("화자 프로필 반영 — 💾 저장해야 파일에 남습니다");
+        })
+        .catch(() => toast("⚠ 업로드 실패", true));
+    };
+    const del = $("spkDel") as HTMLButtonElement;
+    del.onclick = () => {
+      const bt = beats[sel];
+      if (!bt?.speaker) return;
+      void fetch(`/__speakerupload?beat=${encodeURIComponent(bt.id)}`, { method: "DELETE" }).catch(() => {});
+      delete bt.speaker;
+      dirty = true;
+      sendPreview();
+      renderPanel();
+      renderTimeline();
+    };
+  }
 
   // 회상 칸 바인딩 — 빈 값은 키를 지우고, 셋 다 비면 recall 자체를 없앤다 (파일에 잡음이 남지 않게)
   host.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-r]").forEach((el) => {
@@ -432,6 +481,16 @@ function shell(): void {
     #tabs button{margin:0;padding:6px 14px;border:1.5px solid #3a2757;border-radius:999px;background:#241539;
       color:#8b7bb0;font-weight:800;font-size:12px;cursor:pointer}
     #tabs button.on{background:#3d2a5e;border-color:#ff5fa2;color:#ffd0e8}
+    .spk{border:1.5px solid #4a3d20;border-radius:12px;padding:9px 11px;margin:10px 0;background:#2a2110}
+    .spkhead{font-size:11.5px;font-weight:800;color:#ffd884;margin-bottom:7px}
+    .spkhead span{font-weight:600;color:#a8863a;font-size:10px}
+    .spkrow{display:flex;gap:10px;align-items:center}
+    .spkprev{width:44px;height:44px;flex-shrink:0;border-radius:50%;overflow:hidden;background:#150a24;
+      border:1.5px solid #4a3d20;display:flex;align-items:center;justify-content:center;font-size:9px;color:#8b7bb0}
+    .spkprev img{width:100%;height:100%;object-fit:cover;display:block}
+    .spkbtns{display:flex;gap:6px;flex-wrap:wrap}
+    .spkbtns .mini{margin-top:0}
+    .mini[disabled]{opacity:.4;cursor:default}
     .rcwrap{border:1.5px solid #2f5a63;border-radius:12px;padding:10px 12px;margin:12px 0;background:#122a30}
     .rctitle{font-size:12px;font-weight:800;color:#8fe3f0;margin-bottom:8px}
     .rctitle span{font-weight:600;color:#5f8f99;font-size:10.5px}

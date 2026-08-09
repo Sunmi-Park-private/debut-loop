@@ -299,6 +299,12 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
 
     // 명패는 캐릭터와 별도 그룹(독립 이동) — 캐릭터 뒤에 생성해 다리 위로 겹침 (목업과 동일)
     grp("train_bubble", ...(bubbleSkin ? [bubbleSkin, bubbleT] : [bubbleT]));
+    // 명패 안 문구를 따로 등록 — 명패 아트를 바꾸면 글자 자리가 달라져 문구만 옮겨야 한다.
+    // (그룹은 명패 전체 위치, 이 컴포넌트는 글자 크기·색·명패 안에서의 자리)
+    const pBub = pos("train_bubble_text", { x: Math.round(bubbleT.x), y: Math.round(bubbleT.y) });
+    bubbleT.x = pBub.x;
+    bubbleT.y = pBub.y;
+    editable("train_bubble_text", bubbleT);
 
     // 우측: 커맨드 리스트 — 캐릭터를 감싸는 긴 타원의 우측 곡선 배치 (가운데 행이 가장 바깥쪽)
     const rowsGrp = grp("train_rows");

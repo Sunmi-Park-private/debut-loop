@@ -15,7 +15,8 @@ import { renderGate } from "./minigames";
 import { pos } from "./layout";
 import { fullRect, stageTop, stageHeight } from "./stage";
 import { beginFrame, editable, onRedraw, triggerRedraw } from "./editor";
-import { initCheatMenu, registerCheat, registerCardOps, drainPendingCards, getPendingCards, setInGameCheck } from "./cheatMenu";
+import { statusLine, ddayWeeks } from "./runStatus";
+import { initCheatMenu, registerCheat, registerCardOps, registerJumpOps, registerGaugeOps, drainPendingCards, getPendingCards, setInGameCheck } from "./cheatMenu";
 import { addCard, removeCards } from "../engine/deck";
 import { isDevMode } from "./devMode";
 import { toast } from "./metaMenu";
@@ -82,9 +83,26 @@ export function initGameCheats(): void {
     run(ctrl);
     currentDraw();
   };
-  registerCheat("⏭ 비트 10장 자동 진행", needGame((c) => {
-    for (let i = 0; i < 10 && c.current && !c.pendingGate; i++) c.choose("left");
-  }), true);
+  // 상태 게이지 조정 — 치트 메뉴가 패널을 그리고, 실제 수치 읽기·쓰기는 여기서.
+  // 런이 없으면 만들어 준다(로비에서도 조정 가능 — 상단 상태 패널 검증용).
+  const GAUGE_LABEL: Record<GaugeId, string> = {
+    skill: "실력", mental: "멘탈", reputation: "평판", bond: "유대", capital: "자본",
+  };
+  const GAUGE_IDS = ["skill", "mental", "reputation", "bond", "capital"] as const;
+  registerGaugeOps({
+    min: config.gaugeMin,
+    max: config.gaugeMax,
+    read: () => {
+      if (!ctrl) ctrl = newRun();
+      const c = ctrl;
+      return GAUGE_IDS.map((id) => ({ id, label: GAUGE_LABEL[id], value: c.state.gauges[id] }));
+    },
+    write: (id, value) => {
+      if (!ctrl) ctrl = newRun();
+      ctrl.state.gauges[id as GaugeId] = value;
+      triggerRedraw(); // 게임=게이지 패널, 로비=상단 상태 패널 즉시 갱신
+    },
+  });
   registerCheat("⏩ 1회차 완주 → 회귀 화면", () => {
     // 로비에서도 사용 가능: 런이 없으면 새로 만들어 완주해두고, START로 들어가면 곧장 회귀 화면
     if (!ctrl) ctrl = newRun();
@@ -126,6 +144,50 @@ export function initGameCheats(): void {
     memberBoardForced = true;
     memberBoardAudition = true;
   }), true);
+  // 회차 이동 — 선택한 회차·막의 첫 비트까지 자동 진행.
+  // 지나온 비트는 좌측 선택으로 넘기고 관문은 건너뛴다(치트 "1회차 완주"와 같은 방식).
+  // 자동 진행은 선택 효과를 그대로 받으므로 게이지가 바닥나 런이 끝날 수 있다 —
+  // 목적지에 닿는 것이 목적이므로 매 걸음 게이지를 안전선 위로 되올린다.
+  registerJumpOps((loop, act) => {
+    const SAFE = Math.round(config.gaugeMax * 0.6);
+    const topUp = (c: RunController): void => {
+      for (const k of ["skill", "mental", "reputation", "bond", "capital"] as const)
+        if (c.state.gauges[k] < SAFE) c.state.gauges[k] = SAFE;
+    };
+    // 목적지를 이미 지나왔으면 처음부터 다시 — 뒤로 가는 수단이 없다
+    const past = (c: RunController): boolean =>
+      c.state.loopCount > loop || (c.state.loopCount === loop && c.state.act > act);
+    if (!ctrl || ctrl.ended?.type === "ending" || past(ctrl)) ctrl = newRun();
+    const c = ctrl;
+    loop2Mode = null;
+    topUp(c);
+
+    const step = (): void => {
+      if (c.pendingGate) c.skipGate();
+      else c.choose("left");
+      topUp(c);
+    };
+    let guard = 3000; // 비트 95개 × 여유 — 무한 루프 방지
+    // ① 목표 회차까지 (1→2회차는 1회차를 완주하고 회귀)
+    while (c.state.loopCount < loop && guard-- > 0) {
+      if (c.current) step();
+      else if (c.ended?.type === "regress") { loop2Mode = "normal"; c.regress(); }
+      else break;
+    }
+    // ② 목표 막의 첫 비트까지
+    while (c.current && c.state.act < act && guard-- > 0) step();
+
+    freeTraining = false;
+    memberBoardForced = false;
+    currentDraw(); // 게임 화면이면 즉시 반영. 로비에서는 no-op이라 안내 문구로 대신한다.
+    if (guard <= 0) return "이동 실패 — 진행이 멈췄어요";
+    if (!c.current) return `이동 실패 — ${loop}회차 ${act}막에 닿기 전에 회차가 끝났어요`;
+    const where = `${c.state.loopCount}회차 ${c.state.act}막 · W${c.state.week}`;
+    const tail = gameActive ? "" : " — START로 들어가면 그 지점부터 시작합니다";
+    if (c.state.loopCount !== loop || c.state.act !== act) return `가장 가까운 지점: ${where}${tail}`;
+    return `✅ ${where} · ${c.current.id}${tail}`;
+  });
+
   registerCheat("🎓 튜토리얼·설정 리셋", () => {
     const n = resetTutorial();
     // 모든 설정 초기화 — 저장된 debutloop.* 키 제거 + 볼륨 기본값 복원
@@ -242,7 +304,7 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
     const s = ctrl!.state;
     const clueTxt = s.clues.size > 0 ? ` · 🔍 ${s.clues.size}/4` : "";
     const head = new Text({
-      text: `${s.loopCount}회차 · ${Math.min(6, Math.floor(s.week / 4) + 1)}개월 · W${s.week} · 데뷔까지 ${config.debutWeek - s.week}주 · 🎴 ${s.cards.length}${clueTxt}`,
+      text: `${s.loopCount}회차 · ${Math.min(6, Math.floor(s.week / 4) + 1)}개월 · W${s.week} · 데뷔까지 ${ddayWeeks(config.debutWeek, s.week)}주 · 🎴 ${s.cards.length}${clueTxt}`,
       style: { fontSize: 12, fill: 0xa99bc0 },
     });
     const p = pos("header");
@@ -397,7 +459,8 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
         () => { c.skipGate(); draw(); },
         assets.gateBg(gate.engine, gate.id), // 관문 배경: id 슬롯(bg 에디터) 우선 → 엔진 기본
         () => { c.state.points += 1; }, // 리듬 하드(3열) 클리어 보너스 +1pt
-        `${c.state.loopCount}회차 · W${c.state.week} · D-${config.debutWeek - c.state.week} · 카드 ${c.state.cards.length}`); // 포토카드 배경판 상단 탭
+        statusLine({ loop: c.state.loopCount, week: c.state.week, debutWeek: config.debutWeek,
+          cards: c.state.cards.length, clues: c.state.clues.size })); // 포토카드 배경판 상단 탭 — 로비·스토리와 같은 문구
       return;
     }
     if (c.current) {
