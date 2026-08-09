@@ -80,9 +80,22 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
   const bodyH = BODY_H[opts.tab];
 
   // ── 공용 셸 ──
-  const bg = skinNode("side-panel", W, bodyH)
+  // 배경판은 탭 전용 아트가 있으면 그걸 쓰고(원본 비율 유지), 없으면 공용 프레임(9슬라이스라
+  // 늘어나는 게 맞다) → 벡터 순으로 내려간다. 탭마다 내용 높이가 달라 한 장으로는 안 맞는다.
+  const BG_SLOT: Record<SideTab, string> = {
+    daily: "side-daily-bg", album: "side-album-bg", shop: "side-shop-bg", settings: "side-settings-bg",
+  };
+  const bg = skinFit(BG_SLOT[opts.tab], W, bodyH)
+    ?? skinNode("side-panel", W, bodyH)
     ?? new Graphics().roundRect(0, 0, W, bodyH, 20).fill(0xffffff).stroke({ width: 2, color: LINE });
-  grp("side_bg", 0, 0, bg);
+  // 배경판만 탭별 키 — 아트 비율이 탭마다 달라 한 좌표로는 못 맞춘다.
+  // 저장값이 없으면 지금까지 쓰던 공용 키(side_bg) 값을 물려받아, 분리 직후 배치는 그대로다.
+  const BG_KEY: Record<SideTab, string> = {
+    daily: "side_daily_bg", album: "side_album_bg", shop: "side_shop_bg", settings: "side_set_bg",
+  };
+  const bgKey = BG_KEY[opts.tab];
+  const bgP = pos(bgKey, pos("side_bg", { x: 0, y: 0 }));
+  grp(bgKey, bgP.x, bgP.y, bg);
 
   const bar = skinFit("side-title-bar", W - 24, 34);
   if (bar) grp("side_title_bar", 12, 12, bar);

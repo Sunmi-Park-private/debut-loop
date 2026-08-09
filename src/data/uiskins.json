@@ -252,8 +252,7 @@
             569
           ],
           "mode": "9slice",
-          "slice": 24,
-          "dom": true
+          "slice": 24
         },
         {
           "id": "side-close-x",
@@ -263,8 +262,7 @@
             26,
             26
           ],
-          "mode": "stretch",
-          "dom": true
+          "mode": "stretch"
         },
         {
           "id": "side-title-bar",
@@ -275,8 +273,47 @@
             34
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
+        },
+        {
+          "id": "side-daily-bg",
+          "label": "데일리 보너스 · 배경판 — 원본 비율 유지",
+          "file": "",
+          "size": [
+            360,
+            320
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "side-album-bg",
+          "label": "포토앨범 · 배경판 — 원본 비율 유지",
+          "file": "",
+          "size": [
+            360,
+            664
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "side-shop-bg",
+          "label": "상점 · 배경판 — 원본 비율 유지",
+          "file": "",
+          "size": [
+            360,
+            362
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "side-settings-bg",
+          "label": "설정 · 배경판 — 원본 비율 유지",
+          "file": "",
+          "size": [
+            360,
+            330
+          ],
+          "mode": "stretch"
         },
         {
           "id": "side-daily-cell-done",
@@ -287,8 +324,7 @@
             62
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
         },
         {
           "id": "side-daily-cell-today",
@@ -299,8 +335,7 @@
             62
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
         },
         {
           "id": "side-daily-cell-lock",
@@ -311,8 +346,7 @@
             62
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
         },
         {
           "id": "side-album-cell-got",
@@ -323,8 +357,7 @@
             92
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
         },
         {
           "id": "side-album-cell-lock",
@@ -335,8 +368,7 @@
             92
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
         },
         {
           "id": "side-shop-row",
@@ -347,8 +379,7 @@
             62
           ],
           "mode": "9slice",
-          "slice": 14,
-          "dom": true
+          "slice": 14
         },
         {
           "id": "side-shop-btn-buy",
@@ -359,8 +390,7 @@
             32
           ],
           "mode": "9slice",
-          "slice": 10,
-          "dom": true
+          "slice": 10
         },
         {
           "id": "side-shop-coin",
@@ -370,8 +400,7 @@
             18,
             18
           ],
-          "mode": "stretch",
-          "dom": true
+          "mode": "stretch"
         }
       ]
     },
