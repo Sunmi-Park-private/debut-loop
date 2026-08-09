@@ -112,13 +112,17 @@ export function initCheatMenu(): void {
     "border:2px solid #ece4f4;background:#fff;font-size:20px;cursor:pointer;" +
     "box-shadow:0 6px 18px rgba(167,139,230,.35)";
   document.body.appendChild(btn);
-  // 게임 화면(캔버스) 우측 하단 구석에 플로팅 — 뷰포트가 아니라 캔버스 기준
+  // 게임 화면(캔버스) **바깥 오른쪽**에 플로팅 — 화면 위 요소를 가리지 않는다.
+  // 레터박스 여백이 없는 좁은 창(모바일)에서는 밖에 자리가 없으므로 안쪽 구석으로 되돌린다.
+  const GAP = 10;
+  const SIZE = 46;
   const place = (): void => {
     const cv = document.querySelector("canvas");
     if (!cv) return;
     const r = cv.getBoundingClientRect();
-    btn.style.left = `${r.right - 54}px`;
-    btn.style.top = `${r.bottom - 54}px`;
+    const outside = r.right + GAP + SIZE <= window.innerWidth;
+    btn.style.left = `${outside ? r.right + GAP : r.right - SIZE - 8}px`;
+    btn.style.top = `${r.bottom - SIZE - 8}px`;
     btn.style.right = "auto";
     btn.style.bottom = "auto";
   };

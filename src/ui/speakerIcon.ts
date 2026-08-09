@@ -1,7 +1,7 @@
 // ui/speakerIcon.ts — 스토리 카드 상단의 화자 프로필(원형 30px).
 // 비트마다 다른 파일을 쓰므로 UI 스킨 슬롯(고정 id 매니페스트)과 달리 요청 시 로드하고 캐시한다.
 // 도착하면 현재 화면을 다시 그려, 로딩을 기다리지 않고 카드가 먼저 뜬다.
-import { Assets, Container, Graphics, Sprite, Texture } from "pixi.js";
+import { Assets, Container, Sprite, Texture } from "pixi.js";
 import { assetUrl } from "./hotAssets";
 
 /** 화면 표시 지름 — 카드 상단 가운데의 작은 원 */
@@ -27,23 +27,21 @@ function speakerTex(file: string): Texture | null {
   return null;
 }
 
-/** 화자 프로필 노드 — 원형으로 잘라낸 지름 SPEAKER_D 아이콘. 파일이 없거나 아직 안 왔으면 null */
+/** 화자 프로필 노드 — 올린 이미지를 그대로, 지름 SPEAKER_D 안에 원본 비율로.
+ *  테두리·원형 마스크를 씌우지 않는다 — 아트에 이미 테두리가 그려져 올라오므로
+ *  덧그리면 테두리가 겹치고, 마스크는 그 바깥선을 깎는다.
+ *  파일이 없거나 아직 도착하지 않았으면 null. */
 export function speakerNode(file: string | undefined): Container | null {
   if (!file) return null;
   const tex = speakerTex(file);
   if (!tex) return null;
   const wrap = new Container();
-  const s = SPEAKER_D / Math.min(tex.width, tex.height); // cover — 원을 빈틈없이 채운다
+  const s = SPEAKER_D / Math.max(tex.width, tex.height); // contain — 잘리는 곳 없이 전부 보인다
   const spr = new Sprite(tex);
   spr.scale.set(s);
   spr.x = (SPEAKER_D - tex.width * s) / 2;
   spr.y = (SPEAKER_D - tex.height * s) / 2;
-  const r = SPEAKER_D / 2;
-  const mask = new Graphics().circle(r, r, r).fill(0xffffff);
-  spr.mask = mask;
-  // 테두리 — 카드 배경이 밝든 어둡든 원이 또렷하게 떨어지도록
-  const ring = new Graphics().circle(r, r, r - 0.75).stroke({ width: 1.5, color: 0xffffff, alpha: 0.95 });
-  wrap.addChild(spr, mask, ring);
+  wrap.addChild(spr);
   return wrap;
 }
 
