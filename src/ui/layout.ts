@@ -31,6 +31,13 @@ if (import.meta.hot) {
     .then((disk) => {
       if (!disk) return;
       let n = 0;
+      // 디스크에서 지워진 키(초기화 등)도 반영 — 덮어쓰기만 하면 옛 모듈의 삭제된 키가 살아남아
+      // "초기화해도 리로드하면 옛 좌표로 되돌아오는" 것처럼 보인다. 디스크가 유일한 진실이다.
+      for (const k of Object.keys(layout)) {
+        if (dirty.has(k) || k in disk) continue;
+        delete layout[k];
+        n++;
+      }
       for (const [k, v] of Object.entries(disk)) {
         // 이번 세션에 이미 편집한 키는 건드리지 않는다 — 디스크 값이 더 낡았을 수 있다
         if (dirty.has(k)) continue;
