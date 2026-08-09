@@ -37,7 +37,7 @@
           "kind": "practice-idle",
           "label": "전신 · 연습복 (시퀀스)",
           "shape": "full",
-          "file": "assets/char/skin/haru-practice-idle.png",
+          "file": "",
           "seq": true,
           "vid": true
         },

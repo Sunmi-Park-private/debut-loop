@@ -145,8 +145,8 @@
     "color": "#000000"
   },
   "board_title": {
-    "x": 150,
-    "y": -15,
+    "x": 115,
+    "y": -20,
     "color": "#ffffff",
     "texts": [
       ""
@@ -710,7 +710,7 @@
   },
   "train_char": {
     "x": -125,
-    "y": -340,
+    "y": -300,
     "scale": 2.15
   },
   "train_close": {
@@ -785,8 +785,8 @@
     "fontSize": 16
   },
   "training": {
-    "x": 25,
-    "y": 100,
+    "x": 13,
+    "y": 110,
     "scale": 1
   },
   "vocal_mini_bg": {
@@ -1534,7 +1534,30 @@
     "y": 0
   },
   "side_daily_texts": {
-    "x": 0,
-    "y": 28
+    "x": -1,
+    "y": 16,
+    "color": "#c9527f"
+  },
+  "recheck_btn_back": {
+    "x": -5,
+    "y": 50
+  },
+  "recheck_btn_go": {
+    "x": -5,
+    "y": 50
+  },
+  "recheck_line2": {
+    "x": -5,
+    "y": 70
+  },
+  "recheck_line1": {
+    "x": -5,
+    "y": 70
+  },
+  "recheck_title": {
+    "x": 5,
+    "y": 20,
+    "color": "#ffffff",
+    "fontSize": 21
   }
 }

@@ -151,17 +151,18 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
     const textsG = grp("side_daily_texts", gx, onArt ? 0 : 84);
 
     // 상단 점선 게이지바 — 점은 아트가 그리고, 출석할 때마다 한 칸씩 보라색으로 찬다.
-    // 그 위 1·3·7일차 점에만 선물상자를 얹는다 = 그날 받는 추가 보너스 표식.
+    // 그 위 1·4·7일차 점에만 선물상자를 얹는다 = 그날 받는 추가 보너스 표식.
     const TRACK_Y = 251, TRACK_X0 = 51, TRACK_STEP = 43; // 렌더 화면에서 점 중심 역산
-    const TRACK_W = 25, TRACK_H = 17;                    // 칸 상자(74×51)의 1/3
-    const BONUS_DAYS = [1, 3, 7];
+    const TRACK_BOX = 50;   // 상자 크기 (긴 변 기준)
+    const BONUS_DAYS = [1, 4, 7];
     const TRACK_GAP = 6; // 점 위로 띄우는 간격
 
     const rewards = ["⭐5", "⭐10", "카드×1", "⭐15", "카드×2", "⭐20", "카드★★★"];
     rewards.forEach((r, i) => {
       const day = i + 1;
-      const done = day <= 3 || (day === 4 && mock.dailyClaimed);
-      const today = day === 4 && !mock.dailyClaimed;
+      // 처음 여는 유저 기준 — 1일차부터 시작한다 (앞날이 미리 받은 상태면 이상해 보인다)
+      const done = day === 1 && mock.dailyClaimed;
+      const today = day === 1 && !mock.dailyClaimed;
       const box = ART_BOX[i] ?? { x: 0, y: 0, w: CW, h: CH };
       const cw = onArt ? box.w : CW, ch = onArt ? box.h : CH;
       const cell = new Container();
@@ -214,21 +215,24 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
         textsG.addChild(now);
         pressable(cell, () => {
           mock.dailyClaimed = true;
-          toast("⭐15 획득! 내일 또 만나요 🎁");
+          toast(`${r} 획득! 내일 또 만나요 🎁`);
           opts.onRedraw();
         });
       }
       gridG.addChild(cell);
       reg(cellKey, cell); // 칸 하나씩 옮길 수 있게 (아트 칸 미세 정렬용)
 
-      // 추가 보너스 표식 — 1·3·7일차 점 위에만 상자를 얹는다. 진행도(보라 채움)는
+      // 추가 보너스 표식 — 1·4·7일차 점 위에만 상자를 얹는다. 진행도(보라 채움)는
       // 아트의 점이 담당하므로 상자는 받았는지와 무관하게 늘 보인다.
       // 칸과 같은 슬롯을 쓰므로 상자 그림을 바꾸면 위아래가 함께 바뀐다.
+      // 상자 셋은 각각 side_daily_t1·t4·t7로 따로 등록 — 하나씩 옮길 수 있다.
       if (onArt && BONUS_DAYS.includes(day)) {
-        const mini = skinFit("side-daily-cell-done", TRACK_W, TRACK_H);
+        const mini = skinFit("side-daily-cell-done", TRACK_BOX, TRACK_BOX);
         if (mini) {
           const mk = `side_daily_t${day}`;
-          const mp = pos(mk, { x: TRACK_X0 + TRACK_STEP * i - Math.round(TRACK_W / 2), y: TRACK_Y - TRACK_H - TRACK_GAP });
+          // 그림 비율이 유지되므로 실제 크기로 점 중심에 맞춘다
+          const mw = mini.width, mh = mini.height;
+          const mp = pos(mk, { x: TRACK_X0 + TRACK_STEP * i - Math.round(mw / 2), y: Math.round(TRACK_Y - mh - TRACK_GAP) });
           const holder = new Container();
           holder.x = mp.x;
           holder.y = mp.y;
