@@ -28,9 +28,11 @@ function movToAlphaWebm(abs: string): string | void {
   const out = abs.slice(0, abs.lastIndexOf('.')) + '.webm'
   // mp4는 알파가 없어 배경이 단색(빨강·초록 등)으로 눌려 들어온다 — 그 색을 키로 빼서 투명하게.
   // 배경색은 첫 프레임 좌상단에서 읽는다(알파를 평탄화한 렌더는 모서리가 곧 배경색).
-  // similarity를 낮게 잡아 인물 색을 갉지 않게 하고, blend로 압축 노이즈 테두리만 정리한다.
+  // 배경은 평탄화된 **단색**이라 아주 좁은 범위만 빼면 된다. 넓게 잡으면 어두운 머리·의상·
+  // 그림자가 배경색과 가까워져 함께 지워진다(빨강 계열 배경에서 특히). 0.05/0.02가 그 경계다.
+  // 근본 해결은 알파를 살린 mov/webm 업로드 — 키잉은 평탄화본을 되살리는 차선책이다.
   const key = abs.endsWith('.mp4') ? cornerColor(abs) : null
-  const vf = key ? ['-vf', `colorkey=${key}:0.18:0.08`] : []
+  const vf = key ? ['-vf', `format=rgba,colorkey=${key}:0.05:0.02,format=yuva420p`] : []
   execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', abs, ...vf,
     '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p', '-b:v', '0', '-crf', '32',
     '-cpu-used', '4', '-row-mt', '1', '-an', out]) // 인코딩 동안 dev 서버 블로킹 — 에디터가 대기 표시
