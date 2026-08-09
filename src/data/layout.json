@@ -283,8 +283,8 @@
     "y": -90
   },
   "funds_stop_hint": {
-    "x": -15,
-    "y": 110
+    "x": 19,
+    "y": 108
   },
   "funds_stop_info": {
     "x": 33,
@@ -506,8 +506,9 @@
     "y": 194
   },
   "promo_match_desc": {
-    "x": -4,
-    "y": -92
+    "x": -5,
+    "y": -90,
+    "color": "#ffefd8"
   },
   "promo_match_grid": {
     "x": -1,
@@ -674,7 +675,12 @@
   },
   "train_row_dance": {
     "x": 222,
-    "y": 143
+    "y": 143,
+    "texts": [
+      null,
+      null,
+      "안무 카드 2장 (실력·멘탈)"
+    ]
   },
   "train_row_funds": {
     "x": 222,
@@ -686,7 +692,12 @@
   },
   "train_row_vocal": {
     "x": 222,
-    "y": 80
+    "y": 80,
+    "texts": [
+      null,
+      null,
+      "보컬 카드 (실력)"
+    ]
   },
   "train_rows": {
     "x": -10,
@@ -701,9 +712,9 @@
     "y": 17
   },
   "training": {
-    "x": 11,
+    "x": 16,
     "y": 120,
-    "scale": 1.05
+    "scale": 1
   },
   "vocal_mini_bg": {
     "x": 2,
@@ -711,23 +722,23 @@
   },
   "vocal_rec_btn": {
     "x": 5,
-    "y": 32
+    "y": 30
   },
   "vocal_rec_head": {
     "x": 6,
     "y": 60
   },
   "vocal_rec_lamp": {
-    "x": -28,
-    "y": -99
+    "x": -13,
+    "y": -93
   },
   "vocal_rec_track": {
-    "x": 6,
-    "y": -11
+    "x": 5,
+    "y": -10
   },
   "vocal_stop_desc": {
-    "x": 5,
-    "y": -85,
+    "x": 13,
+    "y": -78,
     "color": "#5b4a70",
     "scale": 0.85
   },
@@ -737,13 +748,14 @@
     "color": "#5b4a70"
   },
   "vocal_studio_info": {
-    "x": 0,
-    "y": -97,
-    "scale": 1.05
+    "x": 6,
+    "y": -99,
+    "scale": 1.15
   },
   "vocal_train_game_close_x": {
-    "x": -1,
-    "y": -6
+    "x": -65,
+    "y": 0,
+    "scale": 1.2
   },
   "vocal_train_res_btn": {
     "x": 1,
@@ -774,8 +786,8 @@
     "y": 0
   },
   "vocal_train_game_title": {
-    "x": -13,
-    "y": 46,
+    "x": -6,
+    "y": 50,
     "scale": 1.65,
     "color": "#5b4a70"
   },
@@ -810,12 +822,25 @@
     "y": 107
   },
   "card_text": {
-    "x": 85,
+    "x": 55,
     "y": 40
   },
   "dance_train_game_title": {
     "x": -15,
     "y": 20,
-    "scale": 1.5
+    "scale": 1.5,
+    "color": "#5b4a70"
+  },
+  "story_lbl_mental": {
+    "x": 38,
+    "y": 13,
+    "color": "#5b4a70"
+  },
+  "board_btn_ok": {
+    "x": 111,
+    "y": 370,
+    "texts": [
+      "확인 "
+    ]
   }
 }

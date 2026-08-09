@@ -235,7 +235,7 @@
         {
           "id": "side-panel",
           "label": "공통 · 팝업 배경판",
-          "file": "assets/ui/side-panel.png",
+          "file": "assets/ui/side-panel.webp",
           "size": [
             320,
             420
@@ -270,7 +270,7 @@
         {
           "id": "side-daily-cell-done",
           "label": "데일리 · 출석 칸 · 받음",
-          "file": "assets/ui/side-daily-cell-done.png",
+          "file": "assets/ui/side-daily-cell-done.webp",
           "size": [
             68,
             62
@@ -282,7 +282,7 @@
         {
           "id": "side-daily-cell-today",
           "label": "데일리 · 출석 칸 · 오늘",
-          "file": "assets/ui/side-daily-cell-today.png",
+          "file": "assets/ui/side-daily-cell-today.webp",
           "size": [
             68,
             62
@@ -294,7 +294,7 @@
         {
           "id": "side-daily-cell-lock",
           "label": "데일리 · 출석 칸 · 예정",
-          "file": "assets/ui/side-daily-cell-lock.png",
+          "file": "assets/ui/side-daily-cell-lock.webp",
           "size": [
             68,
             62
@@ -530,7 +530,7 @@
           "file": "assets/ui/train-panel.webp",
           "size": [
             394,
-            610
+            612
           ],
           "mode": "stretch",
           "opacity": -0.5
@@ -538,10 +538,10 @@
         {
           "id": "train-frame",
           "label": "공통 · 패널 테두리 라인 (배경 위에 덧그림) — 원본 비율 유지",
-          "file": "",
+          "file": "assets/ui/train-frame.webp",
           "size": [
             394,
-            610
+            612
           ],
           "mode": "stretch"
         },
@@ -833,7 +833,8 @@
             600
           ],
           "mode": "stretch",
-          "vid": true
+          "vid": true,
+          "scale": 1
         },
         {
           "id": "gate-rec-wave",
@@ -1572,7 +1573,7 @@
         {
           "id": "gate-fail-panel",
           "label": "공통 · 실패 화면 배경 프레임 (\"아쉬워요…\")",
-          "file": "",
+          "file": "assets/ui/gate-fail-panel.webp",
           "size": [
             394,
             600
