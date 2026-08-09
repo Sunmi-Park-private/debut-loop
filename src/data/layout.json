@@ -95,8 +95,8 @@
     ]
   },
   "board_close_x": {
-    "x": 345,
-    "y": 40
+    "x": 185,
+    "y": 660
   },
   "board_head": {
     "x": 2,
@@ -153,9 +153,10 @@
     ]
   },
   "board_week": {
-    "x": -35,
-    "y": 30,
-    "color": "#ff7fb0"
+    "x": -15,
+    "y": 110,
+    "color": "#ff7fb0",
+    "hidden": true
   },
   "bond_train_res_btn": {
     "x": 4,
@@ -347,8 +348,8 @@
     "y": 40
   },
   "gate_exit": {
-    "x": -15,
-    "y": 80
+    "x": -165,
+    "y": 730
   },
   "gate_photo": {
     "x": 26,
@@ -364,19 +365,19 @@
   },
   "gate_photo_pick_grade": {
     "x": -5,
-    "y": 30
+    "y": 50
   },
   "gate_photo_pick_hand": {
-    "x": 0,
-    "y": -180,
-    "scale": 0.95
+    "x": 33,
+    "y": -100,
+    "scale": 0.8
   },
   "gate_photo_pick_sum": {
     "x": -5,
     "y": -200
   },
   "gate_photo_pick_ticket": {
-    "x": 15,
+    "x": 35,
     "y": -480
   },
   "gate_photo_title": {
@@ -385,15 +386,15 @@
   },
   "gate_pick_btn": {
     "x": 55,
-    "y": 70,
+    "y": 120,
     "texts": [
       "확인"
     ],
     "scale": 0.75
   },
   "gate_pick_desc": {
-    "x": 65,
-    "y": 390,
+    "x": 55,
+    "y": 440,
     "color": "#5b4a70",
     "scale": 0.75,
     "texts": [
@@ -402,32 +403,32 @@
   },
   "gate_pick_grade": {
     "x": -15,
-    "y": 130,
+    "y": 120,
     "scale": 1.1
   },
   "gate_pick_hand": {
-    "x": -15,
-    "y": -110,
-    "scale": 1.1
+    "x": -35,
+    "y": -120,
+    "scale": 1.2
   },
   "gate_pick_sum": {
     "x": -15,
-    "y": -130,
+    "y": -80,
     "scale": 1.1
   },
   "gate_pick_ticket": {
-    "x": 130,
-    "y": -300,
+    "x": 115,
+    "y": -310,
     "color": "#5b4a70",
     "texts": [
       "센터 대결 통과증 +3"
     ]
   },
   "gate_title": {
-    "x": 52,
-    "y": 10,
+    "x": 95,
+    "y": 90,
     "scale": 1.1,
-    "color": "#5b4a70"
+    "color": "#a99bc0"
   },
   "gauges": {
     "x": 64,
@@ -653,12 +654,13 @@
     "y": 137
   },
   "rhythm_desc": {
-    "x": 24,
-    "y": 34,
-    "color": "#5b4a70"
+    "x": 25,
+    "y": 36,
+    "color": "#5b4a70",
+    "scale": 1.05
   },
   "rhythm_hud": {
-    "x": 46,
+    "x": 45,
     "y": 62
   },
   "rhythm_line": {
@@ -700,7 +702,7 @@
   "story_tab": {
     "x": 200,
     "y": 71,
-    "color": "#f0a93a"
+    "color": "#ffffff"
   },
   "train_bubble": {
     "x": 20,
@@ -708,7 +710,7 @@
   },
   "train_char": {
     "x": -125,
-    "y": -300,
+    "y": -340,
     "scale": 2.15
   },
   "train_close": {
@@ -969,7 +971,7 @@
   },
   "hard_start": {
     "x": 85,
-    "y": 486,
+    "y": 490,
     "texts": [
       "하드모드(3열) + 보너스"
     ],
@@ -1014,7 +1016,7 @@
     "scale": 0.85
   },
   "board_locked_note": {
-    "x": 20,
+    "x": 95,
     "y": 330,
     "color": "#000000"
   },
@@ -1111,7 +1113,7 @@
     ]
   },
   "easy_start_text": {
-    "x": 45,
+    "x": 56,
     "y": 14
   },
   "funds_train_fail_bg": {
@@ -1124,10 +1126,11 @@
   },
   "hard_start_text": {
     "x": 45,
-    "y": 15,
+    "y": 14,
     "texts": [
       "하드 · 3열 + 보너스"
-    ]
+    ],
+    "fontSize": 13
   },
   "funds_train_fail_retry": {
     "x": 0,
@@ -1147,8 +1150,8 @@
     ]
   },
   "block_dodge_msg": {
-    "x": 115,
-    "y": 45,
+    "x": 105,
+    "y": 40,
     "color": "#5b4a70",
     "texts": [
       "밝은 타일에 올라타 반격하세요!"
@@ -1164,11 +1167,11 @@
     "hidden": true
   },
   "block_dodge_desc": {
-    "x": -65,
+    "x": -75,
     "y": 140,
     "color": "#5b4a70",
     "texts": [
-      "사보타주 저지 · 화면 좌/우 탭 = 이동(한 줄 하강)                                  💥 회피 · ✨ 반격 · 💖 회복 · 🛡 방어"
+      "화면 좌/우 탭 = 이동(한 줄 하강)                                                          💥 회피 · ✨ 반격 · 💖 회복 · 🛡 방어.           "
     ]
   },
   "card_deck_item_card": {
@@ -1329,44 +1332,103 @@
     ]
   },
   "clue_dodge_msg": {
-    "x": 15,
-    "y": 30
+    "x": 18,
+    "y": 110,
+    "texts": [
+      "밝은 타일에 올라타 반격하세요!"
+    ]
   },
   "clue_dodge_enemy": {
-    "x": -5,
-    "y": 30
+    "x": -35,
+    "y": 110,
+    "texts": [
+      "진범의 그림자 "
+    ],
+    "color": "#ffffff"
   },
   "clue_dodge_desc": {
-    "x": 42,
-    "y": 14,
+    "x": 25,
+    "y": 90,
     "texts": [
-      "단서 대조 · 화면 좌/우 탭 = 이동(한 줄 하강) \\n💥 회피 · ✨ 반격 · 💖 회복 · 🛡 방어"
+      " 화면 좌/우 탭 = 이동(한 줄 하강) \\n💥 회피 · ✨ 반격 · 💖 회복 · 🛡 방어"
     ]
   },
   "block_dodge_board": {
-    "x": -5,
-    "y": 70
+    "x": 5,
+    "y": 80
   },
   "block_dodge_hp": {
-    "x": -5,
-    "y": 70
+    "x": 5,
+    "y": 80
   },
   "block_dodge_grid": {
-    "x": -5,
-    "y": 70
+    "x": 5,
+    "y": 80
   },
   "gate_photo_panel": {
     "x": 14,
     "y": 0,
-    "scale": 0.9
+    "scale": 0.9,
+    "hidden": true
   },
   "gate_pick_sheet": {
-    "x": -55,
-    "y": -60,
-    "scale": 1.3
+    "x": -37,
+    "y": -30,
+    "scale": 1.2
   },
   "gate_pick_hand_star": {
     "x": 1,
+    "y": 0
+  },
+  "gate_photo_board": {
+    "x": 0,
+    "y": 0
+  },
+  "gate_photo_exit": {
+    "x": -15,
+    "y": -10
+  },
+  "gate_photo_pick_sheet": {
+    "x": -125,
+    "y": -140,
+    "scale": 1.6
+  },
+  "clue_dodge_board": {
+    "x": 2,
+    "y": 80
+  },
+  "clue_dodge_hp": {
+    "x": 5,
+    "y": -20
+  },
+  "clue_dodge_grid": {
+    "x": 3,
+    "y": 80
+  },
+  "side_bg": {
+    "x": 0,
+    "y": 0
+  },
+  "board_recruit_bg": {
+    "x": 0,
+    "y": 0
+  },
+  "gate_clue_pick_ticket": {
+    "x": 135,
+    "y": -310,
+    "color": "#5b4a70",
+    "texts": [
+      "센터 대결 통과증 +3"
+    ]
+  },
+  "gate_block_title": {
+    "x": 95,
+    "y": 90,
+    "scale": 1.1,
+    "color": "#5b4a70"
+  },
+  "card_deck_item_count": {
+    "x": -29,
     "y": 0
   }
 }
