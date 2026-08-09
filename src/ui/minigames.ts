@@ -1308,12 +1308,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
 
     /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다 */
     const chromeLabel2 = (b: Container, key: string): void => {
-      const t = btnText(b); // pressable()의 inner 래핑 때문에 얕은 탐색으로는 못 찾는다
-      if (!t) return;
-      const q = pos(`${key}_text`, { x: Math.round(t.x), y: Math.round(t.y) });
-      t.x = q.x;
-      t.y = q.y;
-      editable(`${key}_text`, t);
+      centerBtnLabel(`${key}_text`, b);
     };
 
     // 시작 대기: 모드 선택(이지 2열 / 하드 3열)으로 시작 — Space=이지
@@ -1839,12 +1834,7 @@ export function renderGate(
 
   /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다 */
   const chromeLabel = (name: string, b: Container): void => {
-    const t = btnText(b); // pressable()의 inner 래핑 때문에 얕은 탐색으로는 못 찾는다
-    if (!t) return;
-    const q = lpos(`${name}_text`, { x: Math.round(t.x), y: Math.round(t.y) });
-    t.x = q.x;
-    t.y = q.y;
-    editable(lk(`${name}_text`), t);
+    centerBtnLabel(lk(`${name}_text`), b);
   };
 
   const drawTitle = (): void => {

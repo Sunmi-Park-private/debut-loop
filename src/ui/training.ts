@@ -8,7 +8,8 @@ import { templateGauges } from "../engine/cards";
 import { pressable } from "./press";
 import { TRAIN_DRAIN, TRAIN_GRADE_TO_CARD, resolveTraining } from "../engine/training";
 import { MATCH_CARDS } from "../engine/minigames";
-import { mountEngine, txt, btn, btnText, miniBgId, fxConfetti, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
+import { mountEngine, txt, btn, miniBgId, fxConfetti, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
+import { centerBtnLabel } from "./btnLabel";
 import { skinNode, skinFit, skinNatural, skinTexTrim, skinScale } from "./uiSkin";
 import { cardTemplates } from "../data";
 import { pos } from "./layout";
@@ -172,13 +173,7 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
   /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다.
    *  기본값은 btn()이 잡아준 가운데 정렬이라 저장된 값이 없으면 지금 배치 그대로다. */
   const btnLabel = (name: string, b: Container): void => {
-    const t = btnText(b); // pressable()의 inner 래핑 때문에 얕은 탐색으로는 못 찾는다
-    if (!t) return;
-    const key = ns ? `${ns}_${name}_text` : `${name}_text`;
-    const q = pos(key, { x: Math.round(t.x), y: Math.round(t.y) });
-    t.x = q.x;
-    t.y = q.y;
-    editable(key, t);
+    centerBtnLabel(ns ? `${ns}_${name}_text` : `${name}_text`, b);
   };
   /** 변형 전용 키 그룹 — 저장값이 없으면 기본 키(fb) 좌표를 승계 (예: 3×3 그리드 제목이 기존 값을 물려받음) */
   const grpFb = (name: string, fb: string, ...items: Container[]): Container => {

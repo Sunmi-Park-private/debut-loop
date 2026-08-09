@@ -5,7 +5,8 @@ import type { CharacterDef, MiniGameGrade, RoleId } from "../engine/types";
 import { candidatePool, FIXED_MEMBERS } from "../engine/members";
 import { characters } from "../data";
 import type { RunController } from "./runController";
-import { mountEngine, txt, btn, btnText, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
+import { mountEngine, txt, btn, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
+import { centerBtnLabel } from "./btnLabel";
 import { skinFit, skinNatural, skinNode, skinTex, skinTexTrim } from "./uiSkin";
 import { pos } from "./layout";
 import { editable, editableClone, setRedrawHook } from "./editor";
@@ -144,12 +145,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
   /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다.
    *  기본값은 btn()이 잡아준 가운데 정렬이라 저장된 값이 없으면 지금 배치 그대로다. */
   const btnLabel = (name: string, b: Container): void => {
-    const t = btnText(b); // pressable()의 inner 래핑 때문에 얕은 탐색으로는 못 찾는다
-    if (!t) return;
-    const q = pos(`${name}_text`, { x: Math.round(t.x), y: Math.round(t.y) });
-    t.x = q.x;
-    t.y = q.y;
-    editable(`${name}_text`, t);
+    centerBtnLabel(`${name}_text`, b);
   };
 
   /** 대형 프로필용 텍스처 — 전신 아트(bust 미제작 캐릭터)는 상반신만 크롭해 bust처럼 보이게 */
@@ -388,7 +384,8 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
         // 스킨 1종 공용, 색 구분은 텍스트 색으로 유지
         b.addChild(skinNode("audition-btn-mini", 58, 22) ?? new Graphics().roundRect(0, 0, 58, 22, 8).fill(fill));
         const t2 = txt(label, 10.5, color, true);
-        const tq = pos(`${key}_text`, { x: Math.round((58 - t2.width) / 2), y: 4 });
+        t2.anchor.x = 0.5; // 문구 길이와 무관하게 버튼 중앙 — 저장 x는 중심점
+        const tq = pos(`${key}_text`, { x: 29, y: 4 }); // 29 = 미니버튼 폭 58의 중심
         t2.x = tq.x;
         t2.y = tq.y;
         b.addChild(t2);
