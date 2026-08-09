@@ -28,7 +28,15 @@ if (typeof window !== "undefined") {
       wrap: t.style.wordWrap, wrapW: t.style.wordWrapWidth, fs: t.style.fontSize,
       fill: String(t.style.fill), anchorX: t.anchor.x,
     }));
-    return { x: c.x, y: c.y, w: c.width, visible: c.visible, texts: ts };
+    // 어떤 UI 스킨 슬롯이 이 컴포넌트를 그렸는지 — "아트가 연결 안 된 것 같다"를 바로 가릴 수 있게
+    const slots: string[] = [];
+    const walk = (n: Container): void => {
+      const id = slotIdOf(n);
+      if (id) slots.push(id);
+      for (const k of n.children) walk(k);
+    };
+    walk(c);
+    return { x: c.x, y: c.y, w: c.width, visible: c.visible, slots, texts: ts };
   };
 }
 
