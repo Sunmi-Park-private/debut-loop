@@ -238,7 +238,7 @@
           "file": "assets/ui/side-panel.webp",
           "size": [
             320,
-            420
+            569
           ],
           "mode": "9slice",
           "slice": 24,
@@ -1076,10 +1076,10 @@
         {
           "id": "gate-panel",
           "label": "공통 · 관문 패널 프레임 (배경 이미지 없을 때)",
-          "file": "assets/ui/gate-panel.png",
+          "file": "assets/ui/gate-panel.webp",
           "size": [
             394,
-            600
+            700
           ],
           "mode": "9slice",
           "slice": 24

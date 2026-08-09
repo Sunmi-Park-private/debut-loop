@@ -147,7 +147,10 @@
   "board_title": {
     "x": 150,
     "y": -15,
-    "color": "#ffffff"
+    "color": "#ffffff",
+    "texts": [
+      ""
+    ]
   },
   "board_week": {
     "x": -35,
@@ -356,48 +359,53 @@
     "y": -163
   },
   "gate_photo_pick_grade": {
-    "x": 3,
+    "x": -2,
     "y": 69
   },
   "gate_photo_pick_hand": {
-    "x": -1,
-    "y": -136
+    "x": -8,
+    "y": -160
   },
   "gate_photo_pick_sum": {
-    "x": -2,
-    "y": -149
+    "x": -5,
+    "y": -170
   },
   "gate_photo_pick_ticket": {
-    "x": 11,
-    "y": -62
+    "x": 5,
+    "y": -470
   },
   "gate_photo_title": {
     "x": 14,
     "y": -2
   },
   "gate_pick_btn": {
-    "x": 0,
-    "y": -41
+    "x": -5,
+    "y": -40,
+    "texts": [
+      "확인"
+    ]
   },
   "gate_pick_desc": {
-    "x": -2,
-    "y": 1
+    "x": -5,
+    "y": 50,
+    "color": "#5b4a70"
   },
   "gate_pick_grade": {
-    "x": 8,
-    "y": 86
+    "x": -5,
+    "y": 120
   },
   "gate_pick_hand": {
-    "x": 7,
-    "y": -48
+    "x": 0,
+    "y": -50
   },
   "gate_pick_sum": {
     "x": -2,
     "y": -41
   },
   "gate_pick_ticket": {
-    "x": 21,
-    "y": -477
+    "x": 15,
+    "y": -430,
+    "color": "#5b4a70"
   },
   "gate_title": {
     "x": 105,
@@ -1229,12 +1237,12 @@
     "fontSize": 15
   },
   "board_res_btn_recruit": {
-    "x": 75,
-    "y": 310,
-    "scale": 1.15
+    "x": 115,
+    "y": 320,
+    "scale": 0.75
   },
   "board_res_btn_recruit_text": {
-    "x": 90,
+    "x": 92,
     "y": 13,
     "fontSize": 22,
     "texts": [
@@ -1243,34 +1251,63 @@
     "color": "#ffffff"
   },
   "board_res_card_stat": {
-    "x": 41,
-    "y": 123
+    "x": 40,
+    "y": 137
   },
   "board_res_card": {
-    "x": 85,
-    "y": 90,
+    "x": 82,
+    "y": 100,
     "scale": 1.3
   },
   "board_res_caption": {
-    "x": 65,
-    "y": 280,
-    "color": "#ffffff"
+    "x": 75,
+    "y": 440,
+    "color": "#5b4a70",
+    "scale": 0.95
   },
   "board_res_btn_hold": {
-    "x": 155,
-    "y": 380,
-    "scale": 0.4
+    "x": 116,
+    "y": 370,
+    "scale": 0.75
   },
   "board_res_card_name": {
     "x": 77,
-    "y": 101
+    "y": 100,
+    "texts": [
+      "리안"
+    ]
   },
   "board_res_btn_hold_text": {
-    "x": 85,
-    "y": 10,
-    "fontSize": 51,
+    "x": 92,
+    "y": 12,
+    "fontSize": 22,
     "texts": [
       "보류 "
+    ]
+  },
+  "board_res_card_role": {
+    "x": 81,
+    "y": 120,
+    "color": "#5b4a70"
+  },
+  "board_res_grade": {
+    "x": -15,
+    "y": 70,
+    "scale": 1.1
+  },
+  "gate_pick_hand_sym": {
+    "x": 30,
+    "y": 10
+  },
+  "gate_photo_pick_desc": {
+    "x": 5,
+    "y": 280
+  },
+  "gate_photo_tab": {
+    "x": 0,
+    "y": 0,
+    "texts": [
+      "2회차 · W19 · D-35 · 카드 1 "
     ]
   }
 }

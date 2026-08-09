@@ -27,7 +27,7 @@ if (typeof window !== "undefined") {
       text: String(t.text).slice(0, 40), x: t.x, y: t.y, w: t.width,
       wrap: t.style.wordWrap, wrapW: t.style.wordWrapWidth, fs: t.style.fontSize,
     }));
-    return { x: c.x, y: c.y, w: c.width, texts: ts };
+    return { x: c.x, y: c.y, w: c.width, visible: c.visible, texts: ts };
   };
 }
 
@@ -226,7 +226,8 @@ const isForced = (name: string): boolean => dynamicText.has(name) && pos(name).t
 /** 이 컴포넌트에 저장된 표시 속성이 하나라도 있는지 */
 function hasOverride(name: string): boolean {
   const e = pos(name);
-  return e.scale !== undefined || e.fontSize !== undefined || e.color !== undefined || e.texts !== undefined;
+  return e.scale !== undefined || e.fontSize !== undefined || e.color !== undefined || e.texts !== undefined
+    || e.hidden !== undefined;
 }
 
 // 덮어쓰기가 걸린 컴포넌트를 매 프레임 다시 입힌다 — 에디터를 꺼도 동작해야 한다
@@ -267,6 +268,7 @@ function pumpStyles(): void {
 
 function applyStoredStyle(name: string, c: Container): void {
   const e = pos(name);
+  c.visible = e.hidden !== true;
   if (e.scale !== undefined && e.scale > 0) c.scale.set(e.scale);
   if (e.fontSize === undefined && e.color === undefined && e.texts === undefined) return;
   const { texts } = scan(c);
@@ -859,6 +861,28 @@ function buildRow(name: string, c: Container): HTMLDivElement {
       reset.onclick = () => { ensureCoords(name, c); setStyle(name, { fontSize: undefined, color: undefined }); triggerRedraw(); refreshPanel(); };
       line.appendChild(reset);
     }
+    wrap.appendChild(line);
+  }
+
+  // 숨김 — 다른 컴포넌트(배경판 아트 등)가 대신하게 된 폴백 조각을 지우지 않고 끌 때 쓴다.
+  {
+    const line = document.createElement("div");
+    line.style.cssText = "display:flex;gap:5px;align-items:center;margin-top:3px;padding-left:2px";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = pos(name).hidden === true;
+    cb.style.cssText = "accent-color:#ff7fb0;cursor:pointer";
+    const lbl = document.createElement("label");
+    lbl.textContent = "숨김";
+    lbl.style.cssText = "font-size:10.5px;color:#a99bc0;cursor:pointer";
+    lbl.onclick = () => cb.click();
+    cb.onchange = () => {
+      ensureCoords(name, c);
+      setStyle(name, { hidden: cb.checked || undefined });
+      markStyled(name);
+      c.visible = !cb.checked;
+    };
+    line.append(cb, lbl);
     wrap.appendChild(line);
   }
 

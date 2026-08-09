@@ -18,7 +18,7 @@ import { pressable, type PressOpts } from "./press";
 import { cardTemplates, tuning, beatmaps, tickets } from "../data";
 import { skinNode, skinTex, skinTexTrim, skinFit, skinNatural, skinCover, skinScale } from "./uiSkin";
 import { pos } from "./layout";
-import { editable, inputBlocked, setEditorToggleHook, setRedrawHook } from "./editor";
+import { editable, editableClone, inputBlocked, setEditorToggleHook, setRedrawHook } from "./editor";
 import { buzz } from "./haptics";
 import { fullRect } from "./stage";
 import { playLevelUpFx } from "./levelUpFx";
@@ -877,7 +877,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     // 패널(W×PH)이 renderGate에서 아트 비율로 잡혀 있어 스트레치 왜곡 없음
     const board = skinNode("gate-photo-board", W, PH);
     if (board) {
-      body.addChildAt(board, 0);
+      body.setChildIndex(grp("gate_photo_board", board), 0); // 맨 뒤 레이어 + 에디터 등록 (dodge_board와 동일 패턴)
       // 안내문을 아트의 설명 필 위치(헤더 하단 중앙)로 — 미세조정은 레이아웃 에디터(slot_desc)
       descText.text = "3장의 포토를 맞춰 포토카드를 획득하세요";
       descText.style.fontSize = 13;
@@ -1795,7 +1795,21 @@ export function renderGate(
     : bgTex
       ? new Graphics().roundRect(0, 0, W, PH, 24).fill(0xffffff).stroke({ width: 2, color: 0xece4f4 })
       : (skinNode("gate-panel", W, PH) ?? skinNode("ui-frame", W, PH)); // 전용 → 공통 프레임 순
-  if (bg) panel.addChild(bg);
+  if (bg) {
+    // 포토카드는 전용 배경판(gate-photo-board)이 이미 그려지므로, 공통 프레임(gate-panel) 폴백을
+    // gate_photo 그룹과 분리해 독립적으로 옮기거나 숨길 수 있게 한다(에디터 "숨김" 체크박스).
+    if (photo) {
+      const bgWrap = new Container();
+      const bgp = lpos("gate_panel", { x: 0, y: 0 });
+      bgWrap.x = bgp.x;
+      bgWrap.y = bgp.y;
+      bgWrap.addChild(bg);
+      panel.addChild(bgWrap);
+      editable(lk("gate_panel"), bgWrap); // → gate_photo_panel
+    } else {
+      panel.addChild(bg);
+    }
+  }
   if (bgTex && !noPanel) {
     // 배경 이미지 (패널 채움 — 가로 기준, 상단 유지·하단 크롭) + 흰 오버레이 — 어두운 텍스트 가독 유지
     const sp = new Sprite(bgTex);
@@ -1875,8 +1889,21 @@ export function renderGate(
     // 레이아웃 에디터 토글 시 리드로우 생략 — 이 화면은 판정 결과 1회성이라 다시 그리면 사라진다.
     // (등록된 gate_pick_* 항목은 그대로 남아 그 자리에서 조정 가능)
     setEditorToggleHook(() => true);
-    // 배경 이미지 위 가독성 확보 — 반투명 화이트 시트 (레이아웃 에디터: gate_pick_sheet)
-    chromeGrp("gate_pick_sheet", new Graphics().roundRect(10, 2, W - 20, PH - 14, 20).fill({ color: 0xffffff, alpha: 0.88 }));
+    // 배경 이미지 위 가독성 확보 — 관문 패널 프레임 슬롯(gate-panel) 업로드 시 이미지,
+    // 없으면 기존 반투명 화이트 시트 (레이아웃 에디터: gate_pick_sheet)
+    // 아트는 원본 비율 유지(contain·중앙 정렬) — 프레임 크기에 맞춰 늘리지 않는다
+    const sheetTex = skinTex("gate-panel");
+    let sheetSkin: Container | null = null;
+    if (sheetTex) {
+      const ss = Math.min((W - 20) / sheetTex.width, (PH - 14) / sheetTex.height) * skinScale("gate-panel");
+      const sp = new Sprite(sheetTex);
+      sp.scale.set(ss);
+      sp.x = 10 + (W - 20 - sheetTex.width * ss) / 2;
+      sp.y = 2 + (PH - 14 - sheetTex.height * ss) / 2;
+      sheetSkin = sp;
+    }
+    chromeGrp("gate_pick_sheet", sheetSkin
+      ?? new Graphics().roundRect(10, 2, W - 20, PH - 14, 20).fill({ color: 0xffffff, alpha: 0.88 }));
     // 첫 등장 시 카드 선택 시스템 안내 (기기당 1회)
     guide("gate_pick", "yuwol", "무대 성적이 좋을수록 <b>연습으로 모은 카드</b>를 더 많이 쓸 수 있어! 고른 카드의 효과는 <b>게이지에 적용되고 소모</b>돼. PERFECT면 2장까지!");
     const GN: Record<MiniGameGrade, string> = { perfect: "PERFECT ✨", good: "GOOD 👍", clear: "CLEAR ✔" };
@@ -1952,6 +1979,13 @@ export function renderGate(
     const drawHand = (): void => {
       hand.removeChildren();
       const nCards = shown.length;
+      // 심볼·별을 카드마다 반복 키로 등록 — 첫 카드가 대표, 나머지는 복제 (보류 행·카드덱과 같은 규약).
+      // drawHand가 탭마다 다시 그리므로 등록도 매번 새로 잡는다.
+      const seen = new Set<string>();
+      const reg2 = (name: string, g: Container): void => {
+        if (seen.has(name)) editableClone(name, g);
+        else { seen.add(name); editable(name, g); }
+      };
       shown.forEach(({ c: card, i }, iPos) => {
         const t = cardTemplates.find((x) => x.id === card.templateId);
         const angle = fanAngle(iPos, nCards); // 연습 결과 카드와 같은 부채꼴 규격 (두 장이면 ±10°)
@@ -1961,26 +1995,50 @@ export function renderGate(
         cc.rotation = rad;
         cc.x = angle * 3.4;
         cc.y = on ? -36 : 0; // 선택 시 위로
-        const bg2 = new Graphics().roundRect(-CW / 2, -CH, CW, CH, 11)
-          .fill(on ? 0xffe4f0 : 0xf6f0fc)
-          .stroke({ width: on ? 3 : 2.5, color: on ? PINK : GRADE_COLOR[card.grade] });
+        /** 카드 안 조각을 오프셋 그룹으로 등록 — 저장 좌표는 모든 카드에 공통 적용 */
+        const piece = (name: string, child: Container, px: number, py: number): void => {
+          child.x = px;
+          child.y = py;
+          const g = new Container();
+          const q = pos(name, { x: 0, y: 0 });
+          g.x = q.x;
+          g.y = q.y;
+          g.addChild(child);
+          cc.addChild(g);
+          reg2(name, g);
+        };
+        // 카드 프레임 — 연습 결과 카드 앞면(train-result-card) 아트 공용, 없으면 기존 벡터
+        const cardArt = skinFit("train-result-card", CW, CH);
+        let bg2: Container;
+        if (cardArt) {
+          cardArt.x = -CW / 2;
+          cardArt.y = -CH;
+          bg2 = cardArt;
+        } else {
+          bg2 = new Graphics().roundRect(-CW / 2, -CH, CW, CH, 11)
+            .fill(on ? 0xffe4f0 : 0xf6f0fc)
+            .stroke({ width: on ? 3 : 2.5, color: on ? PINK : GRADE_COLOR[card.grade] });
+        }
+        cc.addChild(bg2);
+        if (cardArt && on) // 아트 카드의 선택 표시 — 분홍 링 (벡터 카드는 스트로크가 담당)
+          cc.addChild(new Graphics().roundRect(-CW / 2, -CH, CW, CH, 11).stroke({ width: 3, color: PINK }));
         // 게이지 심볼 — 카드가 올려주는 게이지 아트, 하나도 없으면 이모지로 폴백
         const symRow = gaugeSymbol(card, CW, 24);
         let ic: Container;
+        let icx: number, icy: number;
         if (symRow) {
           ic = symRow;
-          ic.x = -CW / 2;
-          ic.y = -CH + 8;
+          icx = -CW / 2;
+          icy = -CH + 8;
         } else {
           const e = txt(t?.icon ?? "", 22, INK);
-          e.x = -e.width / 2;
-          e.y = -CH + 12;
+          icx = -e.width / 2;
+          icy = -CH + 12;
           ic = e;
         }
+        piece("gate_pick_hand_sym", ic, icx, icy);
         // 판정등급 — 등급별 별 아트, 없으면 ★ 텍스트 (같은 박스에 중앙 정렬)
-        const st = starNode(card.grade, 54, 15);
-        st.x = -54 / 2;
-        st.y = -CH + 44;
+        piece("gate_pick_hand_star", starNode(card.grade, 54, 15), -54 / 2, -CH + 44);
         const eff = cardEffect(card, cardTemplates);
         const first = Object.entries(eff)[0];
         const fx = txt(first ? `${GLBL[first[0]] ?? first[0]}+${first[1]}` : "", 9.5, INK, true);
@@ -1989,7 +2047,7 @@ export function renderGate(
         const nm = txt(t?.name?.replace(" 카드", "") ?? "", 9.5, SUB, true);
         nm.x = -nm.width / 2;
         nm.y = -CH + 88;
-        cc.addChild(bg2, ic, st, fx, nm);
+        cc.addChild(fx, nm);
         cc.eventMode = "static";
         cc.cursor = "pointer";
         cc.on("pointertap", () => {

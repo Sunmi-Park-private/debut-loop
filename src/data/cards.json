@@ -5,7 +5,10 @@
     "icon": "🎤",
     "source": "vocal",
     "baseGauges": {
-      "skill": 6
+      "skill": 7,
+      "mental": 5,
+      "reputation": 4,
+      "bond": 1
     }
   },
   {
@@ -15,7 +18,10 @@
     "source": "dance",
     "baseGauges": {
       "skill": 4,
-      "mental": 2
+      "mental": 2,
+      "bond": 1,
+      "capital": 1,
+      "reputation": 4
     }
   },
   {
@@ -25,7 +31,9 @@
     "source": "promo",
     "baseGauges": {
       "reputation": 6,
-      "bond": -1
+      "bond": -1,
+      "mental": 1,
+      "capital": 5
     }
   },
   {
@@ -35,7 +43,9 @@
     "source": "funds",
     "baseGauges": {
       "capital": 6,
-      "mental": 2
+      "mental": 2,
+      "reputation": 2,
+      "skill": -1
     }
   },
   {
@@ -45,7 +55,8 @@
     "source": "audition",
     "baseGauges": {
       "reputation": 5,
-      "skill": 1
+      "skill": 4,
+      "mental": 3
     }
   },
   {
@@ -54,9 +65,10 @@
     "icon": "🤝",
     "source": "bond",
     "baseGauges": {
-      "mental": 5,
+      "mental": 6,
       "bond": 8,
-      "capital": -2
+      "capital": -2,
+      "reputation": 4
     }
   }
 ]

@@ -15,6 +15,7 @@ export interface Pos {
   scale?: number; fontSize?: number; color?: string;
   texts?: Array<string | null>;
   textForce?: boolean;
+  hidden?: boolean; // 배경판 아트 업로드로 필요 없어진 폴백 프레임 등을 화면에서 끄기 위한 스위치
 }
 
 const layout: Record<string, Pos> = { ...(layoutJson as Record<string, Pos>) };
@@ -79,7 +80,7 @@ export function setPos(name: string, p: Pos): void {
 export function setStyle(name: string, patch: Partial<Omit<Pos, "x" | "y">>): void {
   const cur = layout[name] ?? { x: 0, y: 0 };
   const next: Pos = { ...cur, ...patch };
-  for (const k of ["scale", "fontSize", "color", "texts", "textForce"] as const) {
+  for (const k of ["scale", "fontSize", "color", "texts", "textForce", "hidden"] as const) {
     if (patch[k] === undefined && k in patch) delete next[k];
   }
   // 전부 null인 덮어쓰기 배열은 의미가 없으니 키째 제거 (저장 파일이 지저분해지지 않게)
