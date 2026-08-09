@@ -97,7 +97,9 @@ export function setEditorMode(next: boolean): void {
   interact = false; // 에디터를 껐다 켜면 항상 편집 모드부터
   panelEl().style.display = on ? "block" : "none";
   const handled = toggleHook?.(next) ?? false;
-  if (!handled) redraw();
+  // redraw()를 직접 부르면 안 된다 — 판정결과·연습 보드 같은 오버레이가 등록한 redrawHook을
+  // 무시하고 앱 화면을 처음부터 다시 그려, 에디터를 켜는 순간 그 화면이 닫혀버린다(점검 화면으로 리셋).
+  if (!handled) triggerRedraw();
   if (on) { mountShield(); refreshPanel(); }
   else { unmountShield(); unmountGrid(); clearHighlight(); }
   notifyMode();
