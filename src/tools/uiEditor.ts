@@ -182,7 +182,23 @@ const mkCell = (slot: UiSkinSlot): HTMLElement => {
   return cell;
 };
 
-for (const screen of uiSkinScreens) {
+// uiskins.json은 vite watch 제외 — 번들 모듈이 옛 내용일 수 있다 (layout.json과 같은 stale-module 함정).
+// 그리기 전에 디스크(GET /__uiskins)와 동기화해, 파일에 새로 추가된 슬롯이 에디터에 바로 보이게 한다.
+async function syncFromDisk(): Promise<void> {
+  try {
+    const r = await fetch("/__uiskins");
+    if (!r.ok) return;
+    const fresh = (await r.json()) as { screens: typeof uiSkinScreens };
+    uiSkinScreens.splice(0, uiSkinScreens.length, ...fresh.screens);
+  } catch { /* dev 서버 밖 — 번들 값 그대로 */ }
+}
+
+function renderAll(): void {
+  sections.innerHTML = "";
+  for (const screen of uiSkinScreens) renderScreen(screen);
+}
+
+function renderScreen(screen: (typeof uiSkinScreens)[number]): void {
   const sec = document.createElement("div");
   sec.innerHTML = `<h2 style="margin:26px 0 10px;font-size:15px;border-bottom:2px solid #3a2555;padding-bottom:8px">📱 ${screen.label} <small style="color:#8a76a8;font-weight:400">· ${screen.slots.length}개 컴포넌트</small></h2>`;
   if (screen.id === "common") {
@@ -193,7 +209,7 @@ for (const screen of uiSkinScreens) {
     for (const slot of screen.slots) row.appendChild(mkCell(slot));
     sec.appendChild(row);
     sections.appendChild(sec);
-    continue;
+    return;
   }
   if (screen.id === "gate" || screen.id === "training") {
     // 라벨 접두어("게임 · " · "보컬 연습 · ") 기준 그룹 — 그룹마다 구분선 + 새 줄에서 시작
@@ -217,7 +233,7 @@ for (const screen of uiSkinScreens) {
       sec.appendChild(gg);
     }
     sections.appendChild(sec);
-    continue;
+    return;
   }
   const grid = document.createElement("div");
   grid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px";
@@ -232,3 +248,5 @@ for (const screen of uiSkinScreens) {
   }
   sections.appendChild(sec);
 }
+
+void syncFromDisk().then(renderAll);

@@ -106,12 +106,14 @@ function showBadge(n: number): void {
   if (n === 0) { badge?.remove(); badge = null; return; }
   if (!badge) {
     const el = document.createElement("div");
+    // 표시 전용 — 클릭 동작 없음. 예전엔 누르면 미저장 수정을 통째로 버렸는데(DELETE),
+    // '미저장'이라는 라벨이 저장 버튼처럼 보여 디자이너가 오인 클릭하는 사고가 났다.
+    // 되돌리기가 필요하면 플로우 에디터에서 명시적으로 한다.
     el.style.cssText =
       "position:fixed;top:10px;right:10px;z-index:1200;background:#ff7fb0;color:#fff;" +
-      "font:700 11px -apple-system,sans-serif;padding:5px 10px;border-radius:999px;cursor:pointer;" +
-      "box-shadow:0 2px 8px rgba(0,0,0,.25)";
-    el.title = "저장되지 않은 대사 수정 — 누르면 되돌립니다";
-    el.onclick = () => { void fetch("/__beatspreview", { method: "DELETE" }); };
+      "font:700 11px -apple-system,sans-serif;padding:5px 10px;border-radius:999px;" +
+      "pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.25)";
+    el.title = "플로우 에디터의 미저장 수정이 반영 중 — 에디터에서 💾 저장하면 파일에 남습니다";
     document.body.appendChild(el);
     badge = el;
   }

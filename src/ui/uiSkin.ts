@@ -9,6 +9,22 @@ export interface UiSkinScreen { id: string; label: string; slots: UiSkinSlot[] }
 export const uiSkinScreens = (uiskinsJson as unknown as { screens: UiSkinScreen[] }).screens;
 export const allUiSkinSlots = (): UiSkinSlot[] => uiSkinScreens.flatMap((s) => s.slots);
 
+// uiskins.json은 vite watch 제외 — 서버가 옛 모듈을 서빙할 수 있다 (layout.json과 같은 stale-module 함정).
+// 부팅 시 디스크(GET)와 동기화해 파일에 직접 추가된 슬롯이 게임에도 반영되게 한다. (dev 전용)
+if (import.meta.hot) {
+  void fetch("/__uiskins")
+    .then((r) => (r.ok ? (r.json() as Promise<{ screens: UiSkinScreen[] }>) : null))
+    .then(async (fresh) => {
+      if (!fresh || JSON.stringify(fresh.screens) === JSON.stringify(uiSkinScreens)) return;
+      uiSkinScreens.splice(0, uiSkinScreens.length, ...fresh.screens);
+      // 목록 교체만으로는 부족하다 — 부팅 로드(loadUiSkins)가 옛 목록으로 이미 지나갔으면
+      // 새 슬롯의 텍스처가 loaded에 없어 아트가 안 뜬다. 다시 로드하고 화면을 갱신한다.
+      await loadUiSkins();
+      void import("./editor").then((e) => e.triggerRedraw());
+    })
+    .catch(() => {});
+}
+
 const loaded = new Map<string, { tex: Texture; raw: Texture; slot: UiSkinSlot }>();
 
 // 레이아웃 에디터 매핑 표시용 — 생성한 노드에 출처 슬롯 id를 남긴다.

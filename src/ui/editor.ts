@@ -16,6 +16,11 @@ import { slotIdOf, slotMeta, type UiSkinSlot } from "./uiSkin";
 let on = new URLSearchParams(location.search).has("editor");
 let redraw: () => void = () => {};
 const visible = new Map<string, Container>();
+// 개발용 검증 훅 — E2E에서 등록된 컴포넌트 목록을 조회 (게임 로직 미사용)
+if (typeof window !== "undefined") {
+  (window as unknown as { __layoutKeys?: () => string[] }).__layoutKeys =
+    () => [...visible.entries()].map(([k, c]) => `${k}${c.destroyed ? "!d" : ""}${c.parent ? "" : "!p"}`);
+}
 
 // 같은 레이아웃 키를 여러 자리에서 되풀이해 쓰는 화면이 있다 (카드덱 8칸의 심볼·별·이름…).
 // 좌표는 한 벌만 저장하는 게 맞지만, 대표 한 칸만 등록해 두면 나머지 칸을 눌렀을 때

@@ -8,7 +8,7 @@ import { templateGauges } from "../engine/cards";
 import { pressable } from "./press";
 import { TRAIN_DRAIN, TRAIN_GRADE_TO_CARD, resolveTraining } from "../engine/training";
 import { MATCH_CARDS } from "../engine/minigames";
-import { mountEngine, txt, btn, fxConfetti, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
+import { mountEngine, txt, btn, btnText, miniBgId, fxConfetti, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
 import { skinNode, skinFit, skinNatural, skinTexTrim, skinScale } from "./uiSkin";
 import { cardTemplates } from "../data";
 import { pos } from "./layout";
@@ -172,7 +172,7 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
   /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다.
    *  기본값은 btn()이 잡아준 가운데 정렬이라 저장된 값이 없으면 지금 배치 그대로다. */
   const btnLabel = (name: string, b: Container): void => {
-    const t = b.children.find((c): c is Text => c instanceof Text);
+    const t = btnText(b); // pressable()의 inner 래핑 때문에 얕은 탐색으로는 못 찾는다
     if (!t) return;
     const key = ns ? `${ns}_${name}_text` : `${name}_text`;
     const q = pos(key, { x: Math.round(t.x), y: Math.round(t.y) });
@@ -564,13 +564,18 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     go.y = 330;
     grp("train_res_drain", drain);
     grp("train_res_btn", go);
+    btnLabel("train_res_btn", go); // 버튼 문구("계속 →")를 별도 키(train_res_btn_text)로 — 아트 교체 시 문구만 미세조정
   };
 
   const showFail = (a: Activity): void => {
     clear();
     setNs(a.id, () => showFail(a)); // 활동별 전용 키 + 배율 변경 시 이 화면만 재렌더
-    setChrome(true); // 실패 화면도 패널 복원
-    // 실패 화면 배경 프레임 — 맨 뒤. 미업로드면 깔지 않는다(연습 패널이 그대로 보인다)
+    // 미니게임이 깔았던 종목 배경판을 실패 화면에서도 그대로 유지 — 안 깔면 뒤로 연습 메뉴가 비쳐 보인다.
+    // 재도전·종료를 누르면 다음 화면이 clear()로 body를 비우므로 실패 창과 함께 사라진다.
+    const mini = skinFit(miniBgId(a.id, opts.act), W, H);
+    if (mini) grp("mini_bg", mini); // 게임 화면과 같은 키(<종목>_mini_bg) — 위치 조정도 공유
+    setChrome(!mini); // 배경판이 있으면 게임 화면과 동일하게 패널 프레임 숨김
+    // 실패 화면 배경 프레임 — 배경판 위. 미업로드면 깔지 않는다
     const fbg = skinFit("train-fail-panel", W, H);
     if (fbg) grp("train_fail_bg", fbg);
     const t1 = txt("아쉬워요…", 22, INK, true);

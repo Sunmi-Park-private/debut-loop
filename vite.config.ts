@@ -7,38 +7,19 @@ import { execFileSync, spawn } from 'node:child_process'
 // 리듬 플레이 30초·BGM 루프 기준으로 60초면 충분 (파일 크기·파형 로딩 절감)
 // 알파 mov(ProRes 4444 등) → VP9 알파 WebM 변환 — Chrome/안드로이드 WebView는 mov 알파 재생 불가.
 // iOS(WebKit)는 반대로 VP9 알파가 안 되므로 HEVC 알파(hvc1) .mov 사이블링을 함께 생성 (런타임 videoLoad.ts가 엔진별 선택)
-/** 첫 프레임 좌상단 1픽셀 색 — 알파가 없는 영상의 배경색을 알아낸다 (실패 시 null) */
-function cornerColor(abs: string): string | null {
-  try {
-    // 2×2로 자른다 — 1×1은 4:2:0 크로마가 성립하지 않아 ffmpeg가 거부한다
-    const buf = execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', abs,
-      '-vf', 'crop=2:2:0:0', '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'],
-      { maxBuffer: 1024 })
-    if (buf.length < 3) return null
-    const hex = [...buf.subarray(0, 3)].map((n) => n.toString(16).padStart(2, '0')).join('')
-    return `0x${hex}`
-  } catch { return null }
-}
-
 function movToAlphaWebm(abs: string): string | void {
   if (abs.endsWith('.webm')) { alphaMovSibling(abs, ['-c:v', 'libvpx-vp9']); return } // webm 직접 업로드 → iOS용 mov만 추가 생성
   // mov(알파 있음)·mp4(알파 없음) 모두 webm으로 통일한다. mp4는 알파 채널이 없지만
   // yuva420p로 인코딩해도 전부 불투명으로 들어갈 뿐이라 재생·합성 경로가 같아진다.
+  // (한때 mp4의 단색 배경을 colorkey로 빼는 시도를 했으나, 인물의 어두운 부분까지 파먹어 되돌렸다 —
+  //  투명 배경이 필요하면 알파를 살린 mov/webm으로 올린다)
   if (!abs.endsWith('.mov') && !abs.endsWith('.mp4')) return
   const out = abs.slice(0, abs.lastIndexOf('.')) + '.webm'
-  // mp4는 알파가 없어 배경이 단색(빨강·초록 등)으로 눌려 들어온다 — 그 색을 키로 빼서 투명하게.
-  // 배경색은 첫 프레임 좌상단에서 읽는다(알파를 평탄화한 렌더는 모서리가 곧 배경색).
-  // 배경은 평탄화된 **단색**이라 아주 좁은 범위만 빼면 된다. 넓게 잡으면 어두운 머리·의상·
-  // 그림자가 배경색과 가까워져 함께 지워진다(빨강 계열 배경에서 특히). 0.05/0.02가 그 경계다.
-  // 근본 해결은 알파를 살린 mov/webm 업로드 — 키잉은 평탄화본을 되살리는 차선책이다.
-  const key = abs.endsWith('.mp4') ? cornerColor(abs) : null
-  const vf = key ? ['-vf', `format=rgba,colorkey=${key}:0.05:0.02,format=yuva420p`] : []
-  execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', abs, ...vf,
+  execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', abs,
     '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p', '-b:v', '0', '-crf', '32',
     '-cpu-used', '4', '-row-mt', '1', '-an', out]) // 인코딩 동안 dev 서버 블로킹 — 에디터가 대기 표시
   if (abs.endsWith('.mp4')) {
-    // iOS용 HEVC 알파 mov는 **배경을 뺀 webm**에서 만든다 — 원본 mp4엔 알파가 없어 소용없다.
-    // (webm 직접 업로드 경로와 같은 방식) 원본 mp4는 역할이 끝났으므로 정리한다.
+    // iOS는 VP9 webm을 못 읽으므로 변환본에서 HEVC mov를 함께 만든다. 원본 mp4는 역할이 끝났으므로 정리
     alphaMovSibling(out, ['-c:v', 'libvpx-vp9'])
     fs.unlinkSync(abs)
   } else if (!alphaMovSibling(abs)) fs.unlinkSync(abs) // HEVC 인코딩 실패 시 원본 mov 정리 (webm만 유지)

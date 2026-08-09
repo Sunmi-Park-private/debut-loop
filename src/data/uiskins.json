@@ -551,7 +551,7 @@
           "file": "assets/ui/train-fail-panel.webp",
           "size": [
             394,
-            610
+            606
           ],
           "mode": "stretch",
           "vid": true
@@ -1043,6 +1043,18 @@
           "mode": "stretch",
           "small": true,
           "scale": 0.5
+        },
+        {
+          "id": "gate-rps-opp-frame",
+          "label": "오디션 대비 · 상대방 손 프레임 (직전 손 표시) — 1배율=원본 크기",
+          "file": "assets/ui/gate-rps-opp-frame.webp",
+          "size": [
+            150,
+            130
+          ],
+          "mode": "stretch",
+          "small": true,
+          "natural": true
         },
         {
           "id": "train-rest-bg",
@@ -1576,7 +1588,7 @@
           "file": "assets/ui/gate-fail-panel.webp",
           "size": [
             394,
-            600
+            606
           ],
           "mode": "stretch",
           "vid": true
