@@ -414,7 +414,10 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
       return;
     }
     // 멤버 점검 보드 — 📷 이벤트 직후·W18 락인 연출·치트 (주간 연습보다 먼저)
-    if (c.memberWindowOpen || memberBoardForced) {
+    // 단, 관문이 진행 중이면 보드는 기다린다 — 안 그러면 미니게임 화면 위에 보드가 그려져
+    // 게임이 사라진 것처럼 보이고 키·탭이 전부 보드로 가버린다 (주간 연습도 같은 규칙).
+    // 치트(memberBoardForced)는 의도적 진입이므로 그대로 연다.
+    if ((c.memberWindowOpen && !c.pendingGate) || memberBoardForced) {
       if (!c.state.membersLocked) // 치트 진입에도 표시 — 자원 사슬(카드→진행권→개최) 3단계 안내
         guideSeq("memberBoard2", [
           ["yuwol", "여기가 <b>멤버 점검 보드</b>야. 남은 자리는 우리가 직접 채워 — 멤버를 탭하면 상태를 볼 수 있어."],

@@ -343,84 +343,91 @@
     "y": -8
   },
   "gate": {
-    "x": 19,
-    "y": 43
+    "x": 15,
+    "y": 40
   },
   "gate_exit": {
-    "x": 4,
-    "y": -13
+    "x": -15,
+    "y": 80
   },
   "gate_photo": {
     "x": 26,
     "y": 167
   },
   "gate_photo_pick_btn": {
-    "x": -9,
-    "y": -163,
+    "x": 25,
+    "y": -90,
     "texts": [
       "확인"
-    ]
+    ],
+    "scale": 0.85
   },
   "gate_photo_pick_grade": {
-    "x": -2,
-    "y": 69
+    "x": -5,
+    "y": 30
   },
   "gate_photo_pick_hand": {
-    "x": -8,
-    "y": -160
+    "x": 0,
+    "y": -180,
+    "scale": 0.95
   },
   "gate_photo_pick_sum": {
     "x": -5,
-    "y": -170
+    "y": -200
   },
   "gate_photo_pick_ticket": {
-    "x": 5,
-    "y": -470
+    "x": 15,
+    "y": -480
   },
   "gate_photo_title": {
     "x": 14,
     "y": -2
   },
   "gate_pick_btn": {
-    "x": 39,
-    "y": 60,
+    "x": 55,
+    "y": 70,
     "texts": [
       "확인"
     ],
     "scale": 0.75
   },
   "gate_pick_desc": {
-    "x": 55,
-    "y": 400,
+    "x": 65,
+    "y": 390,
     "color": "#5b4a70",
-    "scale": 0.75
+    "scale": 0.75,
+    "texts": [
+      "사용할 카드를 2장까지 선택하세요.                                                 효과가 게이지에 적용됩니다"
+    ]
   },
   "gate_pick_grade": {
-    "x": 0,
-    "y": 180,
+    "x": -15,
+    "y": 130,
     "scale": 1.1
   },
   "gate_pick_hand": {
-    "x": 0,
-    "y": -50
+    "x": -15,
+    "y": -110,
+    "scale": 1.1
   },
   "gate_pick_sum": {
-    "x": -4,
-    "y": -50,
+    "x": -15,
+    "y": -130,
     "scale": 1.1
   },
   "gate_pick_ticket": {
-    "x": 115,
-    "y": -270,
+    "x": 130,
+    "y": -300,
     "color": "#5b4a70",
     "texts": [
       "센터 대결 통과증 +3"
     ]
   },
   "gate_title": {
-    "x": 105,
+    "x": 52,
     "y": 10,
-    "scale": 1.1
+    "scale": 1.1,
+    "color": "#5b4a70"
   },
   "gauges": {
     "x": 64,
@@ -1104,11 +1111,8 @@
     ]
   },
   "easy_start_text": {
-    "x": 57,
-    "y": 14,
-    "texts": [
-      "이지 · 2열  (Space)"
-    ]
+    "x": 45,
+    "y": 14
   },
   "funds_train_fail_bg": {
     "x": 0,
@@ -1119,8 +1123,8 @@
     "y": 80
   },
   "hard_start_text": {
-    "x": 57,
-    "y": 14,
+    "x": 45,
+    "y": 15,
     "texts": [
       "하드 · 3열 + 보너스"
     ]
@@ -1143,24 +1147,25 @@
     ]
   },
   "block_dodge_msg": {
-    "x": 125,
-    "y": -20,
+    "x": 115,
+    "y": 45,
     "color": "#5b4a70",
     "texts": [
       "밝은 타일에 올라타 반격하세요!"
     ]
   },
   "block_dodge_enemy": {
-    "x": 135,
-    "y": -40,
+    "x": 85,
+    "y": 70,
     "color": "#5b4a70",
     "texts": [
       "진범의 그림자"
-    ]
+    ],
+    "hidden": true
   },
   "block_dodge_desc": {
-    "x": -63,
-    "y": 70,
+    "x": -65,
+    "y": 140,
     "color": "#5b4a70",
     "texts": [
       "사보타주 저지 · 화면 좌/우 탭 = 이동(한 줄 하강)                                  💥 회피 · ✨ 반격 · 💖 회복 · 🛡 방어"
@@ -1306,12 +1311,15 @@
     "scale": 1.1
   },
   "gate_pick_hand_sym": {
-    "x": 30,
+    "x": 31,
     "y": 10
   },
   "gate_photo_pick_desc": {
-    "x": 5,
-    "y": 280
+    "x": -5,
+    "y": 250,
+    "texts": [
+      "사용할 카드를 1장까지 선택하세요.                                                   효과가 게이지에 적용됩니다."
+    ]
   },
   "gate_photo_tab": {
     "x": 0,
@@ -1319,5 +1327,46 @@
     "texts": [
       "2회차 · W19 · D-35 · 카드 1 "
     ]
+  },
+  "clue_dodge_msg": {
+    "x": 15,
+    "y": 30
+  },
+  "clue_dodge_enemy": {
+    "x": -5,
+    "y": 30
+  },
+  "clue_dodge_desc": {
+    "x": 42,
+    "y": 14,
+    "texts": [
+      "단서 대조 · 화면 좌/우 탭 = 이동(한 줄 하강) \\n💥 회피 · ✨ 반격 · 💖 회복 · 🛡 방어"
+    ]
+  },
+  "block_dodge_board": {
+    "x": -5,
+    "y": 70
+  },
+  "block_dodge_hp": {
+    "x": -5,
+    "y": 70
+  },
+  "block_dodge_grid": {
+    "x": -5,
+    "y": 70
+  },
+  "gate_photo_panel": {
+    "x": 14,
+    "y": 0,
+    "scale": 0.9
+  },
+  "gate_pick_sheet": {
+    "x": -55,
+    "y": -60,
+    "scale": 1.3
+  },
+  "gate_pick_hand_star": {
+    "x": 1,
+    "y": 0
   }
 }
