@@ -17,8 +17,8 @@ import { easeIn, easeOut } from "./ease";
 import { pressable, type PressOpts } from "./press";
 import { cardTemplates, tuning, beatmaps, tickets } from "../data";
 import { skinNode, skinTex, skinTexTrim, skinFit, skinNatural, skinCover, skinScale } from "./uiSkin";
-import { pos } from "./layout";
-import { btnText, registerBtnLabel, gateKeyPrefix } from "./btnLabel";
+import { pos, inheritEntry } from "./layout";
+import { registerBtnLabel, gateKeyPrefix } from "./btnLabel";
 import { editable, editableClone, inputBlocked, setEditorToggleHook, setRedrawHook } from "./editor";
 import { buzz } from "./haptics";
 import { fullRect } from "./stage";
@@ -56,8 +56,6 @@ export const miniBgId = (ns: string, act: number): string => {
   };
   return MINI_BG[ns] ?? "";
 };
-
-export { btnText }; // 이전 위치에서 임포트하던 화면들(memberBoard 등) 호환
 
 export const btn = (label: string, w: number, color: number, onTap: () => void, skinId = "gate-btn", pressOpts?: PressOpts): Container => {
   const b = new Container();
@@ -1767,9 +1765,15 @@ export function renderGate(
   // 한 관문을 맞출 때 다른 관문이 틀어진다. 관문 id로 키를 나누고, 저장값이 없으면
   // 기존 공용 키를 승계해 분리 직후 배치가 그대로 유지되게 한다.
   const pre = gateKeyPrefix(gate.id);
-  const lk = (base: string): string => base.replace(/^gate/, pre);
+  // 승계는 좌표뿐 아니라 배율·색·문구까지 통째로 — 표시 속성이 빠지면 분리 직후 화면·문구가 달라진다.
+  // (메모리에만 채우는 읽기 전용 승계라 저장 파일에는 복사본이 생기지 않는다)
+  const lk = (base: string): string => {
+    const k = base.replace(/^gate/, pre);
+    inheritEntry(k, base);
+    return k;
+  };
   const lpos = (base: string, def: { x: number; y: number }): { x: number; y: number } =>
-    pos(lk(base), pos(base, def));
+    pos(lk(base), def);
   const p = lpos("gate", { x: Math.round((430 - W) / 2), y: 145 });
   panel.x = p.x;
   panel.y = p.y;
@@ -1826,7 +1830,7 @@ export function renderGate(
   // 크롬 그룹: layout.json 오프셋 + 에디터 드래그 (mountEngine의 grp와 동일 패턴)
   const chromeGrp = (name: string, ...items: Container[]): void => {
     const g2 = new Container();
-    const gp = lpos(name, { x: 0, y: 0 }); // 포토카드는 gate_photo_* 전용 키 (미저장 시 공통 키 승계)
+    const gp = lpos(name, { x: 0, y: 0 }); // 관문별 전용 키(gate_act2_* 등) — 저장값이 없으면 공통 키 항목을 통째로 승계
     g2.x = gp.x;
     g2.y = gp.y;
     g2.addChild(...items);

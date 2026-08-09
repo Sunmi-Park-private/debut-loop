@@ -24,6 +24,19 @@ const layout: Record<string, Pos> = { ...(layoutJson as Record<string, Pos>) };
 // 이번 세션에 건드린 키 → 건드린 속성 이름 (부팅 동기화가 덮지 않도록 먼저 선언한다)
 const dirty = new Map<string, Set<string>>();
 
+// 공용 키에서 통째로 승계해 메모리에만 채워 둔 키 (아직 layout.json에는 없다)
+const inherited = new Set<string>();
+
+/** 키를 관문별로 나눈 컴포넌트가, 제 이름의 저장값이 아직 없을 때 공용 키의 항목을 통째로 승계한다.
+ *  x/y만 물려받으면 배율·색·문구 같은 표시 속성이 빠져 분리 직후 화면이 달라진다.
+ *  **읽기 전용 승계** — dirty로 표시하지 않으므로 저장 파일에는 복사본이 생기지 않는다.
+ *  (에디터로 실제 편집하는 순간에만 mark()가 제 이름으로 굳힌다) */
+export function inheritEntry(name: string, from: string): void {
+  if (layout[name] !== undefined || layout[from] === undefined) return;
+  layout[name] = { ...layout[from] };
+  inherited.add(name);
+}
+
 // dev 서버는 layout.json을 감시 대상에서 빼두었다(저장할 때마다 게임이 리로드되면 런이 날아가므로).
 // 그 탓에 Vite가 옛 모듈을 물고 있는 구간이 생기고, 새로고침하면 저장한 좌표가 아니라
 // 서버 캐시의 옛 값이 뜬다. 부팅 때 디스크를 직접 읽어(/__layout GET) 덮어써 맞춘다.
@@ -38,6 +51,7 @@ if (import.meta.hot) {
       for (const k of Object.keys(layout)) {
         if (dirty.has(k) || k in disk) continue;
         delete layout[k];
+        inherited.delete(k); // 승계본은 다음 렌더에서 다시 채워진다
         n++;
       }
       for (const [k, v] of Object.entries(disk)) {
@@ -45,6 +59,7 @@ if (import.meta.hot) {
         if (dirty.has(k)) continue;
         if (JSON.stringify(layout[k]) !== JSON.stringify(v)) n++;
         layout[k] = v;
+        inherited.delete(k); // 디스크에 제 항목이 있으면 더는 승계본이 아니다
       }
       if (n > 0) void import("./editor").then((e) => e.triggerRedraw());
     })
@@ -62,6 +77,10 @@ export function onDirty(cb: () => void): void { dirtyCb = cb; }
 
 function mark(name: string, fields: string[]): void {
   const s = dirty.get(name) ?? new Set<string>();
+  // 승계로 채워진 항목을 처음 편집하면, 그 항목 전체(좌표+표시 속성)를 제 이름으로 굳힌다.
+  // 고친 속성만 저장하면 x/y 없는 반쪽 항목이 남아 다음 부팅에 좌표가 깨지고,
+  // 승계로만 들고 있던 나머지 속성(배율·색 등)도 함께 사라진다.
+  if (inherited.delete(name)) for (const f of Object.keys(layout[name] ?? {})) s.add(f);
   for (const f of fields) s.add(f);
   dirty.set(name, s);
   dirtyCb?.();

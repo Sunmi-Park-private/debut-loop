@@ -26,6 +26,7 @@ if (typeof window !== "undefined") {
     const ts = scan(c).texts.map((t) => ({
       text: String(t.text).slice(0, 40), x: t.x, y: t.y, w: t.width,
       wrap: t.style.wordWrap, wrapW: t.style.wordWrapWidth, fs: t.style.fontSize,
+      fill: String(t.style.fill), anchorX: t.anchor.x,
     }));
     return { x: c.x, y: c.y, w: c.width, visible: c.visible, texts: ts };
   };
@@ -186,7 +187,9 @@ function scan(c: Container): Scan {
 export function mutateTextKeepingCenter(t: Text, edit: () => void): void {
   const w0 = t.width, h0 = t.height;
   edit();
-  t.x += (w0 - t.width) / 2;
+  // 가운데 정렬(anchor.x = 0.5)이 켜져 있으면 Pixi가 이미 중심을 잡아 준다 — 여기서 또 밀면 두 번 보정돼
+  // 문구를 고칠수록 왼쪽으로 흘러간다. 앵커 값에 비례한 보정만 남긴다(0 → 절반, 0.5 → 0).
+  t.x += (w0 - t.width) * (0.5 - t.anchor.x);
   t.y += (h0 - t.height) / 2;
 }
 
@@ -912,8 +915,12 @@ function buildRow(name: string, c: Container): HTMLDivElement {
       // 앵커가 바뀌면 같은 x가 다른 자리를 뜻한다 — 지금 보이는 위치를 유지하도록 x를 환산한다
       const half = c.width / 2;
       const nx = Math.round(cb.checked ? c.x + half : c.x - half);
-      c.anchor.x = cb.checked ? 0.5 : 0;
-      c.x = nx;
+      // 되풀이 인스턴스(editableClone)도 함께 — applyStoredStyle은 앵커만 입히고 x는 건드리지 않으므로,
+      // 여기서 빠뜨린 사본은 앵커만 바뀌어 제 폭의 절반만큼 밀린다
+      for (const t of instancesOf(name)) {
+        if (t instanceof Text) t.anchor.x = cb.checked ? 0.5 : 0;
+        t.x = nx;
+      }
       setPos(name, { x: nx, y: Math.round(c.y) });
       setStyle(name, { center: cb.checked || undefined });
       markStyled(name);
