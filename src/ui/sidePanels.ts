@@ -150,10 +150,12 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
     // 문구만 다듬을 수가 없다. 일곱 칸의 문구를 한 묶음(side_daily_texts)으로 뺀다.
     const textsG = grp("side_daily_texts", gx, onArt ? 0 : 84);
 
-    // 상단 점선 게이지바 — 아트의 점 7개 자리에 같은 상자 그림을 1/3 크기로 채운다.
-    // 받은 날만 채워져서 진행도가 한눈에 보인다 (데일리 보상을 받으면 그날 칸이 함께 찬다).
+    // 상단 점선 게이지바 — 점은 아트가 그리고, 출석할 때마다 한 칸씩 보라색으로 찬다.
+    // 그 위 1·3·7일차 점에만 선물상자를 얹는다 = 그날 받는 추가 보너스 표식.
     const TRACK_Y = 251, TRACK_X0 = 51, TRACK_STEP = 43; // 렌더 화면에서 점 중심 역산
     const TRACK_W = 25, TRACK_H = 17;                    // 칸 상자(74×51)의 1/3
+    const BONUS_DAYS = [1, 3, 7];
+    const TRACK_GAP = 6; // 점 위로 띄우는 간격
 
     const rewards = ["⭐5", "⭐10", "카드×1", "⭐15", "카드×2", "⭐20", "카드★★★"];
     rewards.forEach((r, i) => {
@@ -219,13 +221,14 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       gridG.addChild(cell);
       reg(cellKey, cell); // 칸 하나씩 옮길 수 있게 (아트 칸 미세 정렬용)
 
-      // 게이지바 채움 — 받은 날(done)만 미니 상자를 올린다. 칸과 같은 슬롯을 쓰므로
-      // 상자 그림을 바꾸면 위아래가 함께 바뀐다. 점 하나씩 따로 옮길 수 있게 전용 키.
-      if (onArt && done) {
+      // 추가 보너스 표식 — 1·3·7일차 점 위에만 상자를 얹는다. 진행도(보라 채움)는
+      // 아트의 점이 담당하므로 상자는 받았는지와 무관하게 늘 보인다.
+      // 칸과 같은 슬롯을 쓰므로 상자 그림을 바꾸면 위아래가 함께 바뀐다.
+      if (onArt && BONUS_DAYS.includes(day)) {
         const mini = skinFit("side-daily-cell-done", TRACK_W, TRACK_H);
         if (mini) {
           const mk = `side_daily_t${day}`;
-          const mp = pos(mk, { x: TRACK_X0 + TRACK_STEP * i - Math.round(TRACK_W / 2), y: TRACK_Y - Math.round(TRACK_H / 2) });
+          const mp = pos(mk, { x: TRACK_X0 + TRACK_STEP * i - Math.round(TRACK_W / 2), y: TRACK_Y - TRACK_H - TRACK_GAP });
           const holder = new Container();
           holder.x = mp.x;
           holder.y = mp.y;
