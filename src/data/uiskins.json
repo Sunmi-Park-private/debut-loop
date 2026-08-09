@@ -1793,14 +1793,15 @@
         {
           "id": "audition-btn-sub",
           "label": "버튼 · 보조 (보류·돌아가기) — 1배율=원본 크기",
-          "file": "assets/ui/audition-btn-sub.png",
+          "file": "assets/ui/audition-btn-sub.webp",
           "size": [
             220,
             52
           ],
           "mode": "stretch",
           "small": true,
-          "natural": true
+          "natural": true,
+          "scale": 0.44
         },
         {
           "id": "audition-btn-ok",
@@ -1895,7 +1896,7 @@
         {
           "id": "audition-card",
           "label": "후보 결과 카드 — 원본 비율 유지",
-          "file": "assets/ui/audition-card.webp",
+          "file": "",
           "size": [
             180,
             200
@@ -1914,7 +1915,7 @@
           "mode": "stretch",
           "small": true,
           "natural": true,
-          "scale": 0.36
+          "scale": 0.44
         }
       ]
     }
