@@ -169,7 +169,7 @@
   },
   "bond_train_res_grade": {
     "x": -62,
-    "y": -10,
+    "y": 10,
     "scale": 1.3
   },
   "card": {
@@ -736,13 +736,13 @@
     "y": 7
   },
   "train_week": {
-    "x": 291,
+    "x": 285,
     "y": 17,
     "fontSize": 16
   },
   "training": {
-    "x": 15,
-    "y": 120,
+    "x": 17,
+    "y": 80,
     "scale": 1
   },
   "vocal_mini_bg": {
@@ -950,23 +950,25 @@
     "color": "#5b4a70"
   },
   "vocal_train_fail_title": {
-    "x": -35,
-    "y": 70,
-    "scale": 1.2
+    "x": -25,
+    "y": 90,
+    "scale": 1.2,
+    "color": "#ffe4f0",
+    "fontSize": 16
   },
   "vocal_train_fail_quit": {
     "x": 35,
-    "y": 77,
+    "y": 100,
     "scale": 0.85
   },
   "vocal_train_fail_retry": {
     "x": 35,
-    "y": 77,
+    "y": 100,
     "scale": 0.85
   },
   "vocal_train_fail_bg": {
-    "x": 30,
-    "y": 30,
+    "x": 35,
+    "y": -10,
     "scale": 0.85
   },
   "board_locked_note": {
@@ -976,17 +978,17 @@
   },
   "dance_train_fail_title": {
     "x": 5,
-    "y": 235,
-    "color": "#ffffff"
+    "y": 136,
+    "color": "#ffe4f0"
   },
   "audition_rps_opp_frame": {
-    "x": 130,
+    "x": 128,
     "y": 290,
     "scale": 0.35
   },
   "audition_rps_opp_hand": {
-    "x": 35,
-    "y": 110,
+    "x": 34,
+    "y": 52,
     "texts": [
       "상대 직전 손모양 "
     ],
@@ -1029,7 +1031,8 @@
   },
   "audition_train_fail_bg": {
     "x": -5,
-    "y": 0
+    "y": 0,
+    "scale": 1
   },
   "audition_train_fail_retry": {
     "x": 0,
@@ -1038,5 +1041,69 @@
   "audition_train_fail_quit": {
     "x": 0,
     "y": 120
+  },
+  "dance_train_fail_bg": {
+    "x": 0,
+    "y": -36
+  },
+  "dance_train_fail_quit": {
+    "x": 0,
+    "y": 90
+  },
+  "dance_train_fail_retry": {
+    "x": 0,
+    "y": 90
+  },
+  "promo_train_res_card": {
+    "x": 0,
+    "y": 0,
+    "color": "#dbefff",
+    "fontSize": 17
+  },
+  "promo_train_res_btn_text": {
+    "x": 68,
+    "y": 16,
+    "texts": [
+      "계속"
+    ]
+  },
+  "easy_start_text": {
+    "x": 54,
+    "y": 15,
+    "texts": [
+      "이지 · 2열  (Space)"
+    ]
+  },
+  "funds_train_fail_bg": {
+    "x": 0,
+    "y": -50
+  },
+  "funds_train_fail_quit": {
+    "x": 0,
+    "y": 80
+  },
+  "hard_start_text": {
+    "x": 57,
+    "y": 14,
+    "texts": [
+      "하드 · 3열 + 보너스"
+    ]
+  },
+  "funds_train_fail_retry": {
+    "x": 0,
+    "y": 80
+  },
+  "funds_train_fail_title": {
+    "x": 5,
+    "y": 120,
+    "fontSize": 20,
+    "color": "#ffdbe4"
+  },
+  "bond_train_res_btn_text": {
+    "x": 73,
+    "y": 16,
+    "texts": [
+      "계속"
+    ]
   }
 }
