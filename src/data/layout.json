@@ -4,19 +4,24 @@
     "y": -63
   },
   "audition_rps_desc": {
-    "x": -2,
-    "y": -90
+    "x": 195,
+    "y": 400,
+    "texts": [
+      "   "
+    ],
+    "color": "#5b4a70",
+    "fontSize": 13
   },
   "audition_rps_hand_paper": {
-    "x": -1,
+    "x": 0,
     "y": 1
   },
   "audition_rps_hand_rock": {
-    "x": 25,
+    "x": 30,
     "y": 2
   },
   "audition_rps_hand_scissors": {
-    "x": -30,
+    "x": -33,
     "y": 3
   },
   "audition_rps_hands": {
@@ -24,8 +29,9 @@
     "y": 3
   },
   "audition_rps_info": {
-    "x": -5,
-    "y": -110
+    "x": 5,
+    "y": -140,
+    "color": "#5b4a70"
   },
   "audition_title": {
     "x": 80,
@@ -36,8 +42,8 @@
     "y": -5
   },
   "audition_train_game_title": {
-    "x": 139,
-    "y": 187
+    "x": 145,
+    "y": 190
   },
   "audition_train_res_btn": {
     "x": 1,
@@ -61,29 +67,29 @@
     "y": 130
   },
   "board_banner": {
-    "x": 14,
-    "y": 280
+    "x": 15,
+    "y": 250
   },
   "board_bg": {
-    "x": -4,
-    "y": 1
+    "x": 15,
+    "y": 110
   },
   "board_btn_exchange": {
     "x": 15,
-    "y": 337
+    "y": 330
   },
   "board_btn_hold": {
-    "x": 194,
-    "y": 337
+    "x": 195,
+    "y": 330
   },
   "board_caption": {
-    "x": 37,
-    "y": 522,
+    "x": 35,
+    "y": 480,
     "color": "#5b4a70"
   },
   "board_close_x": {
-    "x": 348,
-    "y": 24
+    "x": 345,
+    "y": 40
   },
   "board_head": {
     "x": 2,
@@ -95,44 +101,46 @@
     "scale": 1
   },
   "board_name": {
-    "x": 0,
-    "y": 139,
-    "color": "#5b4a70"
+    "x": 1,
+    "y": 113,
+    "color": "#5b4a70",
+    "scale": 1
   },
   "board_pool": {
-    "x": 32,
-    "y": 324,
+    "x": 35,
+    "y": 300,
     "color": "#5b4a70"
   },
   "board_profile": {
-    "x": 127,
-    "y": -5
+    "x": 125,
+    "y": -36
   },
   "board_role": {
-    "x": 0,
-    "y": 163,
+    "x": 5,
+    "y": 139,
     "color": "#5b4a70"
   },
   "board_skip": {
-    "x": 37,
-    "y": 571,
+    "x": 35,
+    "y": 540,
     "color": "#5b4a70"
   },
   "board_stat": {
-    "x": 114,
-    "y": 182
+    "x": 115,
+    "y": 156
   },
   "board_thumbs": {
     "x": 55,
-    "y": 212
+    "y": 183,
+    "color": "#000000"
   },
   "board_title": {
-    "x": 145,
-    "y": 10
+    "x": 155,
+    "y": -20
   },
   "board_week": {
-    "x": -46,
-    "y": 4
+    "x": -55,
+    "y": -20
   },
   "bond_train_res_btn": {
     "x": 4,
@@ -170,11 +178,11 @@
     "scale": 1
   },
   "card_btn_left": {
-    "x": 16,
+    "x": 12,
     "y": 129
   },
   "card_btn_right": {
-    "x": 198,
+    "x": 203,
     "y": 129
   },
   "card_deck": {
@@ -197,7 +205,7 @@
   },
   "card_deck_item_star": {
     "x": -1,
-    "y": 26
+    "y": 27
   },
   "card_deck_item_sym": {
     "x": 28,
@@ -206,7 +214,7 @@
   },
   "card_deck_sub": {
     "x": 5,
-    "y": 10,
+    "y": 3,
     "scale": 0.95
   },
   "card_deck_title": {
@@ -216,7 +224,7 @@
   },
   "card_portrait": {
     "x": -25,
-    "y": 130
+    "y": 141
   },
   "dance_mini_bg": {
     "x": 0,
@@ -248,7 +256,8 @@
   },
   "dance_stop_desc": {
     "x": -5,
-    "y": -60
+    "y": -60,
+    "color": "#ffffff"
   },
   "dance_train_res_btn": {
     "x": 4,
@@ -371,15 +380,16 @@
     "y": -477
   },
   "gate_title": {
-    "x": 61,
-    "y": 10
+    "x": 53,
+    "y": 6,
+    "scale": 1.1
   },
   "gauges": {
     "x": 64,
     "y": 37
   },
   "gauges_bar": {
-    "x": 15,
+    "x": 18,
     "y": 10
   },
   "header": {
@@ -508,7 +518,7 @@
   "promo_match_desc": {
     "x": -5,
     "y": -90,
-    "color": "#ffefd8"
+    "color": "#000000"
   },
   "promo_match_grid": {
     "x": -1,
@@ -528,7 +538,7 @@
   },
   "promo_train_game_title": {
     "x": 135,
-    "y": 137,
+    "y": 140,
     "scale": 1.15
   },
   "rhythm2_key1": {
@@ -596,8 +606,9 @@
     "y": 137
   },
   "rhythm_desc": {
-    "x": 26,
-    "y": 35
+    "x": 24,
+    "y": 34,
+    "color": "#5b4a70"
   },
   "rhythm_hud": {
     "x": 46,
@@ -649,9 +660,9 @@
     "y": -60
   },
   "train_char": {
-    "x": -95,
-    "y": -180,
-    "scale": 1.95
+    "x": -125,
+    "y": -300,
+    "scale": 2.15
   },
   "train_close": {
     "x": -106,
@@ -663,12 +674,22 @@
   },
   "train_row_audition": {
     "x": 222,
-    "y": 328
+    "y": 328,
+    "texts": [
+      null,
+      null,
+      "오디션 카드 2장 (평판·실력)"
+    ]
   },
   "train_row_bond": {
     "x": 222,
     "y": 390,
-    "color": "#ff7fb0"
+    "color": "#ff7fb0",
+    "texts": [
+      null,
+      null,
+      "유대 카드 2장 (유대·멘탈)"
+    ]
   },
   "train_row_dance": {
     "x": 222,
@@ -680,12 +701,22 @@
     ]
   },
   "train_row_funds": {
-    "x": 222,
-    "y": 266
+    "x": 225,
+    "y": 264,
+    "texts": [
+      null,
+      null,
+      "자금 카드 2장 (자본·멘탈)"
+    ]
   },
   "train_row_promo": {
     "x": 222,
-    "y": 204
+    "y": 204,
+    "texts": [
+      null,
+      null,
+      "홍보 카드 (평판)"
+    ]
   },
   "train_row_vocal": {
     "x": 222,
@@ -705,8 +736,9 @@
     "y": 7
   },
   "train_week": {
-    "x": 282,
-    "y": 17
+    "x": 291,
+    "y": 17,
+    "fontSize": 16
   },
   "training": {
     "x": 15,
@@ -715,11 +747,13 @@
   },
   "vocal_mini_bg": {
     "x": 2,
-    "y": -63
+    "y": -63,
+    "scale": 1
   },
   "vocal_rec_btn": {
     "x": 5,
-    "y": 30
+    "y": 30,
+    "scale": 1
   },
   "vocal_rec_head": {
     "x": 6,
@@ -727,15 +761,16 @@
   },
   "vocal_rec_lamp": {
     "x": -13,
-    "y": -93
+    "y": -107,
+    "scale": 1
   },
   "vocal_rec_track": {
     "x": 5,
     "y": -10
   },
   "vocal_stop_desc": {
-    "x": 13,
-    "y": -78,
+    "x": 5,
+    "y": -85,
     "color": "#5b4a70",
     "scale": 0.85
   },
@@ -745,51 +780,62 @@
     "color": "#5b4a70"
   },
   "vocal_studio_info": {
-    "x": 6,
-    "y": -99,
+    "x": -1,
+    "y": -110,
     "scale": 1.15
   },
   "vocal_train_game_close_x": {
     "x": -65,
-    "y": 0,
+    "y": -10,
     "scale": 1.2
   },
   "vocal_train_res_btn": {
-    "x": 1,
-    "y": 3
+    "x": 25,
+    "y": 60,
+    "texts": [
+      "계속"
+    ],
+    "color": "#5b4a70",
+    "scale": 0.9
   },
   "vocal_train_res_card": {
-    "x": -1,
-    "y": 20
+    "x": -25,
+    "y": -10,
+    "scale": 1.15
   },
   "vocal_train_res_card_icon": {
-    "x": 0,
-    "y": -8
+    "x": -5,
+    "y": 10,
+    "scale": 1.05
   },
   "vocal_train_res_card_name": {
-    "x": -1,
-    "y": 1
+    "x": 0,
+    "y": 0
   },
   "vocal_train_res_card_star": {
     "x": -1,
-    "y": -8
+    "y": 0,
+    "scale": 1
   },
   "vocal_train_res_drain": {
-    "x": 0,
-    "y": 19
+    "x": -65,
+    "y": -80,
+    "scale": 1.35,
+    "color": "#c9527f"
   },
   "vocal_train_res_grade": {
-    "x": 8,
-    "y": 0
+    "x": -66,
+    "y": -30,
+    "scale": 1.35
   },
   "vocal_train_game_title": {
-    "x": -6,
-    "y": 50,
+    "x": -12,
+    "y": 42,
     "scale": 1.65,
     "color": "#5b4a70"
   },
   "backBtn_text": {
-    "x": 15,
+    "x": 12,
     "y": 3,
     "texts": [
       "      로비"
@@ -798,7 +844,7 @@
     "fontSize": 16
   },
   "memberBtn_text": {
-    "x": 31,
+    "x": 32,
     "y": 3,
     "texts": [
       "멤버"
@@ -816,13 +862,14 @@
   },
   "lobby_status_tab": {
     "x": 243,
-    "y": 107
+    "y": 107,
+    "color": "#5b4a70"
   },
   "dance_train_game_title": {
     "x": -15,
     "y": 20,
     "scale": 1.5,
-    "color": "#5b4a70"
+    "color": "#ffffff"
   },
   "story_lbl_mental": {
     "x": 38,
@@ -872,22 +919,124 @@
   },
   "easy_start": {
     "x": 85,
-    "y": 422
+    "y": 422,
+    "texts": [
+      "이지모드 (2열)"
+    ],
+    "color": "#5b4a70"
   },
   "hard_start": {
     "x": 85,
-    "y": 486
+    "y": 486,
+    "texts": [
+      "하드모드(3열) + 보너스"
+    ],
+    "color": "#5b4a70"
   },
   "train_bubble_text": {
     "x": 35,
-    "y": 427,
-    "fontSize": 17,
+    "y": 450,
     "texts": [
-      "오늘은 어떤 연습을 할까요?  몸 상태를 봐가면서 정해요!"
+      "어떤 연습을 할까요?                  몸 상태를 보고 정해요!"
     ]
   },
   "train_frame": {
     "x": 15,
     "y": 90
+  },
+  "lobby_lbl_mental": {
+    "x": 138,
+    "y": 43,
+    "color": "#5b4a70"
+  },
+  "vocal_train_fail_title": {
+    "x": -35,
+    "y": 70,
+    "scale": 1.2
+  },
+  "vocal_train_fail_quit": {
+    "x": 35,
+    "y": 77,
+    "scale": 0.85
+  },
+  "vocal_train_fail_retry": {
+    "x": 35,
+    "y": 77,
+    "scale": 0.85
+  },
+  "vocal_train_fail_bg": {
+    "x": 30,
+    "y": 30,
+    "scale": 0.85
+  },
+  "board_locked_note": {
+    "x": 20,
+    "y": 330,
+    "color": "#000000"
+  },
+  "dance_train_fail_title": {
+    "x": 5,
+    "y": 235,
+    "color": "#ffffff"
+  },
+  "audition_rps_opp_frame": {
+    "x": 130,
+    "y": 290,
+    "scale": 0.35
+  },
+  "audition_rps_opp_hand": {
+    "x": 35,
+    "y": 110,
+    "texts": [
+      "상대 직전 손모양 "
+    ],
+    "color": "#5b4a70",
+    "scale": 0.85,
+    "fontSize": 18
+  },
+  "audition_rps_opp_paper": {
+    "x": -95,
+    "y": -140,
+    "scale": 1.5
+  },
+  "audition_rps_opp_rock": {
+    "x": -95,
+    "y": -140,
+    "scale": 1.5
+  },
+  "audition_train_res_drain": {
+    "x": 0,
+    "y": 3,
+    "color": "#ffe4f0",
+    "fontSize": 15
+  },
+  "audition_rps_opp_scissors": {
+    "x": -95,
+    "y": -140,
+    "scale": 1.5
+  },
+  "funds_train_res_btn": {
+    "x": 3,
+    "y": 0,
+    "texts": [
+      "계속"
+    ]
+  },
+  "audition_train_fail_title": {
+    "x": 5,
+    "y": 170,
+    "color": "#ffe4f0"
+  },
+  "audition_train_fail_bg": {
+    "x": -5,
+    "y": 0
+  },
+  "audition_train_fail_retry": {
+    "x": 0,
+    "y": 120
+  },
+  "audition_train_fail_quit": {
+    "x": 0,
+    "y": 120
   }
 }
