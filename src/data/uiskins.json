@@ -499,14 +499,14 @@
         },
         {
           "id": "end-panel-doom",
-          "label": "파멸 배경 프레임 (게이지 붕괴)",
+          "label": "파멸 배경 프레임 (게이지 붕괴 · 🎬 영상 가능 · 원본 비율 유지)",
           "file": "assets/ui/end-panel-doom.webp",
           "size": [
             394,
-            340
+            606
           ],
-          "mode": "9slice",
-          "slice": 24
+          "mode": "stretch",
+          "vid": true
         },
         {
           "id": "end-btn-doom",

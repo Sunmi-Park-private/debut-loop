@@ -5,7 +5,7 @@ import { pos } from "./layout";
 import { pairSpace } from "./keys";
 import { editable } from "./editor";
 import { pressable } from "./press";
-import { skinNode } from "./uiSkin";
+import { skinFit, skinNode } from "./uiSkin";
 
 interface EndCopy {
   emoji: string;
@@ -83,8 +83,11 @@ export function renderEndScreen(
 
   const bgH = event.type === "regress" ? 402 : 340; // 회귀는 모드 선택 2버튼 수용
   // 배경판 — 업로드된 아트가 있으면 교체, 없으면 기존 벡터
-  // 전용 프레임 슬롯을 먼저 본다 — 비어 있으면 공통(end-panel) → 벡터 순으로 내려간다
-  const bgArt = (variant ? skinNode(`end-panel-${variant}`, 394, bgH) : null)
+  // 전용 프레임 슬롯을 먼저 본다 — 비어 있으면 공통(end-panel) → 벡터 순으로 내려간다.
+  // 전용 판은 skinFit(원본 비율 유지) — 세로로 긴 아트나 영상이 올라와도 눌리지 않는다.
+  // 공통 판은 기존대로 박스를 채운다(9slice 프레임 아트 전제).
+  const VARIANT_BOX: Record<string, number> = { regress: 402, doom: 606 };
+  const bgArt = (variant ? skinFit(`end-panel-${variant}`, 394, VARIANT_BOX[variant] ?? bgH) : null)
     ?? skinNode("end-panel", 394, bgH);
   const bg = bgArt ?? new Graphics().roundRect(0, 0, 394, bgH, 24).fill(0xffffff).stroke({ width: 2, color: 0xece4f4 });
   const c = copyFor(event, state);
