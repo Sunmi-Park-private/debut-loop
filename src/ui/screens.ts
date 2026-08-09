@@ -12,6 +12,7 @@ import { isVideoUrl, loadVideoTexture } from "./videoLoad";
 import { stageTop, stageHeight } from "./stage";
 
 interface EndCopy {
+  emoji: string; // 트루 엔딩만 빈 문자열 — 전체 화면 영상 위에는 이모지를 올리지 않는다
   title: string;
   body: string;
   action: string;
@@ -20,6 +21,7 @@ interface EndCopy {
 function copyFor(event: RunEvent, state: State): EndCopy {
   if (event.type === "regress") {
     return {
+      emoji: "🌑",
       title: "붉은 섬광 — 눈을 뜨니 0시",
       body: `단서 ${state.clues.size}/4 — 진실을 알지 못한 채 무대가 무너졌다.\n파편 같은 기억만이 남아 있다.`,
       action: "다시, 시작하다 ↺",
@@ -27,12 +29,14 @@ function copyFor(event: RunEvent, state: State): EndCopy {
   }
   if (event.type === "ending" && event.kind === "true") {
     return {
+      emoji: "",
       title: "데뷔 성공 — 우리가 지켰어",
       body: `단서 ${state.clues.size}/4 — 사보타주를 막았다.\n5명이 함께, 처음으로 끝까지. 0시가 지나간다.`,
       action: "처음부터 ↺",
     };
   }
   return {
+    emoji: "💀",
     title: "파멸 — 게이지 붕괴",
     body: "게이지 하나가 바닥났다. (실제: 강등→패자부활전→탈락)",
     action: "다시 도전 ↺",
@@ -51,14 +55,16 @@ export function renderEndScreen(
   scr.y = p.y;
 
   // 같은 렌더러가 세 화면을 그린다 — 회귀 / 파멸(게이지 붕괴) / 트루 엔딩.
-  // 분위기가 서로 달라 프레임부터 다르므로, 트루 엔딩만 공통 키를 쓰고 나머지는 전용 키를 갖는다.
-  // 전용 키에 저장값이 없으면 공통 키를 승계하므로, 아트를 올리기 전 배치는 지금 그대로다.
+  // 트루 엔딩이 공통 키(end_*)를 쓰고 나머지는 전용 키를 갖는다.
+  // 전용 키는 공통 키를 승계하지 않는다 — 공통 키는 트루 엔딩이 전체 화면 영상 위에 맞춰
+  // 잡아둔 좌표라, 승계하면 패널 안에 그려지는 회귀·파멸의 문구가 영상 좌표로 끌려간다.
+  // 저장값이 없는 회귀·파멸은 코드 기본 배치(패널 중앙)를 그대로 쓴다.
   const variant = event.type === "regress" ? "regress"
     : event.type === "ending" && event.kind !== "true" ? "doom" : "";
   const doom = variant === "doom";
   const ns = variant ? `${variant}_` : "";
   const lpos = (key: string, dflt: { x: number; y: number }): { x: number; y: number } =>
-    ns ? pos(ns + key, pos(key, dflt)) : pos(key, dflt);
+    pos(ns + key, dflt);
 
   /** 텍스트 노드를 따로 등록 — 그룹은 위치, 텍스트는 크기·색·미세 위치를 갖는다 */
   const asText = (key: string, t: Text): void => {
@@ -98,6 +104,12 @@ export function renderEndScreen(
   const bg = fullVideo ? null
     : bgArt ?? new Graphics().roundRect(0, 0, 394, bgH, 24).fill(0xffffff).stroke({ width: 2, color: 0xece4f4 });
   const c = copyFor(event, state);
+  // 이모지는 패널 화면(회귀 🌑 · 파멸 💀)만 — 트루 엔딩은 전체 영상 위라 문구 c.emoji가 비어 있다
+  const emoji = c.emoji ? new Text({ text: c.emoji, style: { fontSize: 44 } }) : null;
+  if (emoji) {
+    emoji.x = 175;
+    emoji.y = 34;
+  }
   const title = new Text({ text: c.title, style: { fontSize: 19, fill: 0x5b4a70, fontWeight: "bold" } });
   title.x = (394 - title.width) / 2;
   title.y = 104;
@@ -110,6 +122,10 @@ export function renderEndScreen(
 
   // 전체 영상 모드에선 패널을 그리지 않는다 — 영상 위에 문구·버튼만 얹힌다
   if (bg) grp("end_bg", bg);
+  if (emoji) {
+    grp("end_emoji", emoji);
+    asText("end_emoji", emoji);
+  }
   grp("end_title", title);
   grp("end_body", body);
   asText("end_title", title);
