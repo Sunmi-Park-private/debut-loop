@@ -27,7 +27,14 @@ const TITLE: Record<SideTab, string> = {
 };
 
 /** 목업 상태 — 실제 저장은 범위 밖 (DOM 판과 같은 값) */
-const mock = { dailyClaimed: false };
+const mock = { dailyClaimed: false, dailyDay: 1 };
+
+/** 목업 출석 날짜 넘기기 — 치트에서 부른다 (게이지 점이 하나씩 차는 걸 확인용) */
+export function advanceMockDailyDay(): number {
+  mock.dailyDay = mock.dailyDay >= 7 ? 1 : mock.dailyDay + 1;
+  mock.dailyClaimed = false;
+  return mock.dailyDay;
+}
 const mockSns: Record<"google" | "apple", boolean> = { google: false, apple: false };
 let mockSfx = 70;        // 효과음은 아직 실제 배선이 없다 (목업)
 let mockSfxMuted = false;
@@ -156,13 +163,16 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
     const TRACK_BOX = 50;   // 상자 크기 (긴 변 기준)
     const BONUS_DAYS = [1, 4, 7];
     const TRACK_GAP = 6; // 점 위로 띄우는 간격
+    const DOT_R = 5;     // 채움 원 반지름 (아트 점 안쪽에 들어가는 크기)
+    const DOT_FILL = 0xa87fd8;
 
     const rewards = ["⭐5", "⭐10", "카드×1", "⭐15", "카드×2", "⭐20", "카드★★★"];
     rewards.forEach((r, i) => {
       const day = i + 1;
-      // 처음 여는 유저 기준 — 1일차부터 시작한다 (앞날이 미리 받은 상태면 이상해 보인다)
-      const done = day === 1 && mock.dailyClaimed;
-      const today = day === 1 && !mock.dailyClaimed;
+      // 1일차부터 시작 — 오늘(mock.dailyDay)까지가 받은 날, 그 다음 날부터 잠김.
+      // 날짜가 하루 늘 때마다 done이 하나씩 늘고, 게이지 점도 그만큼 찬다.
+      const done = day < mock.dailyDay || (day === mock.dailyDay && mock.dailyClaimed);
+      const today = day === mock.dailyDay && !mock.dailyClaimed;
       const box = ART_BOX[i] ?? { x: 0, y: 0, w: CW, h: CH };
       const cw = onArt ? box.w : CW, ch = onArt ? box.h : CH;
       const cell = new Container();
@@ -222,8 +232,21 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       gridG.addChild(cell);
       reg(cellKey, cell); // 칸 하나씩 옮길 수 있게 (아트 칸 미세 정렬용)
 
+      // 진행도 — 받은 날의 점을 보라색으로 채운다. 아트의 빈 점 위에 원을 덮는 방식이라
+      // 하루가 늘 때마다 왼쪽부터 한 칸씩 찬다. 점마다 전용 키(side_daily_p1~p7)로 따로 조절.
+      if (onArt && done) {
+        const pk = `side_daily_p${day}`;
+        const dp = pos(pk, { x: TRACK_X0 + TRACK_STEP * i, y: TRACK_Y });
+        const dotG = new Container();
+        dotG.x = dp.x;
+        dotG.y = dp.y;
+        dotG.addChild(new Graphics().circle(0, 0, DOT_R).fill(DOT_FILL));
+        panel.addChild(dotG);
+        reg(pk, dotG);
+      }
+
       // 추가 보너스 표식 — 1·4·7일차 점 위에만 상자를 얹는다. 진행도(보라 채움)는
-      // 아트의 점이 담당하므로 상자는 받았는지와 무관하게 늘 보인다.
+      // 위 점이 담당하므로 상자는 받았는지와 무관하게 늘 보인다.
       // 칸과 같은 슬롯을 쓰므로 상자 그림을 바꾸면 위아래가 함께 바뀐다.
       // 상자 셋은 각각 side_daily_t1·t4·t7로 따로 등록 — 하나씩 옮길 수 있다.
       if (onArt && BONUS_DAYS.includes(day)) {

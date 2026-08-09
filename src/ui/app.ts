@@ -21,6 +21,7 @@ import { addCard, removeCards } from "../engine/deck";
 import { isDevMode } from "./devMode";
 import { toast } from "./metaMenu";
 import { renderCardDeckSheet } from "./cardDeckSheet";
+import { advanceMockDailyDay } from "./sidePanels";
 import { pressable } from "./press";
 import { playBgm, setBgmVolume, setBgmMuted, DEFAULT_VOLUME } from "./audio";
 import { guide, guideSeq, resetTutorial } from "./tutorial";
@@ -200,6 +201,10 @@ export function initGameCheats(): void {
     setBgmVolume(DEFAULT_VOLUME);
     setBgmMuted(false);
     toast(`튜토리얼 ${n}건 + 설정 초기화 (볼륨 ${DEFAULT_VOLUME})`);
+  });
+  registerCheat("📅 데일리 출석 하루 넘기기", () => {
+    const d = advanceMockDailyDay();
+    toast(`데일리 ${d}일차 — 창을 다시 열면 반영됩니다`);
   });
   // 관문(스테이지 게임) 숏컷 — gates.json 기반 직접 실행
   const GATE_LABEL: Record<string, string> = {

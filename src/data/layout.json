@@ -1559,5 +1559,17 @@
     "y": 20,
     "color": "#ffffff",
     "fontSize": 21
+  },
+  "side_daily_t1": {
+    "x": 25,
+    "y": 180
+  },
+  "side_daily_t4": {
+    "x": 155,
+    "y": 180
+  },
+  "side_daily_t7": {
+    "x": 285,
+    "y": 180
   }
 }
