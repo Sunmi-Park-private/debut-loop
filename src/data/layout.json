@@ -165,8 +165,8 @@
     "scale": 1.3
   },
   "card": {
-    "x": 19,
-    "y": 434,
+    "x": 15,
+    "y": 440,
     "scale": 1
   },
   "card_btn_left": {
@@ -431,8 +431,8 @@
     "y": -24
   },
   "lobby_cta_run": {
-    "x": -33,
-    "y": 36
+    "x": -30,
+    "y": 45
   },
   "lobby_cta_start": {
     "x": -35,
@@ -840,9 +840,9 @@
     ]
   },
   "card_speaker": {
-    "x": 175,
-    "y": 10,
-    "scale": 1.3
+    "x": 165,
+    "y": -30,
+    "scale": 2
   },
   "side_daily_cell_bg": {
     "x": 5,
@@ -850,9 +850,26 @@
   },
   "side": {
     "x": 35,
-    "y": 210
+    "y": 130,
+    "scale": 1
   },
   "side_daily_cell_done": {
+    "x": 5,
+    "y": 0
+  },
+  "card_text": {
+    "x": 195,
+    "y": 80
+  },
+  "side_daily_cell_reward": {
+    "x": 35,
+    "y": 28
+  },
+  "side_album_cell_text_lock": {
+    "x": 45,
+    "y": 80
+  },
+  "side_album_cell_lock": {
     "x": 5,
     "y": 0
   }

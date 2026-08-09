@@ -179,7 +179,8 @@
           ]
         },
         "hint": "지나친 친절"
-      }
+      },
+      "speaker": "assets/speaker/d2_w1_ticket.webp"
     },
     {
       "id": "d2_w1_rent",

@@ -830,7 +830,7 @@
           "file": "assets/ui/gate-rec-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true,
@@ -876,7 +876,7 @@
           "file": "assets/ui/gate-mirror-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true
@@ -935,7 +935,7 @@
           "file": "assets/ui/gate-match-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true
@@ -946,7 +946,7 @@
           "file": "assets/ui/gate-match-bg-3x3.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true
@@ -957,7 +957,7 @@
           "file": "assets/ui/gate-stop-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true,
@@ -1003,7 +1003,7 @@
           "file": "assets/ui/gate-rps-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true
@@ -1050,7 +1050,7 @@
           "file": "assets/ui/train-rest-bg.webp",
           "size": [
             394,
-            600
+            612
           ],
           "mode": "stretch",
           "vid": true
