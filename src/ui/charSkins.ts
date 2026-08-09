@@ -20,6 +20,22 @@ export interface CharSkinChar {
   slots: CharSkinSlot[];
 }
 export const charSkinChars = (charskinsJson as unknown as { chars: CharSkinChar[] }).chars;
+
+/** 디스크의 최신 charskins.json으로 맞춘다 (dev 전용).
+ *  이 파일은 dev 서버 감시 대상에서 빠져 있어(업로드마다 게임이 리로드되면 작업이 끊긴다)
+ *  Vite가 옛 모듈을 물고 있는 구간이 생긴다 — 새로 추가한 슬롯이 에디터에 안 보이는 원인.
+ *  배열을 제자리에서 갈아끼워, 이미 이 배열을 들고 있는 쪽도 새 값을 본다. */
+export async function refreshCharSkins(): Promise<boolean> {
+  if (!import.meta.hot) return false;
+  try {
+    const r = await fetch("/__charskins");
+    if (!r.ok) return false;
+    const fresh = (await r.json()) as { chars?: CharSkinChar[] };
+    if (!Array.isArray(fresh.chars)) return false;
+    charSkinChars.splice(0, charSkinChars.length, ...fresh.chars);
+    return true;
+  } catch { return false; }
+}
 export const allCharSkinSlots = (): CharSkinSlot[] => charSkinChars.flatMap((c) => c.slots);
 
 /** 캐릭터·종류별 스킨 파일 경로 (슬롯 정의가 없으면 null — 존재 여부는 로드 시 판정) */

@@ -202,6 +202,7 @@ const SAVE_TARGETS: Record<string, string> = {
   '/__backgrounds': 'src/data/backgrounds.json', // 배경 에디터(bg.html)
   '/__uiskins': 'src/data/uiskins.json', // UI 스킨 에디터(ui.html)
   '/__beatmaps': 'src/data/beatmaps.json', // 박자 에디터(beat.html)
+  '/__charskins': 'src/data/charskins.json', // 캐릭터 에디터(char.html) — GET은 디스크 직독(캐시 우회)
 }
 // 개발용: 레이아웃 저장 — **바뀐 키만** 받아 파일에 병합한다.
 // 통째로 덮어쓰면, 페이지를 열 때 뜬 스냅샷이 그 사이 다른 사람이 저장한 좌표를 되돌린다.

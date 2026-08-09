@@ -271,8 +271,27 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     const ca = opts.charAssets;
     const FIG = { x: 20, y: 20, w: 180, h: 380 }; // 표시 영역 — 대사가 하단으로 내려간 만큼 위로
     const fit = (sprW: number, sprH: number): number => Math.min(FIG.w / sprW, FIG.h / sprH);
+    // 주차 영상 — 연습 메뉴에 들어올 때마다 주차로 골라 다른 영상을 튼다 (1주차=1번 … 6주차=1번).
+    // 업로드된 칸만 후보로 삼아, 5개를 다 채우지 않아도 있는 것들이 순서대로 돌아간다.
+    const weekVid = ((): { tex: Texture; kind: string } | null => {
+      const vids = ca?.practiceVids ?? [];
+      const filled = vids.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
+      if (filled.length === 0) return null;
+      const idx = filled[(Math.max(1, opts.week) - 1) % filled.length];
+      const tex = idx === undefined ? null : vids[idx];
+      // 배율은 **실제로 고른 슬롯**의 것 — 빈 칸이 섞이면 주차 번호와 슬롯 번호가 어긋난다
+      return tex ? { tex, kind: `practice-vid-${(idx ?? 0) + 1}` } : null;
+    })();
     const standSeq = ca && ca.practiceFrames.length > 1 ? ca.practiceFrames : ca?.idleFrames ?? [];
-    if (ca && standSeq.length > 1) { // 연습복 시퀀스(practice-idle) 우선 → 레거시 idle 시퀀스
+    if (weekVid) { // 주차 영상이 최우선 — 비율·발밑 기준은 스탠딩과 동일
+      const tex = weekVid.tex;
+      const spr = new Sprite(tex);
+      const s = fit(tex.width, tex.height) * (ca?.scaleOf(weekVid.kind) ?? 1);
+      spr.scale.set(s);
+      spr.x = FIG.x + (FIG.w - tex.width * s) / 2;
+      spr.y = FIG.y + FIG.h - tex.height * s;
+      charGrp.addChild(spr);
+    } else if (ca && standSeq.length > 1) { // 연습복 시퀀스(practice-idle) 우선 → 레거시 idle 시퀀스
       const first = standSeq[0];
       const fw = first?.width ?? 1;
       const fh = first?.height ?? 1;
