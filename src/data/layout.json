@@ -941,18 +941,9 @@
     "y": 130,
     "scale": 1
   },
-  "side_daily_cell_done": {
-    "x": 5,
-    "y": 0,
-    "scale": 0.85
-  },
   "card_text": {
     "x": 195,
     "y": 80
-  },
-  "side_daily_cell_reward": {
-    "x": 35,
-    "y": 64
   },
   "side_album_cell_text_lock": {
     "x": 45,
@@ -1485,32 +1476,13 @@
     "scale": 1.1,
     "color": "#5b4a70"
   },
-  "side_daily_cell_lock": {
-    "x": 9,
-    "y": 0,
-    "scale": 0.8
-  },
-  "side_daily_cell_today": {
-    "x": 0,
-    "y": 0,
-    "scale": 0.85
-  },
   "side_daily_bg": {
     "x": -1,
     "y": 0
   },
-  "side_daily_note": {
-    "x": 98,
-    "y": 268,
-    "fontSize": 10,
-    "color": "#5b4a70"
-  },
   "side_title_text": {
     "x": 25,
-    "y": 30
-  },
-  "side_daily_head": {
-    "x": 25,
-    "y": 60
+    "y": 30,
+    "hidden": true
   }
 }

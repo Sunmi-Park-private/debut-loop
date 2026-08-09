@@ -87,7 +87,9 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
   const BG_SLOT: Record<SideTab, string> = {
     daily: "side-daily-bg", album: "side-album-bg", shop: "side-shop-bg", settings: "side-settings-bg",
   };
-  const bg = skinFit(BG_SLOT[opts.tab], W, bodyH)
+  const tabBgArt = skinFit(BG_SLOT[opts.tab], W, bodyH); // 탭 전용 아트 (없으면 null → 공용 프레임)
+  const onArt = tabBgArt !== null; // 탭 전용 배경판 위에 그리는 중 — 조각 배치가 아트 칸을 따른다
+  const bg = tabBgArt
     ?? skinNode("side-panel", W, bodyH)
     ?? new Graphics().roundRect(0, 0, W, bodyH, 20).fill(0xffffff).stroke({ width: 2, color: LINE });
   // 배경판만 탭별 키 — 아트 비율이 탭마다 달라 한 좌표로는 못 맞춘다.
@@ -126,45 +128,75 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
   // ── 🎁 데일리 보상 ──
   function renderDaily(): void {
     const head = txt("출석 보상 · 매일 접속하고 보상을 받아요", 11, SUB);
-    grp("side_daily_head", 18, 58, head);
+    // 아트가 있으면 제목("DAILY BONUS") 아래 빈 영역으로 — 기본 위치는 아트 제목과 겹친다
+    grp("side_daily_head", onArt ? Math.round((W - head.width) / 2) : 18, onArt ? 104 : 58, head);
 
-    const CW = 78, CH = 74, GAP = 8, COLS = 4;
-    const gx = Math.round((W - COLS * CW - (COLS - 1) * GAP) / 2);
-    const gridG = grp("side_daily_grid", gx, 84);
+    // 배경판 아트(955×1647)에 DAY 1~7 칸이 그려져 있다 — 그 칸 실측을 표시 좌표로 환산해 얹는다
+    // (폭 360 기준 배율 0.377). 1~3 · 4~6 한 줄씩, 7일차는 가로 전체.
+    // 아트가 없으면 예전 4열 그리드 그대로 — 업로드 전후로 화면이 무너지지 않게.
+    // 아트 픽셀 스캔 실측(테두리 검출): 세로선 x=109·338 / 355·589 / 606·838,
+    // 가로선 y=766·987(1줄) · 1013·1222(2줄) · 1244·1421(7일차). ×0.377로 표시 좌표 환산.
+    const ART_BOX = [
+      { x: 41, y: 289, w: 86, h: 83 }, { x: 134, y: 289, w: 88, h: 83 }, { x: 228, y: 289, w: 87, h: 83 },
+      { x: 41, y: 390, w: 86, h: 79 }, { x: 134, y: 390, w: 88, h: 79 }, { x: 228, y: 390, w: 87, h: 79 },
+      { x: 41, y: 489, w: 275, h: 67 },
+    ];
+    // 칸 안쪽 보상 박스 — 위쪽 30%는 "DAY N" 라벨 자리라 비운다 (라벨 아래 끝 기준)
+    const IN_TOP = 0.30, IN_H = 0.62;
+    const CW = onArt ? 86 : 78, CH = onArt ? 81 : 74, GAP = 8, COLS = 4;
+    const gx = onArt ? 0 : Math.round((W - COLS * CW - (COLS - 1) * GAP) / 2);
+    const gridG = grp("side_daily_grid", gx, onArt ? 0 : 84);
 
     const rewards = ["⭐5", "⭐10", "카드×1", "⭐15", "카드×2", "⭐20", "카드★★★"];
     rewards.forEach((r, i) => {
       const day = i + 1;
       const done = day <= 3 || (day === 4 && mock.dailyClaimed);
       const today = day === 4 && !mock.dailyClaimed;
+      const box = ART_BOX[i] ?? { x: 0, y: 0, w: CW, h: CH };
+      const cw = onArt ? box.w : CW, ch = onArt ? box.h : CH;
       const cell = new Container();
-      cell.x = (i % COLS) * (CW + GAP);
-      cell.y = Math.floor(i / COLS) * (CH + GAP);
+      // 칸마다 전용 키 — 상태별 키 하나로 묶으면 같은 상태의 칸들이 함께 움직여 하나씩 못 맞춘다
+      const cellKey = `side_daily_d${day}`;
+      const cp = pos(cellKey, onArt
+        ? { x: box.x, y: box.y }
+        : { x: (i % COLS) * (CW + GAP), y: Math.floor(i / COLS) * (CH + GAP) });
+      cell.x = cp.x;
+      cell.y = cp.y;
 
       // 배경은 상태별로 다른 슬롯을 쓰므로 컴포넌트 이름도 상태별로 나눈다.
       // 한 이름으로 묶으면 패널에 슬롯이 하나만 잡혀(첫 칸=done) 나머지 상태의
       // 아트를 파일 교체로 올릴 수 없다.
       const state = done ? "done" : today ? "today" : "lock";
-      const art = skinFit(`side-daily-cell-${state}`, CW, CH)
-        ?? new Graphics().roundRect(0, 0, CW, CH, 12)
+      // 아트 위에선 칸 안쪽 빈 영역(DAY 라벨 아래)에만 상자를 넣는다 — 라벨은 배경판이 이미 갖고 있다
+      const inX = onArt ? 6 : 0;
+      const inY = onArt ? Math.round(ch * IN_TOP) : 0;
+      const inW = cw - inX * 2;
+      const inH = onArt ? Math.round(ch * IN_H) : ch;
+      const art = skinFit(`side-daily-cell-${state}`, inW, inH)
+        ?? new Graphics().roundRect(0, 0, inW, inH, 12)
           .fill(done ? 0xf2fbf8 : today ? 0xfff2f9 : 0xf8f4fc)
           .stroke({ width: today ? 2.5 : 2, color: done ? 0x6fd8c4 : today ? PINK : LINE });
       const bgName = `side_daily_cell_${state}`;
-      const pArt = pos(bgName, { x: 0, y: 0 });
+      const pArt = pos(bgName, { x: inX, y: inY });
       art.x = pArt.x;
       art.y = pArt.y;
       cell.addChild(art);
       reg(bgName, art);
 
-      const dayT = txt(`D${day}`, 11, done ? 0x2e9a80 : today ? 0xc9527f : SUB, true);
-      const pDay = pos("side_daily_cell_day", { x: Math.round((CW - dayT.width) / 2), y: 10 });
-      dayT.x = pDay.x;
-      dayT.y = pDay.y;
-      cell.addChild(dayT);
-      reg("side_daily_cell_day", dayT);
+      // D1·D2… 라벨은 배경판 아트에 이미 "DAY 1"로 그려져 있다 — 아트가 있으면 코드 라벨은 생략
+      if (!onArt) {
+        const dayT = txt(`D${day}`, 11, done ? 0x2e9a80 : today ? 0xc9527f : SUB, true);
+        const pDay = pos("side_daily_cell_day", { x: Math.round((cw - dayT.width) / 2), y: 10 });
+        dayT.x = pDay.x;
+        dayT.y = pDay.y;
+        cell.addChild(dayT);
+        reg("side_daily_cell_day", dayT);
+      }
 
-      const rw = txt(done ? "✓" : r, 15, done ? 0x2e9a80 : today ? 0xc9527f : SUB, true);
-      const pRw = pos("side_daily_cell_reward", { x: Math.round((CW - rw.width) / 2), y: 30 });
+      const rw = txt(done ? "✓" : r, onArt ? 11 : 15, done ? 0x2e9a80 : today ? 0xc9527f : SUB, true);
+      const pRw = pos("side_daily_cell_reward", onArt
+        ? { x: Math.round((cw - rw.width) / 2), y: inY + inH - 15 } // 보상 박스 아래쪽
+        : { x: Math.round((cw - rw.width) / 2), y: 30 });
       rw.x = pRw.x;
       rw.y = pRw.y;
       cell.addChild(rw);
@@ -173,7 +205,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       if (today) {
         const now = txt("오늘!", 9, 0xc9527f, true);
         // 이름이 배경(side_daily_cell_today)과 겹치지 않게 — 같은 이름이면 둘이 서로를 덮는다
-        const pNow = pos("side_daily_cell_todaytag", { x: Math.round((CW - now.width) / 2), y: 54 });
+        const pNow = pos("side_daily_cell_todaytag", { x: Math.round((cw - now.width) / 2), y: onArt ? 6 : 54 });
         now.x = pNow.x;
         now.y = pNow.y;
         cell.addChild(now);
@@ -185,10 +217,11 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
         });
       }
       gridG.addChild(cell);
+      reg(cellKey, cell); // 칸 하나씩 옮길 수 있게 (아트 칸 미세 정렬용)
     });
 
     const note = txt("7일 연속 출석하면 ★★★ 에픽 카드!", 11, SUB);
-    grp("side_daily_note", Math.round((W - note.width) / 2), 268, note);
+    grp("side_daily_note", Math.round((W - note.width) / 2), onArt ? 550 : 268, note);
   }
 
   // ── 📔 포토앨범 ──
