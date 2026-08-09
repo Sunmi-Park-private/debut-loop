@@ -116,8 +116,9 @@ export function renderEndScreen(
   const mkAction = (key: string, label: string, sub: string, y: number, color: number, fire: () => void): Container => {
     const b = new Container();
     // 버튼 아트 — 슬롯이 비어 있으면 기존 벡터 유지
-    // 파멸 전용 버튼도 원본 비율 유지 — 눌러야 할 영역(300×56)은 컨테이너가 갖는다
-    const g = (doom ? skinFit("end-btn-doom", 300, 56) : null)
+    // 파멸 전용 버튼은 natural — 1배율=원본 크기(리샘플 없음). 아트를 올린 뒤 UI 에디터
+    // 배율로 크기를 잡는다. 눌러야 할 영역(300×56)은 컨테이너가 그대로 갖는다.
+    const g = (doom ? skinNode("end-btn-doom", 300, 56) : null)
       ?? skinNode(`end-btn-${key}`, 300, 56)
       ?? new Graphics().roundRect(0, 0, 300, 56, 16).fill(color);
     const t = new Text({ text: label, style: { fontSize: 15, fill: 0xffffff, fontWeight: "bold" } });

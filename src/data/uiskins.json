@@ -508,14 +508,15 @@
         },
         {
           "id": "end-btn-doom",
-          "label": "버튼 · 파멸 (다시 도전)",
+          "label": "버튼 · 파멸 (다시 도전) — 1배율=원본 크기",
           "file": "",
           "size": [
             300,
             56
           ],
           "mode": "stretch",
-          "small": true
+          "small": true,
+          "natural": true
         }
       ]
     },
