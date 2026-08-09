@@ -151,19 +151,20 @@ const showVideo = (cell: HTMLElement, src: string): void => {
   img.parentElement!.prepend(v);
 };
 
-const VID_EXTS = ["mov", "webm"];
+// mov(알파)·mp4(불투명) 모두 서버가 webm으로 변환한다
+const VID_EXTS = ["mov", "mp4", "webm"];
 
 const upload = async (slot: CharSkinSlot, file: File, cell: HTMLElement): Promise<void> => {
   const raw = (file.name.split(".").pop()?.toLowerCase() ?? "").replace("jpeg", "jpg");
   const isVid = VID_EXTS.includes(raw);
   if (isVid && !slot.vid) { alert("이 슬롯은 이미지 전용입니다"); return; }
-  const ext = isVid ? raw : validate(file); // 영상은 용량 제한 없음 (mov는 서버가 알파 webm으로 변환)
+  const ext = isVid ? raw : validate(file); // 영상은 용량 제한 없음 (mov·mp4는 서버가 webm으로 변환)
   if (!ext) return;
   cell.style.opacity = "0.5";
   const r = await fetch(`/__charupload?slot=${slot.id}&ext=${ext}`, { method: "POST", body: file });
   cell.style.opacity = "1";
   if (!r.ok) { alert(`업로드 실패: ${await r.text()}`); return; }
-  // 서버가 최종 경로를 돌려준다 — mov→webm, png/jpg→webp로 확장자가 바뀐다
+  // 서버가 최종 경로를 돌려준다 — mov·mp4→webm, png/jpg→webp로 확장자가 바뀐다
   slot.file = (await r.text()).trim() || `assets/char/skin/${slot.id}.${ext}`;
   if (isVid) {
     delete slot.frames; // 영상 = 시퀀스 대체 (서버도 동일 정리)
@@ -275,7 +276,7 @@ const makeCell = (slot: CharSkinSlot, small: boolean, scalable = false): HTMLEle
   };
   const input = document.createElement("input");
   input.type = "file";
-  input.accept = `image/png,image/jpeg,image/webp${slot.vid ? ",video/quicktime,video/webm,.mov,.webm" : ""}`;
+  input.accept = `image/png,image/jpeg,image/webp${slot.vid ? ",video/quicktime,video/webm,video/mp4,.mov,.mp4,.webm" : ""}`;
   input.multiple = !!slot.seq;
   input.style.display = "none";
   const handle = (fl: File[]): void => {

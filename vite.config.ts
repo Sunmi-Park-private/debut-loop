@@ -9,12 +9,16 @@ import { execFileSync, spawn } from 'node:child_process'
 // iOS(WebKit)는 반대로 VP9 알파가 안 되므로 HEVC 알파(hvc1) .mov 사이블링을 함께 생성 (런타임 videoLoad.ts가 엔진별 선택)
 function movToAlphaWebm(abs: string): string | void {
   if (abs.endsWith('.webm')) { alphaMovSibling(abs, ['-c:v', 'libvpx-vp9']); return } // webm 직접 업로드 → iOS용 mov만 추가 생성
-  if (!abs.endsWith('.mov')) return
-  const out = abs.slice(0, -4) + '.webm'
+  // mov(알파 있음)·mp4(알파 없음) 모두 webm으로 통일한다. mp4는 알파 채널이 없지만
+  // yuva420p로 인코딩해도 전부 불투명으로 들어갈 뿐이라 재생·합성 경로가 같아진다.
+  if (!abs.endsWith('.mov') && !abs.endsWith('.mp4')) return
+  const out = abs.slice(0, abs.lastIndexOf('.')) + '.webm'
   execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', abs,
     '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p', '-b:v', '0', '-crf', '32',
     '-cpu-used', '4', '-row-mt', '1', '-an', out]) // 인코딩 동안 dev 서버 블로킹 — 에디터가 대기 표시
-  if (!alphaMovSibling(abs)) fs.unlinkSync(abs) // HEVC 인코딩 실패 시 원본 mov 정리 (webm만 유지)
+  // iOS용 HEVC 알파 사이블링은 알파가 있는 mov에서만 의미가 있다. mp4는 원본을 지운다.
+  if (abs.endsWith('.mp4')) fs.unlinkSync(abs)
+  else if (!alphaMovSibling(abs)) fs.unlinkSync(abs) // HEVC 인코딩 실패 시 원본 mov 정리 (webm만 유지)
   return out
 }
 
@@ -732,7 +736,7 @@ export default defineConfig({
       (m) => (m as BgmManifest).tracks, AUDIO_EXTS, 25, stripArtistTag),
     assetUploadPlugin('/__charupload', 'src/data/charskins.json', 'assets/char/skin',
       (m) => (m as CharSkinManifest).chars.flatMap((c) => c.slots),
-      [...IMG_EXTS, 'mov', 'webm'], 4096, mediaPostProcess), // vid 슬롯 = 알파 영상 (mov는 자동 변환). 이미지는 webp로 변환
+      [...IMG_EXTS, 'mov', 'mp4', 'webm'], 4096, mediaPostProcess), // vid 슬롯 = 영상 (mov·mp4는 자동 webm 변환). 이미지는 webp로 변환
     seqUploadPlugin('/__bgseq', 'src/data/backgrounds.json', 'assets/bg',
       (m) => { const b = m as { story: SeqSlot[]; system: SeqSlot[] }; return [...b.story, ...b.system] }), // system=로딩 화면 시퀀스
     seqUploadPlugin('/__charseq', 'src/data/charskins.json', 'assets/char/skin',

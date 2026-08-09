@@ -1157,7 +1157,8 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     let LANE_X: number[] = [];
     let laneCs: Container[] = []; // 레인 컨테이너(링+라벨) — 레이아웃 에디터로 좌우 간격 조정, 노트 x가 따라감
     let editorPaused = false;     // 레이아웃 에디터 켜짐 = 판 일시정지 (노트·타이머·음악 정지)
-    let divG: Graphics | null = null; // 레인 구분선 — 드래그 시 재계산 (redrawDividers)
+    // 레인 사이 흰 구분선은 걷어냈다 — 무대 배경 아트 위에 코드가 그린 선이 겹쳐 보였다.
+    // (이지 1줄·하드 2줄) 레인 위치는 판정 링과 노트로 충분히 읽힌다.
     let trackId = "rhythm"; // begin()에서 로테이션으로 확정 — 노트 시계의 오디오 동기 기준
     const LANE_META: Array<{ icon: string; skin: string; key: string }> = [
       { icon: "🎤", skin: "gate-note-left", key: "F/←" },
@@ -1188,16 +1189,6 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     refreshHud();
 
     const laneY = (lane: number): number => laneCs[lane]?.y ?? 0; // 레인 세로 드래그 오프셋 (노트·이펙트 추종)
-    /** 레인 사이 세로 구분선 — 레인 드래그·좌표 입력에 맞춰 재계산 */
-    const redrawDividers = (): void => {
-      if (!divG) return;
-      divG.clear();
-      for (let i = 1; i < lanes; i++) {
-        const gx = ((LANE_X[i - 1] ?? 0) + (LANE_X[i] ?? 0)) / 2;
-        const gy = (laneY(i - 1) + laneY(i)) / 2;
-        divG.rect(gx - 0.5, TOP_Y - 14, 1, gy + HIT_Y - TOP_Y + 14).fill({ color: 0xd8cce8, alpha: 0.6 });
-      }
-    };
     const popFx = (lane: number, s: string, color: number): void => {
       const f = txt(s, 15, color, true);
       f.x = (LANE_X[lane] ?? 0) - f.width / 2;
@@ -1236,21 +1227,38 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       record(k === "perfect" ? "p" : "g", lane);
     };
 
+    /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다 */
+    const chromeLabel2 = (b: Container, key: string): void => {
+      const t = b.children.find((c): c is Text => c instanceof Text);
+      if (!t) return;
+      const q = pos(`${key}_text`, { x: Math.round(t.x), y: Math.round(t.y) });
+      t.x = q.x;
+      t.y = q.y;
+      editable(`${key}_text`, t);
+    };
+
     // 시작 대기: 모드 선택(이지 2열 / 하드 3열)으로 시작 — Space=이지
     let started = false;
     const startUi = new Container();
     // 오디션은 심사 테마 라벨 + 보너스 조건(good 이상 +3) 명시. 버튼 아트(스킨 id)는 기존 그대로.
     // Space 단축키(begin(2))는 코드 유지 — 라벨에서만 생략 (스펙 §7 verbatim)
     const easyBtn = btn(aud ? "🎪 쇼케이스 (2열)" : "▶ 이지 · 2열  (Space)", 220, PINK, () => begin(2), "gate-rhythm-easy");
-    easyBtn.y = 252;
     const hardBtn = btn(aud ? "🏆 본선 무대 (3열 · 집중 심사 +3)" : "🔥 하드 · 3열 + 보너스", 220, LAV, () => begin(3), "gate-rhythm-hard");
-    hardBtn.y = 316;
+    // 두 버튼을 따로 등록한다 — 한 묶음(rhythm_start)이면 둘이 함께만 움직여 간격·정렬을 못 잡는다.
+    // 기본 좌표는 예전 묶음 앵커 + 각자의 y라 지금 배치가 그대로다.
+    const BX = (MG_W - 220) / 2; // 고정 기준 폭 (관문별 W 무관)
+    const pEasy = pos("easy_start", { x: BX, y: 252 });
+    easyBtn.x = pEasy.x;
+    easyBtn.y = pEasy.y;
+    const pHard = pos("hard_start", { x: BX, y: 316 });
+    hardBtn.x = pHard.x;
+    hardBtn.y = pHard.y;
     startUi.addChild(easyBtn, hardBtn);
-    const startP = pos("rhythm_start", { x: (MG_W - 220) / 2, y: 0 }); // 버튼 묶음 앵커 — 고정 기준 폭 (관문별 W 무관)
-    startUi.x = startP.x;
-    startUi.y = startP.y;
     body.addChild(startUi);
-    editable("rhythm_start", startUi);
+    editable("easy_start", easyBtn);
+    editable("hard_start", hardBtn);
+    chromeLabel2(easyBtn, "easy_start");
+    chromeLabel2(hardBtn, "hard_start");
 
     const begin = (laneCount: number): void => {
       if (started) return;
@@ -1306,8 +1314,6 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       }
       body.addChild(lineGrp);
       editable(lineName, lineGrp);
-      divG = new Graphics(); // 레인 구분선 — 링 아래 z, 레인 위치 따라 재계산
-      body.addChild(divG);
       laneCs = [];
       for (let i = 0; i < lanes; i++) {
         const name = `rhythm${lanes}_lane${i + 1}`; // 모드별 저장 (이지 rhythm2_*, 하드 rhythm3_*)
@@ -1344,7 +1350,6 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
         laneCs.push(lc);
         LANE_X[i] = lc.x;
       }
-      redrawDividers();
 
       // 노트 계획: 곡 로테이션 → 박자표(beat.html) 있으면 사용, 없으면 자동 생성
       trackId = nextRhythmTrack();
@@ -1434,8 +1439,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     const tick = (): void => {
       if (!body.parent) { cleanup(); return; }
       for (let i = 0; i < laneCs.length; i++) LANE_X[i] = laneCs[i]!.x; // 에디터 드래그 실시간 반영 (노트·판정 이펙트 x)
-      if (editorPaused) { // 일시정지: 시간·스폰·미스 동결, 화면 위 노트·구분선만 레인 드래그를 따라감
-        redrawDividers();
+      if (editorPaused) { // 일시정지: 시간·스폰·미스 동결, 화면 위 노트만 레인 드래그를 따라감
         for (const n2 of live) {
           if (n2.done || !n2.el) continue;
           const prog = (now - (n2.t - travelMs)) / travelMs;

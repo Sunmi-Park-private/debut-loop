@@ -70,10 +70,14 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
   panel.addChild(xBtn);
   editable("board_close_x", xBtn);
 
-  // 패널 프레임 — 오디션 → 연습 패널 → 공통 프레임(ui-frame) → 벡터 순 폴백 (이미지 삭제 시에도 프레임 유지)
-  const bg = skinNode("audition-panel", W, H) ?? skinNode("train-panel", W, H) ?? skinNode("ui-frame", W, H)
+  // 패널 프레임. 다른 화면의 아트(train-panel)로 폴백하지 않는다 — 남의 화면 프레임이 끼어들 이유가 없다.
+  // 화면이 자기 배경판을 깔면(board-bg·audition-recruit-bg·recheck-bg) 이 프레임은 감춘다.
+  // 안 감추면 배경판 뒤에서 목업 테두리가 비쳐 남는다.
+  const bg = skinNode("audition-panel", W, H) ?? skinNode("ui-frame", W, H)
     ?? new Graphics().roundRect(0, 0, W, H, 24).fill({ color: 0xffffff, alpha: 0.94 }).stroke({ width: 2, color: 0xece4f4 });
   panel.addChild(bg);
+  /** 자체 배경판을 깐 화면에서 프레임을 감춘다 — clear()가 매번 다시 켜므로 화면마다 선언적으로 부른다 */
+  const setFrame = (v: boolean): void => { bg.visible = v; };
 
   // 헤더 바 · 제목 · 회차 — 각각 독립 그룹으로 등록해 레이아웃 에디터에서 따로 움직인다
   const hgrp = (name: string, ...items: Container[]): Container => {
@@ -115,6 +119,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     killStage();
     body.removeChildren();
     panel.visible = true; // 오디션 무대에서 숨긴 멤버 점검 패널 복원 (안전망 — 정상 경로는 restore)
+    bg.visible = true;    // 화면마다 자기 배경판 유무에 따라 다시 끈다
   };
   const charOf = (id: string): CharacterDef | undefined => characters.find((c) => c.id === id);
 
@@ -209,7 +214,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     clear();
     // 점검 화면 전체 배경판 — 맨 뒤 레이어 (텍스트·버튼은 항상 그 위에 얹힘)
     const bbg = skinFit("board-bg", W, H - 52);
-    if (bbg) body.setChildIndex(bgrp("board_bg", 0, 0, bbg), 0);
+    if (bbg) { body.setChildIndex(bgrp("board_bg", 0, 0, bbg), 0); setFrame(false); }
     const s = ctrl.state;
     const cost = ctrl.auditionExchangeCost;
     const audCards = s.cards.filter((c) => c.templateId === "audition").length;
@@ -466,7 +471,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     clear();
     // 배경판 — 맨 뒤 레이어. 아트 미업로드면 아무것도 깔지 않는다(패널 프레임이 그대로 보인다)
     const rbg = skinFit("recheck-bg", W, H - 52);
-    if (rbg) bgrp("recheck_bg", 0, 0, rbg);
+    if (rbg) { bgrp("recheck_bg", 0, 0, rbg); setFrame(false); }
 
     const t = txt("새로 만날 후보가 없어요", 17, 0xffffff, true);
     t.x = (W - t.width) / 2;
@@ -591,7 +596,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     clear();
     // 영입(후보 결과) 화면 전체 배경판 — 맨 뒤 레이어
     const rbg = skinFit("audition-recruit-bg", W, H - 52);
-    if (rbg) body.setChildIndex(bgrp("board_recruit_bg", 0, 0, rbg), 0);
+    if (rbg) { body.setChildIndex(bgrp("board_recruit_bg", 0, 0, rbg), 0); setFrame(false); }
     const GN: Record<MiniGameGrade, string> = { perfect: "PERFECT ✨", good: "GOOD 👍", clear: "CLEAR ✔" };
     // 관문과 같은 grade-* 슬롯 공용 (심사표 스탬프)
     const stamp = skinFit(`grade-${grade}`, 180, 64);
