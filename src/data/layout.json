@@ -24,8 +24,8 @@
     "y": 3
   },
   "audition_rps_info": {
-    "x": 1,
-    "y": -115
+    "x": -5,
+    "y": -110
   },
   "audition_title": {
     "x": 80,
@@ -57,8 +57,8 @@
     "scale": 1.1
   },
   "board": {
-    "x": 13,
-    "y": 117
+    "x": 15,
+    "y": 130
   },
   "board_banner": {
     "x": 14,
@@ -69,7 +69,7 @@
     "y": 1
   },
   "board_btn_exchange": {
-    "x": 11,
+    "x": 15,
     "y": 337
   },
   "board_btn_hold": {
@@ -78,7 +78,8 @@
   },
   "board_caption": {
     "x": 37,
-    "y": 522
+    "y": 522,
+    "color": "#5b4a70"
   },
   "board_close_x": {
     "x": 348,
@@ -100,7 +101,8 @@
   },
   "board_pool": {
     "x": 32,
-    "y": 324
+    "y": 324,
+    "color": "#5b4a70"
   },
   "board_profile": {
     "x": 127,
@@ -113,7 +115,8 @@
   },
   "board_skip": {
     "x": 37,
-    "y": 571
+    "y": 571,
+    "color": "#5b4a70"
   },
   "board_stat": {
     "x": 114,
@@ -157,8 +160,9 @@
     "y": -4
   },
   "bond_train_res_grade": {
-    "x": 0,
-    "y": 3
+    "x": -62,
+    "y": -10,
+    "scale": 1.3
   },
   "card": {
     "x": 19,
@@ -183,12 +187,12 @@
     "scale": 1
   },
   "card_deck_content": {
-    "x": 0,
-    "y": -16
+    "x": 5,
+    "y": -20
   },
   "card_deck_item_name": {
-    "x": -1,
-    "y": -13,
+    "x": 5,
+    "y": 0,
     "scale": 0.8
   },
   "card_deck_item_star": {
@@ -201,7 +205,7 @@
     "scale": 1
   },
   "card_deck_sub": {
-    "x": 0,
+    "x": 5,
     "y": 0,
     "scale": 0.95
   },
@@ -211,8 +215,8 @@
     "scale": 0.9
   },
   "card_portrait": {
-    "x": -26,
-    "y": 139
+    "x": -25,
+    "y": 130
   },
   "dance_mini_bg": {
     "x": 0,
@@ -243,8 +247,8 @@
     "y": -113
   },
   "dance_stop_desc": {
-    "x": -1,
-    "y": -71
+    "x": -5,
+    "y": -60
   },
   "dance_train_res_btn": {
     "x": 4,
@@ -279,8 +283,8 @@
     "y": -90
   },
   "funds_stop_hint": {
-    "x": 18,
-    "y": 108
+    "x": -15,
+    "y": 110
   },
   "funds_stop_info": {
     "x": 33,
@@ -291,8 +295,8 @@
     "y": 58
   },
   "funds_train_game_title": {
-    "x": 101,
-    "y": -35
+    "x": -5,
+    "y": 0
   },
   "funds_train_res_card_icon": {
     "x": 2,
@@ -375,8 +379,8 @@
     "y": 37
   },
   "gauges_bar": {
-    "x": 21,
-    "y": 12
+    "x": 25,
+    "y": 10
   },
   "header": {
     "x": 162,
@@ -423,8 +427,8 @@
     "y": 528
   },
   "lobby_cta_round": {
-    "x": -40,
-    "y": -33
+    "x": -38,
+    "y": -24
   },
   "lobby_cta_run": {
     "x": -33,
@@ -432,12 +436,12 @@
   },
   "lobby_cta_start": {
     "x": -35,
-    "y": -53,
+    "y": -50,
     "fontSize": 22
   },
   "lobby_cta_sub": {
-    "x": -26,
-    "y": 17
+    "x": -25,
+    "y": 27
   },
   "lobby_daily": {
     "x": 336,
@@ -522,8 +526,9 @@
     "y": -59
   },
   "promo_train_game_title": {
-    "x": 144,
-    "y": 133
+    "x": 135,
+    "y": 137,
+    "scale": 1.15
   },
   "rhythm2_key1": {
     "x": 95,
@@ -639,7 +644,8 @@
   },
   "story_tab": {
     "x": 200,
-    "y": 71
+    "y": 71,
+    "color": "#f0a93a"
   },
   "train_bubble": {
     "x": 29,
@@ -663,7 +669,8 @@
   },
   "train_row_bond": {
     "x": 222,
-    "y": 390
+    "y": 390,
+    "color": "#ff7fb0"
   },
   "train_row_dance": {
     "x": 222,
@@ -694,8 +701,9 @@
     "y": 17
   },
   "training": {
-    "x": 21,
-    "y": 109
+    "x": 11,
+    "y": 120,
+    "scale": 1.05
   },
   "vocal_mini_bg": {
     "x": 2,
@@ -718,19 +726,20 @@
     "y": -11
   },
   "vocal_stop_desc": {
-    "x": 79,
-    "y": -87,
+    "x": 5,
+    "y": -85,
     "color": "#5b4a70",
     "scale": 0.85
   },
   "vocal_studio_hint": {
     "x": 22,
     "y": 46,
-    "color": "#ffffff"
+    "color": "#5b4a70"
   },
   "vocal_studio_info": {
     "x": 0,
-    "y": -100
+    "y": -97,
+    "scale": 1.05
   },
   "vocal_train_game_close_x": {
     "x": -1,
@@ -765,14 +774,14 @@
     "y": 0
   },
   "vocal_train_game_title": {
-    "x": -7,
-    "y": 5,
-    "scale": 1.3,
+    "x": -13,
+    "y": 46,
+    "scale": 1.65,
     "color": "#5b4a70"
   },
   "backBtn_text": {
-    "x": -12,
-    "y": -2,
+    "x": 15,
+    "y": 3,
     "texts": [
       "      로비"
     ],
@@ -789,7 +798,24 @@
     "fontSize": 16
   },
   "title_start": {
-    "x": 92,
+    "x": 35,
     "y": 670
+  },
+  "card_deck_item_name_text": {
+    "x": 35,
+    "y": 66
+  },
+  "lobby_status_tab": {
+    "x": 243,
+    "y": 107
+  },
+  "card_text": {
+    "x": 85,
+    "y": 40
+  },
+  "dance_train_game_title": {
+    "x": -15,
+    "y": 20,
+    "scale": 1.5
   }
 }
