@@ -3,6 +3,7 @@
 import { AnimatedSprite, Application, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
 import type { GameAssets } from "./assets";
 import { openMetaMenu } from "./metaMenu";
+import { renderSidePanel, PIXI_TABS, type SideTab } from "./sidePanels";
 import { pos } from "./layout";
 import { fullRect, coverBg, stageTop, stageHeight } from "./stage";
 import { bgManifest } from "./bgSlots";
@@ -449,6 +450,13 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
     app.stage.addChild(root);
     let disposed = false;
     let refreshDeck: () => void = () => {}; // build마다 최신 buildContent로 교체
+    // 열린 사이드 팝업 — Pixi로 옮긴 탭만 여기에 담긴다(나머지는 기존 DOM 팝업).
+    // 다른 게임 화면과 같은 방식: 상태를 들고 build()가 그린다.
+    let sideTab: SideTab | null = null;
+    const openSide = (tab: SideTab): void => {
+      if (PIXI_TABS.has(tab)) { sideTab = tab; build(); return; }
+      openMetaMenu(tab); // 아직 DOM인 탭
+    };
     onDevDeckChange(() => { if (!disposed) refreshDeck(); }); // 카드 에디터 추가/삭제 → 실시간 갱신 (1회 등록)
 
     function build(): void { // 레이아웃 에디터 토글 시 재구축 (editable 등록/원복)
@@ -553,10 +561,10 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
       editable(`${name}_text`, l); // 버튼 등록 뒤 = 라벨이 자기 문구의 소유자
     };
     // 우측 레일: 데일리 → 앨범 → 상점 → 설정 (연습 버튼 제거 — 게임 내 연습하기·치트로 대체)
-    ico("lobby_daily", "🎁", "데일리", W - 64, 130, () => openMetaMenu("daily"));
-    ico("lobby_album", "📔", "앨범", W - 64, 210, () => openMetaMenu("album"));
-    ico("lobby_shop", "🛍", "상점", W - 64, 290, () => openMetaMenu("shop"));
-    ico("lobby_settings", "⚙️", "설정", W - 64, 370, () => openMetaMenu("settings"));
+    ico("lobby_daily", "🎁", "데일리", W - 64, 130, () => openSide("daily"));
+    ico("lobby_album", "📔", "앨범", W - 64, 210, () => openSide("album"));
+    ico("lobby_shop", "🛍", "상점", W - 64, 290, () => openSide("shop"));
+    ico("lobby_settings", "⚙️", "설정", W - 64, 370, () => openSide("settings"));
 
     // 덱 시트가 열리면 CTA를 잠근다 — 시트 몸통은 입력을 막지 않으므로(핸들 띠만 반응),
     // 열린 시트에 가려진 START가 그대로 눌려 런이 시작되던 문제를 여기서 끊는다.
@@ -621,6 +629,16 @@ export function showLobby(app: Application, assets: GameAssets): Promise<LobbyRe
       if (open) resetPress(cta); // 누른 채로 덱이 열리면 축소 상태로 굳는다 — 원위치
     };
     lockCta(deckSheetOpen); // 리드로우 전 열려 있었으면 잠긴 채로 복원
+
+    // 사이드 팝업 — 로비 위에 얹는다 (딤이 뒤 화면을 덮으므로 마지막에)
+    if (sideTab) {
+      renderSidePanel(root, {
+        tab: sideTab,
+        ticker: app.ticker,
+        onClose: () => { sideTab = null; build(); },
+        onRedraw: () => build(),
+      });
+    }
 
     } // ── build() 끝 ──
     build();
