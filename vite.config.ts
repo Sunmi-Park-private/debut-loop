@@ -266,7 +266,9 @@ function layoutSavePlugin(): Plugin {
                 // 이미 존재하는 항목에 스타일 필드가 함께 오면 x/y는 클라이언트가 ensureCoords()로
                 // 채운 "그려진 그대로"의 스냅샷일 뿐이다 — 그 사이 다른 사람이 저장한 좌표를
                 // 덮어쓰지 않도록 무시한다. x/y만 오는 패치(진짜 드래그 이동)는 그대로 반영한다.
-                if (isStylePatch && (f === 'x' || f === 'y')) continue
+                // 단, center가 함께 오면 예외다 — 앵커가 뒤집히는 순간 x의 의미 자체가 바뀌므로,
+                // 에디터가 보낸 x는 스냅샷이 아니라 새 앵커 기준으로 환산한 진짜 좌표다.
+                if (isStylePatch && (f === 'x' || f === 'y') && !('center' in fields)) continue
                 if (v === null) delete entry[f]
                 else entry[f] = v
               }
