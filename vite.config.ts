@@ -36,9 +36,12 @@ function movToAlphaWebm(abs: string): string | void {
   execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', abs, ...vf,
     '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p', '-b:v', '0', '-crf', '32',
     '-cpu-used', '4', '-row-mt', '1', '-an', out]) // 인코딩 동안 dev 서버 블로킹 — 에디터가 대기 표시
-  // iOS용 HEVC 알파 사이블링은 알파가 있는 mov에서만 의미가 있다. mp4는 원본을 지운다.
-  if (abs.endsWith('.mp4')) fs.unlinkSync(abs)
-  else if (!alphaMovSibling(abs)) fs.unlinkSync(abs) // HEVC 인코딩 실패 시 원본 mov 정리 (webm만 유지)
+  if (abs.endsWith('.mp4')) {
+    // iOS용 HEVC 알파 mov는 **배경을 뺀 webm**에서 만든다 — 원본 mp4엔 알파가 없어 소용없다.
+    // (webm 직접 업로드 경로와 같은 방식) 원본 mp4는 역할이 끝났으므로 정리한다.
+    alphaMovSibling(out, ['-c:v', 'libvpx-vp9'])
+    fs.unlinkSync(abs)
+  } else if (!alphaMovSibling(abs)) fs.unlinkSync(abs) // HEVC 인코딩 실패 시 원본 mov 정리 (webm만 유지)
   return out
 }
 
