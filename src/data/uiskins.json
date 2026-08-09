@@ -444,25 +444,23 @@
       "slots": [
         {
           "id": "end-panel",
-          "label": "엔딩·회귀 패널 배경",
+          "label": "엔딩·회귀 패널 배경 — 원본 비율 유지",
           "file": "",
           "size": [
             394,
             402
           ],
-          "mode": "9slice",
-          "slice": 24
+          "mode": "stretch"
         },
         {
           "id": "end-panel-regress",
-          "label": "회귀 배경판 (붉은 섬광 — 눈을 뜨니 0시)",
+          "label": "회귀 배경판 (붉은 섬광 — 눈을 뜨니 0시) — 원본 비율 유지",
           "file": "",
           "size": [
             394,
             402
           ],
-          "mode": "9slice",
-          "slice": 24
+          "mode": "stretch"
         },
         {
           "id": "end-btn-fast",
@@ -500,7 +498,7 @@
         {
           "id": "end-panel-doom",
           "label": "파멸 배경 프레임 (게이지 붕괴 · 🎬 영상 가능 · 원본 비율 유지)",
-          "file": "assets/ui/end-panel-doom.webp",
+          "file": "assets/ui/end-panel-doom.webm",
           "size": [
             394,
             606
@@ -538,14 +536,13 @@
         },
         {
           "id": "train-frame",
-          "label": "공통 · 패널 테두리 라인 (배경 위에 덧그림)",
+          "label": "공통 · 패널 테두리 라인 (배경 위에 덧그림) — 원본 비율 유지",
           "file": "",
           "size": [
             394,
             610
           ],
-          "mode": "9slice",
-          "slice": 24
+          "mode": "stretch"
         },
         {
           "id": "train-fail-panel",

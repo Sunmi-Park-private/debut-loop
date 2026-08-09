@@ -101,7 +101,7 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
 
   // 테두리 라인 — 배경 위에 덧그리는 별도 레이어. 배경을 바꿔도 테두리는 그대로 남고,
   // 위치·배율은 레이아웃 에디터(train_frame)에서 따로 잡는다.
-  const frameSkin = skinNode("train-frame", W, H);
+  const frameSkin = skinFit("train-frame", W, H); // 원본 비율 유지 — 배율·위치는 에디터에서
   if (frameSkin) {
     const fp = pos("train_frame", { x: 0, y: 0 });
     frameSkin.x = fp.x;
