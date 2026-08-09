@@ -150,6 +150,11 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
     // 문구만 다듬을 수가 없다. 일곱 칸의 문구를 한 묶음(side_daily_texts)으로 뺀다.
     const textsG = grp("side_daily_texts", gx, onArt ? 0 : 84);
 
+    // 상단 점선 게이지바 — 아트의 점 7개 자리에 같은 상자 그림을 1/3 크기로 채운다.
+    // 받은 날만 채워져서 진행도가 한눈에 보인다 (데일리 보상을 받으면 그날 칸이 함께 찬다).
+    const TRACK_Y = 251, TRACK_X0 = 51, TRACK_STEP = 43; // 렌더 화면에서 점 중심 역산
+    const TRACK_W = 25, TRACK_H = 17;                    // 칸 상자(74×51)의 1/3
+
     const rewards = ["⭐5", "⭐10", "카드×1", "⭐15", "카드×2", "⭐20", "카드★★★"];
     rewards.forEach((r, i) => {
       const day = i + 1;
@@ -194,12 +199,14 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       }
 
       const rw = txt(done ? "✓" : r, onArt ? 11 : 15, done ? 0x2e9a80 : today ? 0xc9527f : SUB, true);
+      rw.style.fontWeight = "900"; // 배경판 위 작은 글씨라 bold(700)로는 얇게 보인다
       rw.x = cp.x + Math.round((cw - rw.width) / 2); // 묶음 기준 = 칸 좌표 + 칸 안 위치
       rw.y = cp.y + (onArt ? inY + inH - 25 : 20);
       textsG.addChild(rw);
 
       if (today) {
         const now = txt("오늘!", 9, 0xc9527f, true);
+        now.style.fontWeight = "900";
         now.x = cp.x + Math.round((cw - now.width) / 2);
         now.y = cp.y + (onArt ? -4 : 44);
         textsG.addChild(now);
@@ -211,6 +218,22 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       }
       gridG.addChild(cell);
       reg(cellKey, cell); // 칸 하나씩 옮길 수 있게 (아트 칸 미세 정렬용)
+
+      // 게이지바 채움 — 받은 날(done)만 미니 상자를 올린다. 칸과 같은 슬롯을 쓰므로
+      // 상자 그림을 바꾸면 위아래가 함께 바뀐다. 점 하나씩 따로 옮길 수 있게 전용 키.
+      if (onArt && done) {
+        const mini = skinFit("side-daily-cell-done", TRACK_W, TRACK_H);
+        if (mini) {
+          const mk = `side_daily_t${day}`;
+          const mp = pos(mk, { x: TRACK_X0 + TRACK_STEP * i - Math.round(TRACK_W / 2), y: TRACK_Y - Math.round(TRACK_H / 2) });
+          const holder = new Container();
+          holder.x = mp.x;
+          holder.y = mp.y;
+          holder.addChild(mini);
+          panel.addChild(holder);
+          reg(mk, holder);
+        }
+      }
     });
 
     const note = txt("7일 연속 출석하면 ★★★ 에픽 카드!", 11, SUB);

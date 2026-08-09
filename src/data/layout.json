@@ -1532,5 +1532,9 @@
   "side_daily_grid": {
     "x": 0,
     "y": 0
+  },
+  "side_daily_texts": {
+    "x": 0,
+    "y": 28
   }
 }
