@@ -18,7 +18,7 @@ import { pressable, type PressOpts } from "./press";
 import { cardTemplates, tuning, beatmaps, tickets } from "../data";
 import { skinNode, skinTex, skinTexTrim, skinFit, skinNatural, skinCover, skinScale } from "./uiSkin";
 import { pos } from "./layout";
-import { btnText, centerBtnLabel } from "./btnLabel";
+import { btnText, centerBtnLabel, gateKeyPrefix } from "./btnLabel";
 import { editable, editableClone, inputBlocked, setEditorToggleHook, setRedrawHook } from "./editor";
 import { buzz } from "./haptics";
 import { fullRect } from "./stage";
@@ -1762,12 +1762,14 @@ export function renderGate(
 
   const panel = new Container();
   // 저장값 = 패널 절대좌표 (에디터 드래그·저장과 1:1 왕복). 미저장 시 기본 = 가로 중앙
-  // 포토카드는 배경판 아트 비율로 패널 크기가 달라 다른 관문과 위치를 공유하면 서로 틀어진다.
-  // → 전용 키(gate_photo*)로 분리. 미저장 시 공통 키(gate*) 값을 승계해 현재 위치 유지
-  const photo = gate.engine === "slot";
-  const lk = (base: string): string => photo ? base.replace(/^gate/, "gate_photo") : base;
+  const photo = gate.engine === "slot"; // 배경판 폴백 프레임 분기에 계속 쓰인다
+  // 관문마다 배경판 아트 비율이 달라 패널 크기(W×PH)가 제각각이다 — 키를 공유하면
+  // 한 관문을 맞출 때 다른 관문이 틀어진다. 관문 id로 키를 나누고, 저장값이 없으면
+  // 기존 공용 키를 승계해 분리 직후 배치가 그대로 유지되게 한다.
+  const pre = gateKeyPrefix(gate.id);
+  const lk = (base: string): string => base.replace(/^gate/, pre);
   const lpos = (base: string, def: { x: number; y: number }): { x: number; y: number } =>
-    photo ? pos(lk(base), pos(base, def)) : pos(base, def);
+    pos(lk(base), pos(base, def));
   const p = lpos("gate", { x: Math.round((430 - W) / 2), y: 145 });
   panel.x = p.x;
   panel.y = p.y;
