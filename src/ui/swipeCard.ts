@@ -1,13 +1,14 @@
 // ui/swipeCard.ts — 카드(대사) + 드래그 스와이프 + 좌/우 버튼 렌더 (Pixi v8).
 import { AnimatedSprite, BlurFilter, Container, Graphics, Sprite, Text, Texture, type FederatedPointerEvent } from "pixi.js";
 import type { Beat } from "../engine/types";
+import { recallOf } from "../engine/recall";
 import { pos } from "./layout";
 import { easeOut, easeInOut, lerp } from "./ease";
 import { pressable } from "./press";
 import { buzz } from "./haptics";
 import { pairSpace } from "./keys";
 import { skinNode, skinTexTrim } from "./uiSkin";
-import { editable, editorEnabled } from "./editor";
+import { editable, inputBlocked } from "./editor";
 
 const sub = (t: string, casting: Record<string, string>): string =>
   t.replace(/\{(\w+)\}/g, (_, k: string) => casting[k] ?? k);
@@ -24,6 +25,10 @@ const SETTLE_MAX_MS = 260;
 // 회전이 세로 이동으로 새어 나온다(Δy = 축거리·sin θ). 캐릭터는 축에서 195px 떨어져 있어
 // 임계에서 약 25px씩 — 왼쪽으로 끌면 정수리가 올라가고 오른쪽으로 끌면 내려가, 좌우 차가 50px에 달했다.
 const PIVOT_X = CARD_W / 2;
+// 선택 버튼 문구를 버튼 중앙에서 화면 **안쪽(중심선 방향)** 으로 당기는 양.
+// 좌 버튼 문구는 오른쪽으로, 우 버튼 문구는 왼쪽으로 이만큼 이동한다.
+// 버튼 아트를 넓힌 뒤 문구가 바깥으로 치우쳐 보여 모았다. 바깥으로 밀려면 음수로.
+const BTN_TEXT_IN = 10;
 
 export interface CardOpts {
   seen?: boolean; // 회귀 가속: 축약 카드로 표시
@@ -121,22 +126,42 @@ export function renderCard(
   }
   if (seen) {
     const ff = new Text({ text: replay ? "▶▶ 기억 속 장면" : "▶▶ 기억 속 장면 — 빠르게 넘기기", style: { fontSize: 12, fill: 0xa78be6, fontWeight: "bold" } });
-    ff.x = 18;
-    ff.y = 16;
+    const pFf = pos("card_seen_note", { x: 18, y: 16 });
+    ff.x = pFf.x;
+    ff.y = pFf.y;
     card.addChild(ff);
+    editable("card_seen_note", ff); // 2회차에서만 보이는 머리말
     textY = 44;
   }
 
   const btnY = H - 80;
-  const raw = sub(beat.textKey, casting);
+  // 2회차 회상 카드는 비트에 적어둔 회상 문구를 쓴다 (없으면 1회차 문장 그대로).
+  // 예전엔 여기서 40자에서 잘라 문장이 중간에 끊겼다 — 자르지 않는다.
+  const rc = seen ? recallOf(beat) : null;
+  const raw = sub(rc ? rc.text : beat.textKey, casting);
   const line = new Text({
-    text: seen && raw.length > 40 ? raw.slice(0, 40) + "…" : raw,
-    style: { fontSize: seen ? 14 : 17, fill: seen ? 0xa99bc0 : 0x5b4a70, wordWrap: true, wordWrapWidth: 360, lineHeight: seen ? 21 : 26 },
+    text: raw,
+    // align:center — 줄바꿈된 각 줄을 서로 가운데로 맞춘다(줄 길이가 제각각이라 왼쪽 정렬이면 들쭉날쭉).
+    style: {
+      fontSize: seen ? 14 : 17, fill: seen ? 0xa99bc0 : 0x5b4a70,
+      wordWrap: true, wordWrapWidth: 360, lineHeight: seen ? 21 : 26, align: "center",
+    },
   });
-  line.x = 18;
-  // 초상 카드: 대사를 버튼 바로 위(하단)에 배치 — 낮아진 패널에서 빈 공간 제거
-  line.y = !seen && hasPortrait ? btnY - line.height - 16 : textY;
+  // 세로는 **상단 기준**으로 고정한다. 예전엔 `btnY - line.height`로 아래를 맞춰서,
+  // 3줄짜리는 안정적인데 1·2줄짜리는 위쪽에 빈 공간이 생기고 문단이 아래로 내려앉았다.
+  // 3줄이 지금과 같은 자리에 오도록 그 높이만큼 위에서 시작한다.
+  const bodyLH = seen ? 21 : 26;
+  const bodyTop = btnY - bodyLH * 3 - 16;
+  // 가로는 패널 아트(game-card-frame, 폭 CARD_W) 기준 가운데 — 실제 렌더 폭으로 계산해
+  // 대사 길이가 장면마다 달라도 항상 패널 중앙에 온다
+  const pLine = pos("card_text", {
+    x: Math.round((CARD_W - line.width) / 2),
+    y: !seen && hasPortrait ? bodyTop : textY,
+  });
+  line.x = pLine.x;
+  line.y = pLine.y;
   card.addChild(line);
+  editable("card_text", line); // 대사 문구를 카드와 별개로 조정 (크기·색·위치)
 
   // 확정 시 라이트 블룸 대상 — 버튼 컨테이너와 블룸 색 (스킨 아트 색상: 좌=핑크, 우=블루 / 벡터 폴백=버튼 채색)
   const btnRefs: Partial<Record<"left" | "right", { b: Container; color: number }>> = {};
@@ -152,14 +177,24 @@ export function renderCard(
     const t = new Text({
       text: label,
       // 대사와 동일한 폰트 스타일·크기 (스킨 버튼 위 색상도 대사와 동일, 벡터 폴백은 흰색 유지)
-      style: { fontSize: 17, fill: btnSkin ? 0x5b4a70 : 0xffffff, wordWrap: true, wordWrapWidth: 154, lineHeight: 26 },
+      // align:center — 두 줄로 접히는 긴 라벨("그래도 지금은 / 동료야")의 둘째 줄이
+      // 왼쪽에 붙지 않게. 블록만 가운데 두면 줄끼리 어긋나 보인다.
+      style: { fontSize: 17, fill: btnSkin ? 0x5b4a70 : 0xffffff, wordWrap: true, wordWrapWidth: 154, lineHeight: 26, align: "center" },
     });
-    const pT = pos(`${name}_text`, { x: 12, y: 12 }); // 버튼 내부 텍스트 위치 — 에디터 조정 가능
+    // 기본값은 버튼(178×60) 안 정중앙에서 중심선 쪽으로 BTN_TEXT_IN만큼 당긴 자리.
+    // 가운데 정렬 자체는 유지되므로 문구 길이가 비트마다 달라도(6~12자, 두 줄 포함)
+    // 전 비트가 같은 규칙으로 놓인다.
+    // 에디터에서 옮기면 그 값이 우선하지만, 그 순간부터 길이 보정은 사라진다.
+    const dx = dir === "left" ? BTN_TEXT_IN : -BTN_TEXT_IN;
+    const pT = pos(`${name}_text`, {
+      x: Math.round((178 - t.width) / 2 + dx),
+      y: Math.round((60 - t.height) / 2),
+    });
     t.x = pT.x;
     t.y = pT.y;
     b.addChild(g, t);
     editable(name, b);
-    editable(`${name}_text`, t);
+    editable(`${name}_text`, t); // 문구 크기·색을 버튼과 따로 조정
     btnRefs[dir] = { b, color: btnSkin ? (dir === "left" ? 0xff6f91 : 0x6ec8ff) : color };
     // 눌림 → 복귀 후 블룸·확정. 안쪽 컨테이너로 감싸도 t의 로컬 좌표는 그대로라 에디터 조정과 충돌하지 않는다
     pressable(b, () => flashChoice(dir, () => onChoose(dir)));
@@ -198,31 +233,43 @@ export function renderCard(
   };
   if (replay) {
     // 그때의 선택 + 탭 안내 (버튼 없음 — 카드 전체가 탭 타깃)
-    const chose = new Text({ text: `그때의 선택 — ${beat[replay].label}`, style: { fontSize: 13, fill: 0x8a76a8, fontWeight: "bold" } });
-    chose.x = 18;
-    chose.y = btnY + 4;
+    const chose = new Text({ text: `그때의 선택 — ${rc ? rc[replay] : beat[replay].label}`, style: { fontSize: 13, fill: 0x8a76a8, fontWeight: "bold" } });
+    const pCh = pos("card_replay_choice", { x: 18, y: btnY + 4 });
+    chose.x = pCh.x;
+    chose.y = pCh.y;
     const tap = new Text({ text: "탭하여 넘기기 ▸", style: { fontSize: 12, fill: 0xc9b8e0 } });
-    tap.x = CARD_W - tap.width - 18;
-    tap.y = btnY + 28;
+    const pTap = pos("card_replay_tap", { x: Math.round(CARD_W - tap.width - 18), y: btnY + 28 });
+    tap.x = pTap.x;
+    tap.y = pTap.y;
     card.addChild(chose, tap);
+    editable("card_replay_choice", chose);
+    editable("card_replay_tap", tap);
     // 적용될 게이지 변화량 칩 — 탭 전에 미리 표시 (증가=초록, 감소=핑크: gaugeBar UP/DOWN과 동일)
+    // 칩은 개수가 비트마다 달라 하나씩 등록하지 않고, 묶음 하나를 옮길 수 있게 한다.
     const GL: Record<string, string> = { skill: "실력", mental: "멘탈", reputation: "평판", bond: "유대", capital: "자본" };
+    const chips = new Container();
+    const pChips = pos("card_replay_chips", { x: 0, y: 0 });
+    chips.x = pChips.x;
+    chips.y = pChips.y;
     let cx = 18;
     for (const [k, v] of Object.entries(beat[replay].effects.gauges ?? {})) {
       if (!v) continue;
       const chip = new Text({ text: `${GL[k] ?? k} ${v > 0 ? "+" : ""}${v}`, style: { fontSize: 12, fill: v > 0 ? 0x3fb98a : 0xff6f91, fontWeight: "bold" } });
       chip.x = cx;
       chip.y = btnY + 28;
-      card.addChild(chip);
+      chips.addChild(chip);
       cx += chip.width + 10;
     }
+    card.addChild(chips);
+    editable("card_replay_chips", chips);
   } else {
-    mkBtn("← " + beat.left.label, 18, 0x9a7fe0, "left");
-    mkBtn(beat.right.label + " →", 198, 0xff7fb0, "right");
+    // 방향은 버튼 아트가 표시한다 — 문구에 ←/→를 덧붙이지 않는다
+    mkBtn(rc ? rc.left : beat.left.label, 18, 0x9a7fe0, "left");
+    mkBtn(rc ? rc.right : beat.right.label, 198, 0xff7fb0, "right");
   }
 
   // ── replay(빠른 모드): 탭·Space·→ 1회로 기록된 선택 재적용 — 드래그/버튼/방향키 없음 ──
-  if (!editorEnabled() && replay) {
+  if (!inputBlocked() && replay) {
     card.eventMode = "static";
     card.cursor = "pointer";
     // 탭·Space·→ 공용 1회 실행 — 어느 쪽으로 진행해도 리스너 해제 (중복 발화 방지)
@@ -249,7 +296,7 @@ export function renderCard(
 
   // ── 드래그 스와이프 (목업 bindDrag 이식) ── 에디터 모드에선 비활성(위치 조정 드래그와 충돌)
   // 캐릭터는 카드와 분리된 오브젝트라 카드 히트영역 밖 — 캐릭터 위에서도 스와이프되도록 양쪽에 배선
-  if (!editorEnabled() && !replay) {
+  if (!inputBlocked() && !replay) {
     const dragTargets: Container[] = portraitSpr ? [card, portraitSpr] : [card];
     for (const t of dragTargets) {
       t.eventMode = "static";

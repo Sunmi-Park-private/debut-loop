@@ -1,7 +1,7 @@
 // ui/training.ts — A안: 프메 커맨드 보드 연습 화면 (Pixi v8).
 // 좌측 캐릭터 스탠딩(placeholder) + 말풍선, 우측 세로 커맨드 리스트.
 // 판정은 engine, 카드·소모 반영은 컨트롤러 — 여긴 렌더+입력만.
-import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Sprite, type Texture, type Ticker } from "pixi.js";
+import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Sprite, Text, type Texture, type Ticker } from "pixi.js";
 import type { MiniGameGrade, TrainingId, CardGrade } from "../engine/types";
 import { starNode, gaugeSymbol, fanAngle } from "./cardArt";
 import { templateGauges } from "../engine/cards";
@@ -99,6 +99,18 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
   const panelSkin = skinNode("train-panel", W, H) ?? skinNode("ui-frame", W, H);
   if (panelSkin) { panel.addChild(panelSkin); chrome.push(panelSkin); }
 
+  // 테두리 라인 — 배경 위에 덧그리는 별도 레이어. 배경을 바꿔도 테두리는 그대로 남고,
+  // 위치·배율은 레이아웃 에디터(train_frame)에서 따로 잡는다.
+  const frameSkin = skinFit("train-frame", W, H); // 원본 비율 유지 — 배율·위치는 에디터에서
+  if (frameSkin) {
+    const fp = pos("train_frame", { x: 0, y: 0 });
+    frameSkin.x = fp.x;
+    frameSkin.y = fp.y;
+    panel.addChild(frameSkin);
+    chrome.push(frameSkin);
+    editable("train_frame", frameSkin);
+  }
+
   // 헤더: train-title(플로팅 타이틀 패널) 업로드 시 그걸로, 없으면 기존 헤더 스트립
   const titleSkin = skinNode("train-title", 250, 82);
   // 주차·회차 문구 — 레이아웃 에디터(train_week)로 위치 조정 가능 (우상단 X 버튼과 겹침 회피용)
@@ -157,6 +169,17 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     return g2;
   };
   const grp = (name: string, ...items: Container[]): Container => grpIn(body, name, ...items);
+  /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다.
+   *  기본값은 btn()이 잡아준 가운데 정렬이라 저장된 값이 없으면 지금 배치 그대로다. */
+  const btnLabel = (name: string, b: Container): void => {
+    const t = b.children.find((c): c is Text => c instanceof Text);
+    if (!t) return;
+    const key = ns ? `${ns}_${name}_text` : `${name}_text`;
+    const q = pos(key, { x: Math.round(t.x), y: Math.round(t.y) });
+    t.x = q.x;
+    t.y = q.y;
+    editable(key, t);
+  };
   /** 변형 전용 키 그룹 — 저장값이 없으면 기본 키(fb) 좌표를 승계 (예: 3×3 그리드 제목이 기존 값을 물려받음) */
   const grpFb = (name: string, fb: string, ...items: Container[]): Container => {
     const key = ns ? `${ns}_${name}` : name;
@@ -522,6 +545,9 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     clear();
     setNs(a.id, () => showFail(a)); // 활동별 전용 키 + 배율 변경 시 이 화면만 재렌더
     setChrome(true); // 실패 화면도 패널 복원
+    // 실패 화면 배경 프레임 — 맨 뒤. 미업로드면 깔지 않는다(연습 패널이 그대로 보인다)
+    const fbg = skinFit("train-fail-panel", W, H);
+    if (fbg) grp("train_fail_bg", fbg);
     const t1 = txt("아쉬워요…", 22, INK, true);
     t1.x = (W - t1.width) / 2;
     t1.y = 120;
@@ -533,7 +559,9 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     quit.y = 284;
     grp("train_fail_title", t1);
     grp("train_fail_retry", go);
+    btnLabel("train_fail_retry", go);
     grp("train_fail_quit", quit);
+    btnLabel("train_fail_quit", quit);
   };
 
   showMenu();

@@ -18,7 +18,7 @@ import { pressable, type PressOpts } from "./press";
 import { cardTemplates, tuning, beatmaps, tickets } from "../data";
 import { skinNode, skinTex, skinTexTrim, skinFit, skinNatural, skinCover, skinScale } from "./uiSkin";
 import { pos } from "./layout";
-import { editable, editorEnabled, setEditorToggleHook, setRedrawHook } from "./editor";
+import { editable, inputBlocked, setEditorToggleHook, setRedrawHook } from "./editor";
 import { buzz } from "./haptics";
 import { fullRect } from "./stage";
 import { playLevelUpFx } from "./levelUpFx";
@@ -1398,7 +1398,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
         cd.parent?.removeChild(cd);
         restartBgm(trackId); // 판마다 처음부터 (노트·음악 싱크)
         ticker.add(tick);
-        if (editorEnabled()) applyEditor(true); // 에디터 켠 채 시작 → 첫 프레임부터 일시정지
+        if (inputBlocked()) applyEditor(true); // 편집 모드로 시작 → 첫 프레임부터 일시정지 (조작 모드면 그대로 진행)
       };
       setTimeout(stepCd, 800);
     };
@@ -1731,6 +1731,16 @@ export function renderGate(
     editable(lk(name), g2);
   };
 
+  /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다 */
+  const chromeLabel = (name: string, b: Container): void => {
+    const t = b.children.find((c): c is Text => c instanceof Text);
+    if (!t) return;
+    const q = lpos(`${name}_text`, { x: Math.round(t.x), y: Math.round(t.y) });
+    t.x = q.x;
+    t.y = q.y;
+    editable(lk(`${name}_text`), t);
+  };
+
   const drawTitle = (): void => {
     if (gate.engine === "slot" && skinTex("gate-photo-board")) {
       // 배경판 아트(텍스트 미포함) — 제목·상단 탭을 아트 레이아웃 위치에 코드로 작성 (미세조정=레이아웃 에디터)
@@ -1916,7 +1926,10 @@ export function renderGate(
   const showFail = (): void => {
     setRedrawHook(showFail); // 배율 변경 시 이 화면만 재렌더
     clear();
-    body.addChild(new Graphics().roundRect(10, 2, W - 20, PH - 14, 20).fill({ color: 0xffffff, alpha: 0.88 }));
+    // 배경 프레임 — 업로드된 아트가 있으면 그걸로, 없으면 기존 반투명 판을 유지한다
+    const fbg = skinFit("gate-fail-panel", W, PH);
+    if (fbg) chromeGrp("gate_fail_bg", fbg);
+    else body.addChild(new Graphics().roundRect(10, 2, W - 20, PH - 14, 20).fill({ color: 0xffffff, alpha: 0.88 }));
     const t1 = txt("아쉬워요…", 22, INK, true);
     t1.x = (W - t1.width) / 2;
     t1.y = 220;
@@ -1926,7 +1939,11 @@ export function renderGate(
     const quit = btn("종료하기 (보상 없이 진행)", 220, 0xc4b8d6, onExit, "gate-btn-quit");
     quit.x = (W - 220) / 2;
     quit.y = 394;
-    body.addChild(t1, go, quit);
+    chromeGrp("gate_fail_title", t1);
+    chromeGrp("gate_fail_retry", go);
+    chromeLabel("gate_fail_retry", go);
+    chromeGrp("gate_fail_quit", quit);
+    chromeLabel("gate_fail_quit", quit);
   };
 
   // ── 라운드 진행: 기본 1회 + 광고 시청 시 1회 더 (관문당 1회 한정) — 라운드마다 즉시 정산 ──

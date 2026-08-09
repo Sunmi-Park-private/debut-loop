@@ -6,8 +6,8 @@ import type { Card, CardGrade } from "../engine/types";
 import { starNode, gaugeSymbol } from "./cardArt";
 import { easeIn, easeOut, easeInOut, lerp } from "./ease";
 import { pos } from "./layout";
-import { editable } from "./editor";
-import { BASE_W, BASE_H } from "./stage";
+import { editable, editableClone } from "./editor";
+import { BASE_W, BASE_H, stageHeight } from "./stage";
 import { skinNode, skinFit, skinTexTrim } from "./uiSkin";
 import { cardTemplates } from "../data";
 
@@ -20,7 +20,11 @@ const COLS = 4;
 const CW = 82;
 const CH = CW * 1.3;
 const GAP = 10;
-const MAX_TILES = 8;
+// 표시 상한 = 4열 × 3줄. 칸을 나누는 기준이 「종류 + 등급 + 게이지」라, 게이지가 둘인 원형
+// (유대=멘탈+유대, 안무=실력+멘탈, 오디션=평판+실력)은 한 번에 두 칸을 먹는다.
+// 8칸이던 시절엔 휴식 한 번에 상한을 넘겨, 덱에는 들어갔는데 화면엔 안 나오는 일이 생겼다.
+const MAX_TILES = 12;
+const ROWS = Math.ceil(MAX_TILES / 4);
 const TAP_SLOP = 8;    // 이 거리 안에서 뗐으면 드래그가 아니라 탭
 const HANDLE_H = 98;   // 개폐 핸들 띠 높이 — content 오프셋과 같은 값(제목 아래·첫 카드 줄 위)
 const FLIP_HALF = 130; // 뒤집기 반바퀴 (ms) — 폭이 0이 되는 시점에 앞뒤 면 교체
@@ -93,7 +97,13 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
   const bannerH = bannerTex ? Math.round(W * (bannerTex.height / bannerTex.width)) : 230;
   // 개폐 스트로크는 배너 높이 비율로 — 닫힘=상단 30%만 노출, 열림=상단 70%까지(하단 30%는 화면 밑)
   const BANNER_TOP = H - Math.round(bannerH * 0.3); // 배너 상단 = 덱 조각들의 기준선
-  const OPEN_DY = bannerTex ? Math.round(bannerH * 0.4) : 240; // 아트 미업로드(벡터 폴백)만 고정값
+  // 여는 폭 — 기본은 배너 높이의 40%. 마지막 줄이 화면 바닥에 걸리면 그만큼 더 연다.
+  // 상한 60%는 배너 아래쪽이 화면 바닥을 계속 덮는 선 (더 열면 배너 밑에 빈 틈이 보인다).
+  const contentH = 52 + ROWS * (CH + GAP);
+  const needDy = Math.round(BANNER_TOP + HANDLE_H + contentH + 24 - stageHeight());
+  const OPEN_DY = bannerTex
+    ? Math.min(Math.round(bannerH * 0.6), Math.max(Math.round(bannerH * 0.4), needDy))
+    : 240; // 아트 미업로드(벡터 폴백)만 고정값
   const bannerSkin = skinNode("lobby-deck-banner", W, bannerH);
   if (bannerSkin) bannerSkin.y = BANNER_TOP;
   // 개폐 핸들 = 배너 상단 제목 띠(첫 카드 줄이 시작되기 전까지). 배너 전체를 판정 영역으로 두면
@@ -147,13 +157,16 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
   // 카드 안쪽 조각(심볼·별·이름·개수)의 좌표는 **카드 한 장 기준**이다. 조각을 감싸는 그룹이
   // 카드 컨테이너의 자식이라 에디터가 저장하는 값도 카드 내부 오프셋(0,0=기본 위치)이 된다.
   // 키 이름을 로비·스토리가 공유하므로 어느 화면에서 옮기든 layout.json 한 곳이 바뀌어 양쪽이 같이 따라온다.
-  // 8칸이 같은 오프셋을 쓰는데 에디터 드래그 대상은 하나여야 하므로, 조각별로 처음 만들어진 칸에만 핸들을 건다.
-  const registered = new Set<string>(); // 이번 빌드에서 이미 에디터에 등록한 조각 이름
+  // 8칸이 같은 오프셋을 쓰므로 저장되는 좌표는 조각당 한 벌이다. 다만 등록은 칸마다 해 둔다 —
+  // 첫 칸만 걸어두면 두 번째 칸의 심볼을 눌렀을 때 그 조각이 아니라 바깥 컨테이너(=n칸 전체)가 잡힌다.
+  // 첫 칸이 대표(editable), 나머지는 복제(editableClone)로 같은 이름에 묶인다.
+  const registered = new Set<string>(); // 이번 빌드에서 이미 대표를 세운 조각 이름
+  const reg = (name: string, g: Container): void => {
+    if (registered.has(name)) editableClone(name, g);
+    else { registered.add(name); editable(name, g); }
+  };
   const frontFace = (card: Card, count: number): Container => {
     const f = new Container();
-    const art = skinFit("train-result-card", CW, CH);
-    f.addChild(art ?? new Graphics().roundRect(0, 0, CW, CH, 12)
-      .fill(0xf6f0fc).stroke({ width: 2.5, color: GRADE_COLOR[card.grade] }));
     const t = cardTemplates.find((x) => x.id === card.templateId);
     // 조각의 기본 위치는 child가 갖고, 그룹은 에디터 오프셋만 갖는다.
     // (그룹에 둘을 합쳐 넣으면 에디터가 합계를 저장해 리빌드마다 기본 위치가 누적된다)
@@ -166,11 +179,14 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
       g.y = q.y;
       g.addChild(child);
       f.addChild(g);
-      if (!registered.has(name)) {
-        registered.add(name);
-        editable(name, g);
-      }
+      reg(name, g);
     };
+
+    // 카드 프레임 — 조각들의 바탕. 위에 얹히는 심볼·별·이름보다 먼저 넣어 뒤로 깔린다.
+    igrp("card_deck_item_card",
+      skinFit("train-result-card", CW, CH) ?? new Graphics().roundRect(0, 0, CW, CH, 12)
+        .fill(0xf6f0fc).stroke({ width: 2.5, color: GRADE_COLOR[card.grade] }),
+      0, 0);
 
     // 게이지 심볼 — 카드가 올려주는 게이지 아트, 하나도 없으면 카드 이모지로 폴백
     const symRow = gaugeSymbol(card, CW, SYM);
@@ -185,6 +201,12 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
 
     const nm = mkText(t?.name?.replace(" 카드", "") ?? "", 10, 0x5b4a70, true);
     igrp("card_deck_item_name", nm, (CW - nm.width) / 2, 66);
+    // 카드명 텍스트를 그룹과 별개로 등록 — 그룹은 카드 안에서의 위치, 텍스트는 크기·색·미세 위치.
+    // 기본값은 igrp가 잡아준 가운데 정렬이라 지금 배치는 그대로다.
+    const qn = pos("card_deck_item_name_text", { x: nm.x, y: nm.y });
+    nm.x = qn.x;
+    nm.y = qn.y;
+    reg("card_deck_item_name_text", nm);
 
     if (count > 1) {
       const bd = mkText(`×${count}`, 10, 0xc9527f, true);

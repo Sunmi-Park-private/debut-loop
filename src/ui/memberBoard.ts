@@ -1,6 +1,6 @@
 // ui/memberBoard.ts — 멤버 점검 보드 (📷 이벤트 직후 윈도우 · W18 락인 연출).
 // training.ts 패턴(딤+패널). 판정·상태 변형은 컨트롤러, 여긴 렌더+입력만.
-import { Container, Graphics, Rectangle, Sprite, Texture, type Ticker } from "pixi.js";
+import { Container, Graphics, Rectangle, Sprite, Text, Texture, type Ticker } from "pixi.js";
 import type { CharacterDef, MiniGameGrade, RoleId } from "../engine/types";
 import { candidatePool, FIXED_MEMBERS } from "../engine/members";
 import { characters } from "../data";
@@ -42,11 +42,13 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
   parent.addChild(dim);
 
   const panel = new Container();
-  const p = pos("board", pos("training")); // 기본은 연습 보드와 동일 앵커, board로 개별 저장 가능
+  // 저장된 board 오프셋은 계속 적용하되 에디터에는 걸지 않는다 — 이 컨테이너는 화면 전체를
+  // 감싸서 board_bg와 경계가 거의 같고, 화면 어디를 눌러도 함께 잡혀 배경판을 따로 못 골랐다.
+  // (배경판은 board_bg, 나머지는 각 조각 그룹으로 옮긴다)
+  const p = pos("board", pos("training"));
   panel.x = p.x;
   panel.y = p.y;
   parent.addChild(panel);
-  editable("board", panel);
 
   // 우상단 X — 다른 팝업(연습 등)과 동일한 닫기 관례 (ui-close-x 공용 스킨, 없으면 벡터)
   const xBtn = new Container();
@@ -84,16 +86,14 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     editable(name, g);
     return g;
   };
-  const headSkin = skinNode("audition-head", W - 6, 46);
-  if (headSkin) { headSkin.x = 3; headSkin.y = 3; }
-  const head = headSkin ?? new Graphics().roundRect(3, 3, W - 6, 46, 14).fill(0xffe9f3);
+  // 헤더 띠(board_head)는 걷어냈다 — 패널 프레임 아트가 이미 상단을 갖고 있어 겹쳐 보였다.
+  // 다른 화면에서 쓰지 않는 조각이라 숨기지 않고 지운다 (제목·회차는 그대로).
   const title = txt(ctrl.state.membersLocked ? "🎉 데뷔조 확정" : "멤버 점검", 17, INK, true);
   title.x = 18;
   title.y = 15;
   const wk = txt(`W${ctrl.state.week} · ${ctrl.state.loopCount}회차`, 12, 0xc9527f, true);
   wk.x = W - wk.width - 18;
   wk.y = 18;
-  hgrp("board_head", head);
   hgrp("board_title", title);
   hgrp("board_week", wk);
   panel.addChild(xBtn); // 헤더보다 위로 — 에디터로 X를 패널 안쪽에 옮겨도 프레임에 가리지 않는다
@@ -132,6 +132,17 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     body.addChild(g);
     editable(name, g);
     return g;
+  };
+
+  /** 버튼 안 문구를 따로 등록 — 버튼 아트를 바꾸면 폭이 달라져 문구만 미세조정해야 한다.
+   *  기본값은 btn()이 잡아준 가운데 정렬이라 저장된 값이 없으면 지금 배치 그대로다. */
+  const btnLabel = (name: string, b: Container): void => {
+    const t = b.children.find((c): c is Text => c instanceof Text);
+    if (!t) return;
+    const q = pos(`${name}_text`, { x: Math.round(t.x), y: Math.round(t.y) });
+    t.x = q.x;
+    t.y = q.y;
+    editable(`${name}_text`, t);
   };
 
   /** 대형 프로필용 텍스처 — 전신 아트(bust 미제작 캐릭터)는 상반신만 크롭해 bust처럼 보이게 */
@@ -416,6 +427,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
       }
     }, "exchange");
     bgrp("board_btn_exchange", 14, y, exBtn);
+    btnLabel("board_btn_exchange", exBtn);
     const canHold = ticketN > 0 && pool.length > 0;
     const holdBtn = abtn("🎤 오디션 개최", 186, canHold ? PINK : 0xc4b8d6, () => {
       // 새로 만날 후보가 없으면(전원 심사 완료) 재심사임을 먼저 확인 — 취소 시 진행권을 쓰지 않는다
@@ -424,6 +436,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
       toast(pool.length === 0 ? "영입할 후보가 없어요" : `진행권이 없어요. 오디션 카드 ${cost}장으로 교환하세요`);
     }, "hold");
     bgrp("board_btn_hold", W - 186 - 14, y, holdBtn);
+    btnLabel("board_btn_hold", holdBtn);
     if (canHold) pulse(holdBtn); // 지금 누를 버튼 강조 (그룹 내부 로컬 좌표 기준)
 
     const close = txt("← 이번엔 넘어가기", 12, 0xffffff);
@@ -451,6 +464,10 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
   const showRecheckConfirm = (): void => {
     setRedrawHook(showRecheckConfirm);
     clear();
+    // 배경판 — 맨 뒤 레이어. 아트 미업로드면 아무것도 깔지 않는다(패널 프레임이 그대로 보인다)
+    const rbg = skinFit("recheck-bg", W, H - 52);
+    if (rbg) bgrp("recheck_bg", 0, 0, rbg);
+
     const t = txt("새로 만날 후보가 없어요", 17, 0xffffff, true);
     t.x = (W - t.width) / 2;
     t.y = 120;
@@ -460,14 +477,21 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     const l2 = txt("기량이 오르내릴 수 있고, 진행권 1장을 씁니다", 12, 0xffffff);
     l2.x = (W - l2.width) / 2;
     l2.y = 180;
-    body.addChild(t, l1, l2);
-    const go = abtn("재심사 진행", 200, PINK, showAudition, "recruit");
+    // 문구는 각각 따로 등록 — 크기·색·위치를 줄 단위로 조정한다 (자식 좌표는 그대로, 그룹이 오프셋)
+    bgrp("recheck_title", 0, 0, t);
+    bgrp("recheck_line1", 0, 0, l1);
+    bgrp("recheck_line2", 0, 0, l2);
+
+    const go = btn("재심사 진행", 200, PINK, showAudition, "recheck-btn-go");
     go.x = (W - 200) / 2;
     go.y = 230;
-    const back = abtn("돌아가기 (진행권 유지)", 200, 0xc4b8d6, showBoard, "sub");
+    const back = btn("돌아가기 (진행권 유지)", 200, 0xc4b8d6, showBoard, "recheck-btn-back");
     back.x = (W - 200) / 2;
     back.y = 294;
-    body.addChild(go, back);
+    bgrp("recheck_btn_go", 0, 0, go);
+    btnLabel("recheck_btn_go", go);
+    bgrp("recheck_btn_back", 0, 0, back);
+    btnLabel("recheck_btn_back", back);
   };
 
   // ── ② 오디션 무대 (리듬게임 · 전용 문구) ──

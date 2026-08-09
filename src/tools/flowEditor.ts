@@ -1,7 +1,8 @@
 // tools/flowEditor.ts — 게임 플로우 다이어그램 + 에디터 (dev 전용, /flow.html)
 // beats JSON을 주차·막 타임라인으로 시각화하고, 노드 편집 → 💾 저장(/__beats) → 실제 게임 반영.
 // beats 외 최상위 키(_note·casting·line·config)는 그대로 보존한다.
-import type { Beat, GateDef, GaugeId, Effect } from "../engine/types";
+import type { Beat, BeatRecall, GateDef, GaugeId, Effect, LoopCount } from "../engine/types";
+import { recallOf, beatsOfLoop, recallIsInherited } from "../engine/recall";
 
 const GAUGES: GaugeId[] = ["skill", "mental", "reputation", "bond", "capital"];
 const GLBL: Record<string, string> = { skill: "실력", mental: "멘탈", reputation: "평판", bond: "유대", capital: "자본" };
@@ -15,6 +16,8 @@ let beats: Beat[];
 let gates: GateDef[] = [];
 let sel = -1;
 let dirty = false;
+/** 편집 중인 회차 — 목록·패널이 이 값을 따라간다 (1회차=관찰, 2회차=회상+포착) */
+let tab: LoopCount = 1;
 
 const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement;
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
@@ -35,11 +38,41 @@ function validate(): string | null {
     ids.add(b.id);
     if (b.loop !== undefined && b.loop !== 1 && b.loop !== 2) return `${b.id}: loop는 1 또는 2`;
     if (!b.left?.label || !b.right?.label) return `${b.id}: 좌/우 라벨 필요`;
+    if (b.recall !== undefined) {
+      if (typeof b.recall !== "object" || Array.isArray(b.recall)) return `${b.id}: recall은 객체`;
+      for (const k of ["textKey", "leftLabel", "rightLabel"] as const) {
+        const v = b.recall[k];
+        if (v !== undefined && typeof v !== "string") return `${b.id}: recall.${k}는 문자열`;
+      }
+    }
   }
   for (const g of gates) {
     if (g.trigger.beatId && !ids.has(g.trigger.beatId)) return `관문 ${g.id}의 트리거 비트(${g.trigger.beatId})가 없습니다 — id 변경/삭제 주의`;
   }
   return null;
+}
+
+// 타이핑 → 게임에 실시간 반영 (저장 아님). 문구만 보내고, 파일 기록은 💾가 담당한다.
+let previewTimer = 0;
+let previewPending: Record<string, unknown> = {};
+function sendPreview(): void {
+  const bt = beats[sel];
+  if (!bt) return;
+  // 대기 중인 다른 비트의 수정을 덮어쓰지 않고 모아 둔다 —
+  // 0.3초 안에 다른 비트로 옮겨 타이핑하면 앞 비트의 반영이 통째로 사라지던 문제
+  previewPending[bt.id] = {
+    textKey: bt.textKey,
+    left: { label: bt.left.label, hint: bt.left.hint },
+    right: { label: bt.right.label, hint: bt.right.hint },
+    recall: bt.recall,
+  };
+  if (previewTimer) clearTimeout(previewTimer);
+  previewTimer = window.setTimeout(() => {
+    previewTimer = 0;
+    const body = JSON.stringify(previewPending);
+    previewPending = {};
+    void fetch("/__beatspreview", { method: "POST", body }).catch(() => {});
+  }, 300);
 }
 
 async function save(): Promise<void> {
@@ -48,7 +81,7 @@ async function save(): Promise<void> {
   sessionStorage.setItem("flow.scroll", String(window.scrollY));
   sessionStorage.setItem("flow.sel", String(sel));
   const res = await fetch("/__beats", { method: "POST", body: JSON.stringify(doc) });
-  if (res.ok) toast("💾 저장 완료 — 게임 페이지가 자동 리로드됩니다");
+  if (res.ok) toast("💾 저장 완료 — 게임 화면은 그대로 유지됩니다");
   else toast("저장 실패", true);
   dirty = false;
 }
@@ -110,6 +143,8 @@ function badges(b: Beat): string {
   const out: string[] = [];
   if (b.loop === 1) out.push(`<span class="bdg l1">1회차</span>`);
   if (b.loop === 2) out.push(`<span class="bdg l2">2회차</span>`);
+  // 2회차 탭에서 공통 비트는 "회상" — 새 장면(loop:2)과 성격이 달라 한눈에 갈라 보여준다
+  if (tab === 2 && !b.loop) out.push(`<span class="bdg rc">↩︎ 회상</span>`);
   if (b.training) out.push(`<span class="bdg tr">🎹 연습</span>`);
   if (b.isConvergence) out.push(`<span class="bdg cv">⭐ 수렴</span>`);
   if (b.requires) out.push(`<span class="bdg rq">🔒 조건</span>`);
@@ -123,7 +158,10 @@ function renderTimeline(): void {
   let html = "";
   let curWeek: number | undefined = undefined;
   let curAct: number | undefined = undefined;
-  beats.forEach((b, i) => {
+  // 이 회차에 실제로 플레이되는 비트만. data-i는 **원본 배열 인덱스**를 그대로 실어야
+  // 추가·삭제·필드 편집이 필터와 무관하게 정확한 비트를 가리킨다.
+  const shown = beatsOfLoop(beats, tab).map((b) => [b, beats.indexOf(b)] as const);
+  shown.forEach(([b, i]) => {
     if (b.act !== curAct) {
       if (curAct !== undefined) html += `</div>`; // 이전 막 밴드 닫기
       curAct = b.act;
@@ -137,19 +175,27 @@ function renderTimeline(): void {
       html += `<div class="week">W${b.week}</div>`;
     }
     const loopCls = b.loop === 1 ? "n-l1" : b.loop === 2 ? "n-l2" : "";
-    html += `<div class="node ${loopCls} ${i === sel ? "on" : ""}" data-i="${i}">
+    // 2회차 탭은 그 화면에 실제로 나올 문구를 보여준다. 아직 회상을 쓰지 않은 공통 비트는
+    // 흐리게 눕혀, 88개 중 손대지 않은 곳이 스캔만으로 보이게 한다.
+    const r = tab === 2 ? recallOf(b) : null;
+    const inherit = tab === 2 && !b.loop && recallIsInherited(b);
+    const body = r ? r.text : b.textKey;
+    html += `<div class="node ${loopCls} ${inherit ? "n-inherit" : ""} ${i === sel ? "on" : ""}" data-i="${i}">
       <div class="nid">${esc(b.id)} ${badges(b)}</div>
-      <div class="ntxt">${esc(b.textKey.slice(0, 64))}${b.textKey.length > 64 ? "…" : ""}</div>
-      <div class="nlr"><span>◀ ${esc(b.left.label)} ${gaugeChips(b.left.effects)}${extraChips(b.left.effects)}</span>
-      <span>${esc(b.right.label)} ▶ ${gaugeChips(b.right.effects)}${extraChips(b.right.effects)}</span></div>
+      <div class="ntxt">${esc(body.slice(0, 64))}${body.length > 64 ? "…" : ""}</div>
+      <div class="nlr"><span>◀ ${esc(r ? r.left : b.left.label)} ${gaugeChips(b.left.effects)}${extraChips(b.left.effects)}</span>
+      <span>${esc(r ? r.right : b.right.label)} ▶ ${gaugeChips(b.right.effects)}${extraChips(b.right.effects)}</span></div>
     </div>`;
   });
   html += `</div>`;
-  html += `<div class="endnote">1회차 → 💥 강제 사고 → <b>↺ 회귀 (W0부터, 본 카드 축약)</b> · 2회차 → 🎬 <b>트루엔딩</b></div>`;
+  html += tab === 1
+    ? `<div class="endnote">1회차 → 💥 강제 사고 → <b>↺ 회귀 (W0부터)</b></div>`
+    : `<div class="endnote">2회차 → 🎬 <b>트루엔딩</b> · <b>↩︎ 회상</b> 비트는 1회차에서 본 장면이 다시 나오는 자리입니다</div>`;
   host.innerHTML = html;
   host.querySelectorAll<HTMLElement>(".node").forEach((n) => {
     n.onclick = () => { sel = Number(n.dataset.i); renderTimeline(); renderPanel(); };
   });
+  syncTabs(); // 회상 진행률이 편집 즉시 따라오도록 목록과 함께 갱신
 }
 
 // ── 편집 패널 ──
@@ -178,6 +224,28 @@ function renderPanel(): void {
         <button class="mini" data-advapply="${key}">적용</button></details>
     </div>`;
   };
+  // ── 2회차 회상 칸 — 공통 비트에만. 위엔 1회차 원문(읽기 전용), 아래가 입력 칸.
+  // 잠금 장치를 두지 않는다: 위는 못 고치는 원문, 아래는 쓰는 칸 — 위치만으로 구분된다.
+  const recallField = (key: keyof BeatRecall, title: string, base: string, rows: number): string => {
+    const v = b.recall?.[key] ?? "";
+    const inherit = v.trim() === "";
+    const input = rows > 1
+      ? `<textarea data-r="${key}" rows="${rows}" placeholder="비워두면 1회차 문장이 그대로 나옵니다">${esc(v)}</textarea>`
+      : `<input data-r="${key}" value="${esc(v)}" placeholder="비워두면 1회차 문구 그대로">`;
+    return `<div class="rcf ${inherit ? "inherit" : ""}">
+      <div class="rchead">${title}<span class="bdg same">1회차와 동일</span></div>
+      <div class="rcbase">${esc(base)}</div>
+      ${input}</div>`;
+  };
+  const recallBlock = tab === 2 && !b.loop
+    ? `<div class="rcwrap">
+         <div class="rctitle">↩︎ 2회차 회상 문구 <span>— 이 비트가 회상으로 다시 나올 때 보일 문구</span></div>
+         ${recallField("textKey", "대사", b.textKey, 3)}
+         ${recallField("leftLabel", "◀ 왼쪽 선택지", b.left.label, 1)}
+         ${recallField("rightLabel", "오른쪽 선택지 ▶", b.right.label, 1)}
+       </div>`
+    : "";
+
   host.innerHTML = `
     <div class="phead"><b>${esc(b.id)}</b></div>
     <div class="pactions">
@@ -197,12 +265,31 @@ function renderPanel(): void {
       </span></label>
     </div>
     ${fld("대사(textKey)", `<textarea data-f="textKey" rows="3">${esc(b.textKey)}</textarea>`)}
+    ${recallBlock}
     ${side("left", "◀ 왼쪽 선택지")}
     ${side("right", "오른쪽 선택지 ▶")}
     <details><summary>진입 조건 requires JSON</summary>
       <textarea id="reqTa" rows="3">${esc(b.requires ? JSON.stringify(b.requires, null, 1) : "")}</textarea>
       <button class="mini" id="reqApply">적용 (비우면 제거)</button></details>
   `;
+
+  // 회상 칸 바인딩 — 빈 값은 키를 지우고, 셋 다 비면 recall 자체를 없앤다 (파일에 잡음이 남지 않게)
+  host.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-r]").forEach((el) => {
+    el.addEventListener("input", () => {
+      const bt = beats[sel];
+      if (!bt) return;
+      const key = el.dataset.r as keyof BeatRecall;
+      const r: BeatRecall = { ...bt.recall };
+      if (el.value.trim() === "") delete r[key];
+      else r[key] = el.value;
+      if (Object.keys(r).length === 0) delete bt.recall;
+      else bt.recall = r;
+      dirty = true;
+      sendPreview();
+      el.closest(".rcf")?.classList.toggle("inherit", el.value.trim() === "");
+      renderTimeline();
+    });
+  });
 
   // 필드 바인딩
   host.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("[data-f]").forEach((el) => {
@@ -221,9 +308,9 @@ function renderPanel(): void {
         if ((el as HTMLInputElement).checked) bt.training = true; else delete bt.training;
       } else if (f === "isConvergence") {
         if ((el as HTMLInputElement).checked) bt.isConvergence = true; else delete bt.isConvergence;
-      } else if (f === "textKey") bt.textKey = el.value;
-      else if (f === "left.label") bt.left.label = el.value;
-      else if (f === "right.label") bt.right.label = el.value;
+      } else if (f === "textKey") { bt.textKey = el.value; sendPreview(); }
+      else if (f === "left.label") { bt.left.label = el.value; sendPreview(); }
+      else if (f === "right.label") { bt.right.label = el.value; sendPreview(); }
       renderTimeline();
     });
   });
@@ -327,14 +414,37 @@ function shell(): void {
     .gate span{color:#a8863a;font-size:11px;margin-left:6px}
     .node{background:#241539;border:1.5px solid #3a2757;border-radius:12px;padding:9px 12px;margin:6px 0;cursor:pointer}
     .node:hover{border-color:#8b7bb0} .node.on{border-color:#ff5fa2;box-shadow:0 0 0 1px #c9427f}
-    .node.n-l1{background:#1b2140;border-color:#3d4a79} .node.n-l2{background:#2c1735;border-color:#5a3057}
+    .node.n-l1{background:#1b2140;border-color:#3d4a79}
+    /* 2회차 전용(포착) — 회상 비트와 한눈에 갈라지도록 연보라 판. 회상은 어두운 기본 판을 쓴다 */
+    .node.n-l2{background:#4b3573;border-color:#a78be6;box-shadow:inset 3px 0 0 #a78be6}
+    .node.n-l2 .nid{color:#f0e6ff} .node.n-l2 .nlr{color:#c9b6e6}
     .nid{font-size:11px;color:#cbb8e8;font-weight:700;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
     .ntxt{font-size:12.5px;margin:4px 0;line-height:1.45}
     .nlr{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;color:#8b7bb0;flex-wrap:wrap}
     .bdg{font-size:9.5px;padding:1px 7px;border-radius:9px;font-weight:800}
-    .bdg.l1{background:#3d4a79;color:#bcd0ff} .bdg.l2{background:#5a3057;color:#ffb8dd}
+    .bdg.l1{background:#3d4a79;color:#bcd0ff} .bdg.l2{background:#2a1c40;color:#e6c8ff}
     .bdg.tr{background:#2f4a3a;color:#9df0cf} .bdg.cv{background:#4a3d20;color:#ffd884}
     .bdg.rq{background:#3a2757;color:#cbb8e8} .bdg.gt{background:#4a3d20;color:#ffcf6b}
+    .bdg.rc{background:#264a52;color:#8fe3f0} .bdg.same{background:#4a3d20;color:#ffd884;margin-left:6px}
+    /* 아직 회상을 쓰지 않은 비트 — 흐리게 + 좌측 띠로 남은 작업이 보이게 */
+    .node.n-inherit{opacity:.55;border-left:3px solid #6b5a2a}
+    #tabs{display:flex;gap:6px;margin-left:14px}
+    #tabs button{margin:0;padding:6px 14px;border:1.5px solid #3a2757;border-radius:999px;background:#241539;
+      color:#8b7bb0;font-weight:800;font-size:12px;cursor:pointer}
+    #tabs button.on{background:#3d2a5e;border-color:#ff5fa2;color:#ffd0e8}
+    .rcwrap{border:1.5px solid #2f5a63;border-radius:12px;padding:10px 12px;margin:12px 0;background:#122a30}
+    .rctitle{font-size:12px;font-weight:800;color:#8fe3f0;margin-bottom:8px}
+    .rctitle span{font-weight:600;color:#5f8f99;font-size:10.5px}
+    .rcf{margin:10px 0}
+    .rcf.inherit{opacity:.85}
+    /* 배지 표시는 CSS가 맡는다 — 타이핑 중 패널을 다시 그리면 입력 포커스를 잃으므로 */
+    .rcf .bdg.same{display:none} .rcf.inherit .bdg.same{display:inline}
+    .rchead{font-size:11px;font-weight:700;color:#8fe3f0;display:flex;align-items:center}
+    .rcbase{font-size:11px;color:#6f8f97;background:#0d1f24;border:1px solid #24444c;border-radius:7px;
+      padding:6px 8px;margin:4px 0 5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+    .rcf input,.rcf textarea{width:100%;padding:7px 9px;border:1.5px solid #2f5a63;border-radius:8px;
+      background:#0a1a1e;color:#eafcff;font-size:12.5px;font-family:inherit;box-sizing:border-box}
+    .rcf.inherit input,.rcf.inherit textarea{border-color:#6b5a2a;background:#171208}
     .chip{font-size:9.5px;padding:0 5px;border-radius:7px;margin-left:2px}
     .chip.up{background:#1f4433;color:#7ef0c0} .chip.down{background:#4a2030;color:#ff8ba3} .chip.etc{background:#2a1c40;color:#a99bc0}
     .endnote{margin:22px 0;padding:12px 16px;border:1.5px dashed #8b7bb0;border-radius:12px;color:#cbb8e8;font-size:12.5px}
@@ -362,18 +472,42 @@ function shell(): void {
   <div id="bar">
     <a href="editor.html" style="font-size:12px;color:#c9b6e6;text-decoration:none;background:#241539;border:1.5px solid #3a2757;padding:6px 12px;border-radius:10px;white-space:nowrap">← 허브</a>
     <h1>🗺 게임 플로우 에디터</h1>
+    <div id="tabs"><button data-tab="1">1회차</button><button data-tab="2">2회차</button></div>
     <span class="sub" id="stats"></span>
     <button id="saveBtn">💾 저장 → 게임 반영</button>
   </div>
   <div id="wrap"><div id="timeline"></div><div id="panel"></div></div>`;
   ($("saveBtn") as HTMLButtonElement).onclick = () => { void save(); };
+  $("tabs").querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((btn) => {
+    btn.onclick = () => {
+      tab = Number(btn.dataset.tab) as LoopCount;
+      // 선택 비트가 새 탭에 없으면 선택을 놓는다 — 안 보이는 비트를 편집하고 있는 상태 방지
+      const cur = beats[sel];
+      if (cur && cur.loop !== undefined && cur.loop !== tab) sel = -1;
+      syncTabs();
+      renderTimeline();
+      renderPanel();
+    };
+  });
   window.addEventListener("beforeunload", (e) => { if (dirty) e.preventDefault(); });
+}
+
+/** 탭 버튼 상태 + 요약 문구 — 2회차 탭은 회상 진행률을 보여준다 */
+function syncTabs(): void {
+  $("tabs").querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => {
+    b.classList.toggle("on", Number(b.dataset.tab) === tab);
+  });
+  const common = beats.filter((b) => !b.loop);
+  const written = common.filter((b) => !recallIsInherited(b)).length;
+  $("stats").textContent = tab === 1
+    ? `${beatsOfLoop(beats, 1).length}비트 · 관문 ${gates.length} · 공통 ${common.length} / 1회차 전용 ${beats.filter((b) => b.loop === 1).length}`
+    : `${beatsOfLoop(beats, 2).length}비트 · ↩︎ 회상 ${written}/${common.length} 작성 · 2회차 전용 ${beats.filter((b) => b.loop === 2).length}`;
 }
 
 async function main(): Promise<void> {
   shell();
   await load();
-  $("stats").textContent = `${beats.length}비트 · 관문 ${gates.length} · 공통 ${beats.filter((b) => !b.loop).length} / 1회차 ${beats.filter((b) => b.loop === 1).length} / 2회차 ${beats.filter((b) => b.loop === 2).length}`;
+  syncTabs();
   const savedSel = Number(sessionStorage.getItem("flow.sel") ?? "-1");
   if (savedSel >= 0 && savedSel < beats.length) sel = savedSel;
   renderTimeline();

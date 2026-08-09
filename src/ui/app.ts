@@ -265,12 +265,14 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
       ?? skinFit("game-back", 93, 26)
       ?? new Graphics().roundRect(0, 0, 66, 26, 13).fill(0xf3ecfa).stroke({ width: 1.5, color: 0xe4d8f0 });
     const t = new Text({ text: "← 로비", style: { fontSize: 11.5, fill: BTN_INK, fontWeight: "bold" } });
-    t.x = 10;
-    t.y = 6;
+    const pT = pos("backBtn_text", { x: 10, y: 6 }); // 버튼 안 문구 — 아트 교체에 맞춰 따로 조정
+    t.x = pT.x;
+    t.y = pT.y;
     b.addChild(g, t);
     pressable(b, () => exit());
     root.addChild(b);
     editable("backBtn", b);
+    editable("backBtn_text", t); // 문구를 버튼과 별개로 옮기고 크기·색을 바꿀 수 있게
   }
 
   function drawMemberBtn(): void {
@@ -285,12 +287,14 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
       ?? skinFit("ui-back", 93, 26)
       ?? new Graphics().roundRect(0, 0, 72, 26, 13).fill(0xf3ecfa).stroke({ width: 1.5, color: 0xe4d8f0 });
     const t = new Text({ text: "👥 멤버", style: { fontSize: 11.5, fill: BTN_INK, fontWeight: "bold" } });
-    t.x = 10;
-    t.y = 6;
+    const pT = pos("memberBtn_text", { x: 10, y: 6 }); // 버튼 안 문구 — 아트 교체에 맞춰 따로 조정
+    t.x = pT.x;
+    t.y = pT.y;
     b.addChild(g, t);
     pressable(b, () => { memberBoardForced = true; draw(); });
     root.addChild(b);
     editable("memberBtn", b);
+    editable("memberBtn_text", t); // 문구를 버튼과 별개로 옮기고 크기·색을 바꿀 수 있게
   }
 
   function draw(): void {

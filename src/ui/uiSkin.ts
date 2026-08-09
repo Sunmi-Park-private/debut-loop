@@ -11,6 +11,22 @@ export const allUiSkinSlots = (): UiSkinSlot[] => uiSkinScreens.flatMap((s) => s
 
 const loaded = new Map<string, { tex: Texture; raw: Texture; slot: UiSkinSlot }>();
 
+// 레이아웃 에디터 매핑 표시용 — 생성한 노드에 출처 슬롯 id를 남긴다.
+// (에디터에서 컴포넌트를 선택하면 어떤 슬롯·파일이 그려진 것인지 역추적)
+const SLOT_TAG = "__skinSlot";
+function tagSlot<T extends Container>(node: T, id: string): T {
+  (node as unknown as Record<string, string>)[SLOT_TAG] = id;
+  return node;
+}
+/** 노드가 어떤 UI 스킨 슬롯에서 만들어졌는지 (없으면 null) */
+export function slotIdOf(node: Container): string | null {
+  return (node as unknown as Record<string, string | undefined>)[SLOT_TAG] ?? null;
+}
+/** 슬롯 메타 조회 — 에디터 매핑 패널용 */
+export function slotMeta(id: string): UiSkinSlot | null {
+  return loaded.get(id)?.slot ?? allUiSkinSlots().find((s) => s.id === id) ?? null;
+}
+
 /** 투명 여백 트리밍 — AI 생성 아트처럼 캔버스 대부분이 여백인 업로드도 실제 아트 영역만 사용.
  *  9slice/stretch가 여백을 늘려 빈 박스로 보이는 문제 방지. 여백이 15% 미만이면 원본 유지. */
 function trimAlpha(tex: Texture): Texture {
@@ -156,7 +172,7 @@ export function skinNatural(id: string, w: number, h: number): Container | null 
   applyDensity(sp, hit.slot);
   const wrap = new Container();
   wrap.addChild(sp);
-  return wrap;
+  return tagSlot(wrap, id);
 }
 
 /** 비율 유지 스킨: 박스(w×h) 안에 원본 비율 그대로 contain-fit (중앙 정렬) — 없으면 null.
@@ -172,7 +188,7 @@ export function skinFit(id: string, w: number, h: number): Container | null {
   applyDensity(sp, hit.slot); // 농도 (ui.html 드롭다운)
   const wrap = new Container();
   wrap.addChild(sp);
-  return wrap;
+  return tagSlot(wrap, id);
 }
 
 /** 커버 스킨: 박스(w×h)를 비율 유지로 가득 채움, 넘치는 부분은 마스크로 크롭 — 전체 배경판용.
@@ -190,7 +206,7 @@ export function skinCover(id: string, w: number, h: number): Container | null {
   const mask = new Graphics().roundRect(0, 0, w, h, 16).fill(0xffffff);
   sp.mask = mask;
   wrap.addChild(sp, mask);
-  return wrap;
+  return tagSlot(wrap, id);
 }
 
 /** 스킨 노드: 업로드된 스킨이 있으면 노드 반환, 없으면 null(호출측이 기존 Graphics 유지).
@@ -238,12 +254,12 @@ export function skinNode(id: string, w: number, h: number): Container | null {
     node = s;
   }
   applyDensity(node, hit.slot); // 농도 (ui.html 드롭다운, −0.5 진하게 ~ +0.5 연하게)
-  if (us === 1) return node;
+  if (us === 1) return tagSlot(node, id);
   const wrap = new Container();
   node.x = (w - sw) / 2;
   node.y = (h - sh) / 2;
   wrap.addChild(node);
-  return wrap;
+  return tagSlot(wrap, id);
 }
 
 // 개발용 핫스왑: ui.html 배율 조정을 리로드 없이 반영 — 현재 화면 재렌더 (터널 너머 다른 기기 포함)

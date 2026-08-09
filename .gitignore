@@ -13,6 +13,9 @@ graphify-out/
 *.tmp.mjs
 *.log
 
+# 비트(스토리) 저장 시 자동 백업 — /__beats 통째 덮어쓰기 사고 대비, 커밋 대상 아님
+src/data/beats/.backups/
+
 # OS
 .DS_Store
 

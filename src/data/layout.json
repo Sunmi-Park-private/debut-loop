@@ -1,331 +1,334 @@
 {
-  "gauges": {
-    "x": 64,
-    "y": 37
+  "audition_mini_bg": {
+    "x": -2,
+    "y": -63
   },
-  "header": {
-    "x": 162,
-    "y": 147
+  "audition_rps_desc": {
+    "x": -2,
+    "y": -90
   },
-  "card": {
-    "x": 19,
-    "y": 434
-  },
-  "endScreen": {
-    "x": 18,
-    "y": 200
-  },
-  "gate": {
-    "x": 19,
-    "y": 43
-  },
-  "practiceBtn": {
-    "x": 303,
-    "y": 194
-  },
-  "training": {
-    "x": 21,
-    "y": 109
-  },
-  "backBtn": {
-    "x": 23,
-    "y": 108
-  },
-  "lobby_star": {
-    "x": 66,
-    "y": 23
-  },
-  "lobby_char": {
-    "x": 26,
-    "y": 65
-  },
-  "lobby_cta": {
-    "x": 214,
-    "y": 528
-  },
-  "rhythm_start": {
-    "x": 94,
-    "y": 176
-  },
-  "rhythm_line": {
+  "audition_rps_hand_paper": {
     "x": -1,
     "y": 1
   },
-  "rhythm2_lane1": {
-    "x": 93,
-    "y": 13
+  "audition_rps_hand_rock": {
+    "x": 25,
+    "y": 2
   },
-  "rhythm2_lane2": {
-    "x": 292,
-    "y": 16
-  },
-  "lobby_badge": {
-    "x": 14,
-    "y": 12
-  },
-  "card_deck": {
-    "x": 0,
-    "y": -22
-  },
-  "lobby_daily": {
-    "x": 336,
-    "y": 174
-  },
-  "lobby_settings": {
-    "x": 336,
-    "y": 402
-  },
-  "lobby_shop": {
-    "x": 337,
-    "y": 325
-  },
-  "lobby_album": {
-    "x": 336,
-    "y": 250
-  },
-  "lobby_status": {
-    "x": 17,
-    "y": -22
-  },
-  "lobby_val_mental": {
-    "x": 132,
-    "y": 67
-  },
-  "lobby_val_reputation": {
-    "x": 187,
-    "y": 66
-  },
-  "lobby_val_bond": {
-    "x": 245,
-    "y": 65
-  },
-  "lobby_val_skill": {
-    "x": 299,
-    "y": 66
-  },
-  "lobby_val_capital": {
-    "x": 365,
-    "y": 65
-  },
-  "lobby_bar_mental": {
-    "x": 115,
-    "y": 78
-  },
-  "lobby_bar_reputation": {
-    "x": 172,
-    "y": 79
-  },
-  "lobby_bar_bond": {
-    "x": 229,
-    "y": 79
-  },
-  "lobby_bar_skill": {
-    "x": 285,
-    "y": 79
-  },
-  "lobby_bar_capital": {
-    "x": 343,
-    "y": 78
-  },
-  "card_btn_left_text": {
-    "x": 12,
-    "y": 15
-  },
-  "card_btn_right_text": {
-    "x": 22,
-    "y": 15
-  },
-  "card_portrait": {
-    "x": -26,
-    "y": 139
-  },
-  "rhythm3_lane1": {
-    "x": 83,
-    "y": -2
-  },
-  "rhythm3_lane2": {
-    "x": 197,
-    "y": -2
-  },
-  "rhythm3_lane3": {
-    "x": 314,
-    "y": -3
-  },
-  "train_rows": {
-    "x": -10,
-    "y": -28
-  },
-  "train_row_vocal": {
-    "x": 222,
-    "y": 80
-  },
-  "train_row_dance": {
-    "x": 222,
-    "y": 143
-  },
-  "train_row_bond": {
-    "x": 222,
-    "y": 390
-  },
-  "train_row_audition": {
-    "x": 222,
-    "y": 328
-  },
-  "train_char": {
-    "x": 14,
-    "y": 55
-  },
-  "train_bubble": {
-    "x": 29,
-    "y": -25
-  },
-  "slot_pips": {
-    "x": 1,
-    "y": -9
-  },
-  "slot_btns": {
-    "x": 0,
-    "y": -20
-  },
-  "slot_desc": {
-    "x": -1,
+  "audition_rps_hand_scissors": {
+    "x": -30,
     "y": 3
   },
-  "gate_title": {
-    "x": 61,
-    "y": 10
+  "audition_rps_hands": {
+    "x": 33,
+    "y": 3
   },
-  "slot_reels": {
-    "x": 4,
-    "y": 15
-  },
-  "train_row_promo": {
-    "x": 222,
-    "y": 204
-  },
-  "train_row_funds": {
-    "x": 222,
-    "y": 266
-  },
-  "slot_btn_retry": {
-    "x": 35,
-    "y": 113
-  },
-  "slot_btn_get": {
-    "x": 204,
-    "y": 113
-  },
-  "train_skip": {
-    "x": 96,
-    "y": 7
-  },
-  "train_close": {
-    "x": -106,
-    "y": 452
-  },
-  "train_close_label": {
-    "x": -19,
-    "y": 477
-  },
-  "train_week": {
-    "x": 282,
-    "y": 17
-  },
-  "memberBtn": {
-    "x": 317,
-    "y": 110
-  },
-  "gate_exit": {
-    "x": 4,
-    "y": -13
-  },
-  "rhythm2_strip2": {
-    "x": 246,
-    "y": 172
-  },
-  "rhythm2_strip1": {
-    "x": 47,
-    "y": 171
-  },
-  "rhythm_hud": {
-    "x": 46,
-    "y": 62
-  },
-  "rhythm_desc": {
-    "x": 26,
-    "y": 35
-  },
-  "rhythm2_key1": {
-    "x": 95,
-    "y": 30
-  },
-  "rhythm2_key2": {
-    "x": 294,
-    "y": 28
-  },
-  "gauges_bar": {
-    "x": 21,
-    "y": 12
-  },
-  "rhythm3_strip3": {
-    "x": 286,
-    "y": 137
-  },
-  "rhythm3_strip2": {
-    "x": 169,
-    "y": 137
-  },
-  "rhythm3_strip1": {
-    "x": 55,
-    "y": 137
-  },
-  "rhythm3_key3": {
-    "x": 320,
-    "y": 0
-  },
-  "rhythm3_key2": {
-    "x": 196,
-    "y": -1
-  },
-  "rhythm3_key1": {
-    "x": 85,
-    "y": 0
-  },
-  "rhythm2_line": {
-    "x": 1,
-    "y": 15
+  "audition_rps_info": {
+    "x": -5,
+    "y": -110
   },
   "audition_title": {
     "x": 80,
     "y": 28
   },
+  "audition_train_game_close_x": {
+    "x": -2,
+    "y": -5
+  },
+  "audition_train_game_title": {
+    "x": 139,
+    "y": 187
+  },
+  "audition_train_res_btn": {
+    "x": 1,
+    "y": -2,
+    "texts": [
+      "계속"
+    ],
+    "fontSize": 20
+  },
+  "audition_train_res_card_icon": {
+    "x": 3,
+    "y": -1
+  },
+  "backBtn": {
+    "x": 33,
+    "y": 110,
+    "scale": 1.1
+  },
   "board": {
-    "x": 13,
-    "y": 117
+    "x": 15,
+    "y": 130
+  },
+  "board_banner": {
+    "x": 14,
+    "y": 280
+  },
+  "board_bg": {
+    "x": -4,
+    "y": 1
+  },
+  "board_btn_exchange": {
+    "x": 15,
+    "y": 337
+  },
+  "board_btn_hold": {
+    "x": 194,
+    "y": 337
+  },
+  "board_caption": {
+    "x": 37,
+    "y": 522,
+    "color": "#5b4a70"
+  },
+  "board_close_x": {
+    "x": 348,
+    "y": 24
+  },
+  "board_head": {
+    "x": 2,
+    "y": -173
+  },
+  "board_held": {
+    "x": 15,
+    "y": 391,
+    "scale": 1
+  },
+  "board_name": {
+    "x": 0,
+    "y": 139,
+    "color": "#5b4a70"
+  },
+  "board_pool": {
+    "x": 32,
+    "y": 324,
+    "color": "#5b4a70"
+  },
+  "board_profile": {
+    "x": 127,
+    "y": -5
+  },
+  "board_role": {
+    "x": 0,
+    "y": 163,
+    "color": "#5b4a70"
+  },
+  "board_skip": {
+    "x": 37,
+    "y": 571,
+    "color": "#5b4a70"
+  },
+  "board_stat": {
+    "x": 114,
+    "y": 182
+  },
+  "board_thumbs": {
+    "x": 55,
+    "y": 212
+  },
+  "board_title": {
+    "x": 149,
+    "y": 6
+  },
+  "board_week": {
+    "x": -46,
+    "y": 4
+  },
+  "bond_train_res_btn": {
+    "x": 4,
+    "y": 72,
+    "texts": [
+      "계속 "
+    ],
+    "fontSize": 23,
+    "color": "#ffffff"
+  },
+  "bond_train_res_card": {
+    "x": 5,
+    "y": 124
+  },
+  "bond_train_res_card_icon": {
+    "x": 1,
+    "y": 7
+  },
+  "bond_train_res_card_name": {
+    "x": -2,
+    "y": 3
+  },
+  "bond_train_res_card_star": {
+    "x": 0,
+    "y": -4
+  },
+  "bond_train_res_grade": {
+    "x": -62,
+    "y": -10,
+    "scale": 1.3
+  },
+  "card": {
+    "x": 19,
+    "y": 434,
+    "scale": 1
+  },
+  "card_btn_left": {
+    "x": 16,
+    "y": 129
+  },
+  "card_btn_right": {
+    "x": 198,
+    "y": 129
+  },
+  "card_deck": {
+    "x": 0,
+    "y": -22
+  },
+  "card_deck_banner": {
+    "x": -1,
+    "y": 31,
+    "scale": 1
+  },
+  "card_deck_content": {
+    "x": 5,
+    "y": -20
+  },
+  "card_deck_item_name": {
+    "x": 5,
+    "y": 0,
+    "scale": 0.8
+  },
+  "card_deck_item_star": {
+    "x": -1,
+    "y": 26
+  },
+  "card_deck_item_sym": {
+    "x": 28,
+    "y": 18,
+    "scale": 1
+  },
+  "card_deck_sub": {
+    "x": 5,
+    "y": 0,
+    "scale": 0.95
+  },
+  "card_deck_title": {
+    "x": 18,
+    "y": 106,
+    "scale": 0.9
+  },
+  "card_portrait": {
+    "x": -25,
+    "y": 130
+  },
+  "dance_mini_bg": {
+    "x": 0,
+    "y": -56
+  },
+  "dance_mirror_bar": {
+    "x": 8,
+    "y": -85
+  },
+  "dance_mirror_btn": {
+    "x": 2,
+    "y": -133
+  },
+  "dance_mirror_char": {
+    "x": -1,
+    "y": 176
+  },
+  "dance_mirror_hint": {
+    "x": -1,
+    "y": -74
+  },
+  "dance_mirror_info": {
+    "x": -2,
+    "y": -93
+  },
+  "dance_mirror_track": {
+    "x": -3,
+    "y": -113
+  },
+  "dance_stop_desc": {
+    "x": -5,
+    "y": -60
+  },
+  "dance_train_res_btn": {
+    "x": 4,
+    "y": 10
+  },
+  "dance_train_res_card": {
+    "x": 2,
+    "y": 33
+  },
+  "dance_train_res_drain": {
+    "x": 3,
+    "y": 17
+  },
+  "dance_train_res_grade": {
+    "x": -2,
+    "y": 21
+  },
+  "endScreen": {
+    "x": 18,
+    "y": 200
+  },
+  "funds_mini_bg": {
+    "x": 1,
+    "y": -57
+  },
+  "funds_stop_btn": {
+    "x": 5,
+    "y": 170
+  },
+  "funds_stop_desc": {
+    "x": 34,
+    "y": -90
+  },
+  "funds_stop_hint": {
+    "x": -15,
+    "y": 110
+  },
+  "funds_stop_info": {
+    "x": 33,
+    "y": -118
+  },
+  "funds_stop_track": {
+    "x": 1,
+    "y": 58
+  },
+  "funds_train_game_title": {
+    "x": -5,
+    "y": 0
+  },
+  "funds_train_res_card_icon": {
+    "x": 2,
+    "y": -1
+  },
+  "funds_train_res_card_name": {
+    "x": 0,
+    "y": 1
+  },
+  "funds_train_res_card_star": {
+    "x": 1,
+    "y": -8
+  },
+  "gate": {
+    "x": 19,
+    "y": 43
+  },
+  "gate_exit": {
+    "x": 4,
+    "y": -13
   },
   "gate_photo": {
     "x": 26,
     "y": 167
   },
-  "gate_photo_title": {
-    "x": 14,
-    "y": -2
-  },
-  "slot_shots": {
-    "x": -4,
-    "y": 3
-  },
-  "slot_result": {
-    "x": 4,
-    "y": -24
+  "gate_photo_pick_btn": {
+    "x": -1,
+    "y": -163
   },
   "gate_photo_pick_grade": {
     "x": 3,
     "y": 69
-  },
-  "gate_photo_pick_btn": {
-    "x": -1,
-    "y": -163
   },
   "gate_photo_pick_hand": {
     "x": -1,
@@ -339,284 +342,16 @@
     "x": 11,
     "y": -62
   },
-  "board_skip": {
-    "x": 37,
-    "y": 571
-  },
-  "board_banner": {
+  "gate_photo_title": {
     "x": 14,
-    "y": 280
+    "y": -2
   },
-  "board_btn_exchange": {
-    "x": 11,
-    "y": 337
-  },
-  "board_btn_hold": {
-    "x": 194,
-    "y": 337
-  },
-  "board_pool": {
-    "x": 32,
-    "y": 324
-  },
-  "board_caption": {
-    "x": 37,
-    "y": 522
-  },
-  "board_held": {
-    "x": 15,
-    "y": 391
-  },
-  "board_name": {
+  "gate_pick_btn": {
     "x": 0,
-    "y": 139
+    "y": -41
   },
-  "board_role": {
-    "x": 0,
-    "y": 163
-  },
-  "board_stat": {
-    "x": 114,
-    "y": 182
-  },
-  "board_thumbs": {
-    "x": 55,
-    "y": 212
-  },
-  "board_profile": {
-    "x": 127,
-    "y": -5
-  },
-  "lobby_daily_label": {
-    "x": 349,
-    "y": 206
-  },
-  "lobby_album_label": {
-    "x": 350,
-    "y": 282
-  },
-  "lobby_shop_label": {
-    "x": 350,
-    "y": 355
-  },
-  "lobby_settings_label": {
-    "x": 350,
-    "y": 430
-  },
-  "vocal_stop_desc": {
-    "x": -1,
-    "y": -71
-  },
-  "vocal_studio_info": {
-    "x": 0,
-    "y": -100
-  },
-  "vocal_rec_btn": {
-    "x": 5,
-    "y": 32
-  },
-  "vocal_train_res_grade": {
-    "x": 8,
-    "y": 0
-  },
-  "vocal_train_res_card": {
-    "x": -1,
-    "y": 20
-  },
-  "vocal_train_res_btn": {
-    "x": 1,
-    "y": 3
-  },
-  "vocal_train_res_drain": {
-    "x": 0,
-    "y": 19
-  },
-  "dance_stop_desc": {
-    "x": -1,
-    "y": -71
-  },
-  "dance_mirror_track": {
-    "x": -3,
-    "y": -113
-  },
-  "dance_mirror_btn": {
-    "x": 2,
-    "y": -133
-  },
-  "funds_stop_desc": {
-    "x": 34,
-    "y": -90
-  },
-  "funds_stop_info": {
-    "x": 33,
-    "y": -118
-  },
-  "funds_train_game_title": {
-    "x": 101,
-    "y": -35
-  },
-  "funds_stop_btn": {
-    "x": 5,
-    "y": 170
-  },
-  "funds_stop_track": {
-    "x": 1,
-    "y": 58
-  },
-  "funds_mini_bg": {
-    "x": 1,
-    "y": -57
-  },
-  "board_week": {
-    "x": -46,
-    "y": 4
-  },
-  "board_close_x": {
-    "x": 348,
-    "y": 24
-  },
-  "funds_stop_hint": {
-    "x": 18,
-    "y": 108
-  },
-  "vocal_mini_bg": {
-    "x": 2,
-    "y": -63
-  },
-  "vocal_studio_hint": {
-    "x": 22,
-    "y": 46
-  },
-  "vocal_rec_track": {
-    "x": 6,
-    "y": -11
-  },
-  "vocal_rec_head": {
-    "x": 6,
-    "y": 60
-  },
-  "vocal_rec_lamp": {
-    "x": -28,
-    "y": -99
-  },
-  "vocal_train_game_close_x": {
-    "x": -1,
-    "y": -6
-  },
-  "vocal_train_res_card_star": {
-    "x": -1,
-    "y": -8
-  },
-  "vocal_train_res_card_name": {
-    "x": -1,
-    "y": 1
-  },
-  "vocal_train_res_card_icon": {
-    "x": 0,
-    "y": -8
-  },
-  "funds_train_res_card_star": {
-    "x": 1,
-    "y": -8
-  },
-  "funds_train_res_card_name": {
-    "x": 0,
-    "y": 1
-  },
-  "funds_train_res_card_icon": {
-    "x": 2,
-    "y": -1
-  },
-  "bond_train_res_card_star": {
-    "x": 0,
-    "y": -4
-  },
-  "bond_train_res_card_name": {
+  "gate_pick_desc": {
     "x": -2,
-    "y": 3
-  },
-  "bond_train_res_card_icon": {
-    "x": 1,
-    "y": 7
-  },
-  "promo_match_grid": {
-    "x": -1,
-    "y": 10
-  },
-  "promo_train_game_title": {
-    "x": 144,
-    "y": 133
-  },
-  "promo_match_desc": {
-    "x": -4,
-    "y": -92
-  },
-  "promo_match_info": {
-    "x": -6,
-    "y": -116
-  },
-  "promo_mini_bg": {
-    "x": -2,
-    "y": -59
-  },
-  "promo_match_grid_3x3": {
-    "x": -3,
-    "y": -37
-  },
-  "card_deck_content": {
-    "x": 0,
-    "y": -16
-  },
-  "bond_train_res_btn": {
-    "x": 4,
-    "y": 72
-  },
-  "bond_train_res_card": {
-    "x": 5,
-    "y": 124
-  },
-  "audition_mini_bg": {
-    "x": -2,
-    "y": -63
-  },
-  "audition_train_game_close_x": {
-    "x": -2,
-    "y": -5
-  },
-  "audition_train_game_title": {
-    "x": 139,
-    "y": 187
-  },
-  "audition_rps_desc": {
-    "x": -2,
-    "y": -90
-  },
-  "audition_rps_info": {
-    "x": 1,
-    "y": -115
-  },
-  "audition_rps_hands": {
-    "x": 33,
-    "y": 3
-  },
-  "audition_train_res_card_icon": {
-    "x": 3,
-    "y": -1
-  },
-  "board_head": {
-    "x": 2,
-    "y": -173
-  },
-  "audition_rps_hand_rock": {
-    "x": 25,
-    "y": 2
-  },
-  "audition_rps_hand_scissors": {
-    "x": -30,
-    "y": 3
-  },
-  "audition_rps_hand_paper": {
-    "x": -1,
     "y": 1
   },
   "gate_pick_grade": {
@@ -635,104 +370,452 @@
     "x": 21,
     "y": -477
   },
-  "gate_pick_desc": {
-    "x": -2,
-    "y": 1
-  },
-  "gate_pick_btn": {
-    "x": 0,
-    "y": -41
-  },
-  "card_deck_banner": {
-    "x": -1,
-    "y": 31
-  },
-  "dance_mini_bg": {
-    "x": 0,
-    "y": -56
-  },
-  "dance_mirror_info": {
-    "x": -2,
-    "y": -93
-  },
-  "dance_mirror_bar": {
-    "x": 8,
-    "y": -85
-  },
-  "dance_mirror_hint": {
-    "x": -1,
-    "y": -74
-  },
-  "dance_train_res_btn": {
-    "x": 4,
+  "gate_title": {
+    "x": 61,
     "y": 10
   },
-  "dance_train_res_drain": {
-    "x": 3,
-    "y": 17
+  "gauges": {
+    "x": 64,
+    "y": 37
   },
-  "dance_train_res_card": {
-    "x": 2,
-    "y": 33
+  "gauges_bar": {
+    "x": 25,
+    "y": 10
   },
-  "dance_train_res_grade": {
-    "x": -2,
-    "y": 21
+  "header": {
+    "x": 162,
+    "y": 147
   },
-  "dance_mirror_char": {
-    "x": -1,
-    "y": 176
+  "lobby_album": {
+    "x": 336,
+    "y": 250
   },
-  "bond_train_res_grade": {
-    "x": 0,
-    "y": 55
+  "lobby_album_label": {
+    "x": 350,
+    "y": 282
   },
-  "story_tab": {
-    "x": 200,
-    "y": 71
+  "lobby_badge": {
+    "x": 14,
+    "y": 12
   },
-  "card_deck_title": {
-    "x": -2,
-    "y": 40
+  "lobby_bar_bond": {
+    "x": 229,
+    "y": 79
   },
-  "card_deck_sub": {
-    "x": 0,
-    "y": 0
+  "lobby_bar_capital": {
+    "x": 343,
+    "y": 78
   },
-  "board_title": {
-    "x": 142,
-    "y": 5
+  "lobby_bar_mental": {
+    "x": 115,
+    "y": 78
   },
-  "board_bg": {
-    "x": -4,
-    "y": 1
+  "lobby_bar_reputation": {
+    "x": 172,
+    "y": 79
   },
-  "lobby_cta_start": {
-    "x": -31,
-    "y": -47
+  "lobby_bar_skill": {
+    "x": 285,
+    "y": 79
   },
-  "lobby_cta_sub": {
-    "x": -26,
-    "y": 24
+  "lobby_char": {
+    "x": 26,
+    "y": 65
   },
-  "card_deck_item_name": {
-    "x": -1,
-    "y": -13
+  "lobby_cta": {
+    "x": 214,
+    "y": 528
   },
-  "card_deck_item_star": {
-    "x": -1,
-    "y": 26
-  },
-  "card_btn_left": {
-    "x": 9,
-    "y": 129
-  },
-  "card_deck_item_sym": {
-    "x": 28,
-    "y": 18
+  "lobby_cta_round": {
+    "x": -38,
+    "y": -24
   },
   "lobby_cta_run": {
     "x": -33,
-    "y": 46
+    "y": 36
+  },
+  "lobby_cta_start": {
+    "x": -35,
+    "y": -50,
+    "fontSize": 22
+  },
+  "lobby_cta_sub": {
+    "x": -25,
+    "y": 27
+  },
+  "lobby_daily": {
+    "x": 336,
+    "y": 174
+  },
+  "lobby_daily_label": {
+    "x": 349,
+    "y": 206
+  },
+  "lobby_settings": {
+    "x": 336,
+    "y": 402
+  },
+  "lobby_settings_label": {
+    "x": 350,
+    "y": 430
+  },
+  "lobby_shop": {
+    "x": 337,
+    "y": 325
+  },
+  "lobby_shop_label": {
+    "x": 350,
+    "y": 355
+  },
+  "lobby_star": {
+    "x": 66,
+    "y": 23
+  },
+  "lobby_status": {
+    "x": 17,
+    "y": -22
+  },
+  "lobby_val_bond": {
+    "x": 245,
+    "y": 65
+  },
+  "lobby_val_capital": {
+    "x": 365,
+    "y": 65
+  },
+  "lobby_val_mental": {
+    "x": 132,
+    "y": 67,
+    "scale": 1
+  },
+  "lobby_val_reputation": {
+    "x": 187,
+    "y": 66
+  },
+  "lobby_val_skill": {
+    "x": 299,
+    "y": 66
+  },
+  "memberBtn": {
+    "x": 303,
+    "y": 110,
+    "scale": 1.1
+  },
+  "practiceBtn": {
+    "x": 303,
+    "y": 194
+  },
+  "promo_match_desc": {
+    "x": -4,
+    "y": -92
+  },
+  "promo_match_grid": {
+    "x": -1,
+    "y": 10
+  },
+  "promo_match_grid_3x3": {
+    "x": -3,
+    "y": -37
+  },
+  "promo_match_info": {
+    "x": -6,
+    "y": -116
+  },
+  "promo_mini_bg": {
+    "x": -2,
+    "y": -59
+  },
+  "promo_train_game_title": {
+    "x": 135,
+    "y": 137,
+    "scale": 1.15
+  },
+  "rhythm2_key1": {
+    "x": 95,
+    "y": 30
+  },
+  "rhythm2_key2": {
+    "x": 294,
+    "y": 28
+  },
+  "rhythm2_lane1": {
+    "x": 93,
+    "y": 13
+  },
+  "rhythm2_lane2": {
+    "x": 292,
+    "y": 16
+  },
+  "rhythm2_line": {
+    "x": 1,
+    "y": 15
+  },
+  "rhythm2_strip1": {
+    "x": 47,
+    "y": 171
+  },
+  "rhythm2_strip2": {
+    "x": 246,
+    "y": 172
+  },
+  "rhythm3_key1": {
+    "x": 85,
+    "y": 0
+  },
+  "rhythm3_key2": {
+    "x": 196,
+    "y": -1
+  },
+  "rhythm3_key3": {
+    "x": 320,
+    "y": 0
+  },
+  "rhythm3_lane1": {
+    "x": 83,
+    "y": -2
+  },
+  "rhythm3_lane2": {
+    "x": 197,
+    "y": -2
+  },
+  "rhythm3_lane3": {
+    "x": 314,
+    "y": -3
+  },
+  "rhythm3_strip1": {
+    "x": 55,
+    "y": 137
+  },
+  "rhythm3_strip2": {
+    "x": 169,
+    "y": 137
+  },
+  "rhythm3_strip3": {
+    "x": 286,
+    "y": 137
+  },
+  "rhythm_desc": {
+    "x": 26,
+    "y": 35
+  },
+  "rhythm_hud": {
+    "x": 46,
+    "y": 62
+  },
+  "rhythm_line": {
+    "x": -1,
+    "y": 1
+  },
+  "rhythm_start": {
+    "x": 94,
+    "y": 176
+  },
+  "slot_btn_get": {
+    "x": 204,
+    "y": 113
+  },
+  "slot_btn_retry": {
+    "x": 35,
+    "y": 113
+  },
+  "slot_btns": {
+    "x": 0,
+    "y": -20
+  },
+  "slot_desc": {
+    "x": -1,
+    "y": 3
+  },
+  "slot_pips": {
+    "x": 1,
+    "y": -9
+  },
+  "slot_reels": {
+    "x": 4,
+    "y": 15
+  },
+  "slot_result": {
+    "x": 4,
+    "y": -24
+  },
+  "slot_shots": {
+    "x": -4,
+    "y": 3
+  },
+  "story_tab": {
+    "x": 200,
+    "y": 71,
+    "color": "#f0a93a"
+  },
+  "train_bubble": {
+    "x": 29,
+    "y": -25
+  },
+  "train_char": {
+    "x": 14,
+    "y": 55
+  },
+  "train_close": {
+    "x": -106,
+    "y": 452
+  },
+  "train_close_label": {
+    "x": -19,
+    "y": 477
+  },
+  "train_row_audition": {
+    "x": 222,
+    "y": 328
+  },
+  "train_row_bond": {
+    "x": 222,
+    "y": 390,
+    "color": "#ff7fb0"
+  },
+  "train_row_dance": {
+    "x": 222,
+    "y": 143
+  },
+  "train_row_funds": {
+    "x": 222,
+    "y": 266
+  },
+  "train_row_promo": {
+    "x": 222,
+    "y": 204
+  },
+  "train_row_vocal": {
+    "x": 222,
+    "y": 80
+  },
+  "train_rows": {
+    "x": -10,
+    "y": -28
+  },
+  "train_skip": {
+    "x": 96,
+    "y": 7
+  },
+  "train_week": {
+    "x": 282,
+    "y": 17
+  },
+  "training": {
+    "x": 11,
+    "y": 120,
+    "scale": 1.05
+  },
+  "vocal_mini_bg": {
+    "x": 2,
+    "y": -63
+  },
+  "vocal_rec_btn": {
+    "x": 5,
+    "y": 32
+  },
+  "vocal_rec_head": {
+    "x": 6,
+    "y": 60
+  },
+  "vocal_rec_lamp": {
+    "x": -28,
+    "y": -99
+  },
+  "vocal_rec_track": {
+    "x": 6,
+    "y": -11
+  },
+  "vocal_stop_desc": {
+    "x": 5,
+    "y": -85,
+    "color": "#5b4a70",
+    "scale": 0.85
+  },
+  "vocal_studio_hint": {
+    "x": 22,
+    "y": 46,
+    "color": "#5b4a70"
+  },
+  "vocal_studio_info": {
+    "x": 0,
+    "y": -97,
+    "scale": 1.05
+  },
+  "vocal_train_game_close_x": {
+    "x": -1,
+    "y": -6
+  },
+  "vocal_train_res_btn": {
+    "x": 1,
+    "y": 3
+  },
+  "vocal_train_res_card": {
+    "x": -1,
+    "y": 20
+  },
+  "vocal_train_res_card_icon": {
+    "x": 0,
+    "y": -8
+  },
+  "vocal_train_res_card_name": {
+    "x": -1,
+    "y": 1
+  },
+  "vocal_train_res_card_star": {
+    "x": -1,
+    "y": -8
+  },
+  "vocal_train_res_drain": {
+    "x": 0,
+    "y": 19
+  },
+  "vocal_train_res_grade": {
+    "x": 8,
+    "y": 0
+  },
+  "vocal_train_game_title": {
+    "x": -13,
+    "y": 46,
+    "scale": 1.65,
+    "color": "#5b4a70"
+  },
+  "backBtn_text": {
+    "x": 15,
+    "y": 3,
+    "texts": [
+      "      로비"
+    ],
+    "color": "#ffefd8",
+    "fontSize": 16
+  },
+  "memberBtn_text": {
+    "x": 31,
+    "y": 3,
+    "texts": [
+      "멤버"
+    ],
+    "color": "#ffffff",
+    "fontSize": 16
+  },
+  "title_start": {
+    "x": 35,
+    "y": 670
+  },
+  "card_deck_item_name_text": {
+    "x": 35,
+    "y": 66
+  },
+  "lobby_status_tab": {
+    "x": 243,
+    "y": 107
+  },
+  "card_text": {
+    "x": 85,
+    "y": 40
+  },
+  "dance_train_game_title": {
+    "x": -15,
+    "y": 20,
+    "scale": 1.5
   }
 }

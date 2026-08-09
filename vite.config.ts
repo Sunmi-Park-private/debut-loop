@@ -84,6 +84,28 @@ function stripArtistTag(abs: string): void {
   } catch { /* ffmpeg 부재·포맷 미지원 → 원본 유지 */ }
 }
 
+// 빌드 산출물(APK·ios/)은 무겁고 gitignore 대상이라 워크트리마다 새로 생기지 않는다.
+// 세션이 워크트리에서 돌 때도 메인 체크아웃의 산출물을 찾도록 폴백 경로를 만든다.
+// (.git 이 파일이면 워크트리 → gitdir 의 `.git/worktrees/<name>` 에서 두 단계 위가 메인 저장소)
+function mainCheckoutDir(): string | null {
+  try {
+    const dotGit = path.resolve(process.cwd(), '.git')
+    if (!fs.existsSync(dotGit) || fs.statSync(dotGit).isDirectory()) return null // 메인 체크아웃 자신
+    const m = /^gitdir:\s*(.+)$/m.exec(fs.readFileSync(dotGit, 'utf8'))
+    if (!m) return null
+    return path.resolve(m[1].trim(), '../../..') // .git/worktrees/<name> → 저장소 루트
+  } catch { return null }
+}
+/** cwd 우선, 없으면 메인 체크아웃에서 찾는다. 둘 다 없으면 null */
+function resolveBuildArtifact(rel: string): string | null {
+  const here = path.resolve(process.cwd(), rel)
+  if (fs.existsSync(here)) return here
+  const main = mainCheckoutDir()
+  if (!main) return null
+  const there = path.resolve(main, rel)
+  return fs.existsSync(there) ? there : null
+}
+
 // dev 편의: 최신 APK 빌드 다운로드 — 에디터 허브 우측 상단 버튼 (/__apk·/__apkrelease, ?info=메타)
 // debug=치트 메뉴 포함(팀 테스트) · release=치트 제외(제출·외부 공유), 둘 다 디버그 키 서명이라 사이드로드 가능
 function apkDownloadPlugin(kind: 'debug' | 'release' = 'debug'): Plugin {
@@ -95,8 +117,8 @@ function apkDownloadPlugin(kind: 'debug' | 'release' = 'debug'): Plugin {
     name: `apk-download:${kind}`,
     configureServer(server) {
       server.middlewares.use(route, (req, res) => {
-        const p = path.resolve(process.cwd(), apkPath)
-        if (!fs.existsSync(p)) { res.statusCode = 404; res.end('no build'); return }
+        const p = resolveBuildArtifact(apkPath)
+        if (!p) { res.statusCode = 404; res.end('no build'); return }
         const st = fs.statSync(p)
         const q = new URL(req.url ?? '/', 'http://localhost').searchParams
         if (q.has('info')) {
@@ -122,8 +144,8 @@ function iosZipPlugin(): Plugin {
     name: 'ios-zip',
     configureServer(server) {
       server.middlewares.use('/__ioszip', (req, res) => {
-        const iosDir = path.resolve(process.cwd(), 'ios')
-        if (!fs.existsSync(iosDir)) { res.statusCode = 404; res.end('no ios project'); return }
+        const iosDir = resolveBuildArtifact('ios')
+        if (!iosDir) { res.statusCode = 404; res.end('no ios project'); return }
         const pubDir = path.join(iosDir, 'App/App/public')
         const mtime = fs.statSync(fs.existsSync(pubDir) ? pubDir : iosDir).mtimeMs // 마지막 cap sync 시각
         const q = new URL(req.url ?? '/', 'http://localhost').searchParams
@@ -137,7 +159,7 @@ function iosZipPlugin(): Plugin {
         res.setHeader('Content-Type', 'application/zip')
         res.setHeader('Content-Disposition',
           `attachment; filename="debut-loop-ios-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.zip"`)
-        const child = spawn('zip', ['-rq', '-', 'ios', '-x', '*.DS_Store'], { cwd: process.cwd() }) // 요청 시점 상태를 스트리밍 (임시 파일 없음)
+        const child = spawn('zip', ['-rq', '-', 'ios', '-x', '*.DS_Store'], { cwd: path.dirname(iosDir) }) // 요청 시점 상태를 스트리밍 (임시 파일 없음)
         child.stdout.pipe(res)
         child.on('error', () => { if (!res.writableEnded) { res.statusCode = 500; res.end('zip failed') } })
         req.on('close', () => { child.kill() })
@@ -147,8 +169,8 @@ function iosZipPlugin(): Plugin {
 }
 
 // 개발용: 에디터(레이아웃·튜닝)의 💾 저장을 data JSON 파일로 반영 (화이트리스트)
+// ※ /__layout은 여기 없다 — 문서 통째 교체가 아니라 키 단위 병합이라 layoutSavePlugin이 따로 처리한다.
 const SAVE_TARGETS: Record<string, string> = {
-  '/__layout': 'src/data/layout.json',
   '/__tuning': 'src/data/tuning.json',
   '/__cards': 'src/data/cards.json',
   '/__beats': 'src/data/beats/demo2_zeroc.json', // 플로우 에디터(flow.html) — 저장 시 게임 탭 자동 리로드로 반영
@@ -156,6 +178,79 @@ const SAVE_TARGETS: Record<string, string> = {
   '/__uiskins': 'src/data/uiskins.json', // UI 스킨 에디터(ui.html)
   '/__beatmaps': 'src/data/beatmaps.json', // 박자 에디터(beat.html)
 }
+// 개발용: 레이아웃 저장 — **바뀐 키만** 받아 파일에 병합한다.
+// 통째로 덮어쓰면, 페이지를 열 때 뜬 스냅샷이 그 사이 다른 사람이 저장한 좌표를 되돌린다.
+// (디자이너 둘이 서로 다른 화면을 만져도 나중에 저장한 쪽이 상대 작업을 지우던 원인)
+function layoutSavePlugin(): Plugin {
+  const FILE = 'src/data/layout.json'
+  return {
+    name: 'layout-save',
+    configureServer(server) {
+      server.middlewares.use('/__layout', (req, res) => {
+        const abs = path.resolve(process.cwd(), FILE)
+        if (req.method === 'GET') {
+          try {
+            res.setHeader('Content-Type', 'application/json')
+            res.end(fs.readFileSync(abs, 'utf8'))
+          } catch { res.statusCode = 404; res.end('not found') }
+          return
+        }
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
+        // 청크를 모아 한 번에 디코딩한다 — 청크마다 toString()하면 UTF-8 멀티바이트(한글 3바이트)가
+        // 경계에서 잘려 그 글자가 깨진다. 큰 문서(beats)를 저장할 때마다 몇 글자씩 손상되던 원인.
+        const chunks: Buffer[] = []
+        req.on('data', (d: Buffer) => { chunks.push(d) })
+        req.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8')
+          try {
+            // 속성 단위 패치가 온다. { 컴포넌트: { 바뀐속성: 값 | null } }
+            // null = 그 속성 삭제(코드 기본값 복귀). 보내지 않은 속성은 파일 값 그대로 둔다.
+            const OK: Record<string, (v: unknown) => boolean> = {
+              x: (v) => typeof v === 'number', y: (v) => typeof v === 'number',
+              scale: (v) => typeof v === 'number', fontSize: (v) => typeof v === 'number',
+              color: (v) => typeof v === 'string',
+              texts: (v) => Array.isArray(v) && v.every((t) => t === null || typeof t === 'string'),
+              textForce: (v) => typeof v === 'boolean', // 동적 문구 덮어쓰기를 의도적으로 허용한 표시
+            }
+            const patch = JSON.parse(body) as Record<string, Record<string, unknown>>
+            for (const fields of Object.values(patch)) {
+              if (!fields || typeof fields !== 'object') { res.statusCode = 400; res.end('bad patch'); return }
+              for (const [f, v] of Object.entries(fields)) {
+                if (!OK[f]) { res.statusCode = 400; res.end(`unknown field: ${f}`); return }
+                if (v !== null && !OK[f]!(v)) { res.statusCode = 400; res.end(`bad value: ${f}`); return }
+              }
+            }
+            const cur = JSON.parse(fs.readFileSync(abs, 'utf8')) as Record<string, Record<string, unknown>>
+            const STYLE_FIELDS = ['scale', 'fontSize', 'color', 'texts', 'textForce']
+            for (const [name, fields] of Object.entries(patch)) {
+              const existed = cur[name] !== undefined
+              const isStylePatch = existed && Object.keys(fields).some((f) => STYLE_FIELDS.includes(f))
+              const entry = { ...(cur[name] ?? {}) }
+              for (const [f, v] of Object.entries(fields)) {
+                // 이미 존재하는 항목에 스타일 필드가 함께 오면 x/y는 클라이언트가 ensureCoords()로
+                // 채운 "그려진 그대로"의 스냅샷일 뿐이다 — 그 사이 다른 사람이 저장한 좌표를
+                // 덮어쓰지 않도록 무시한다. x/y만 오는 패치(진짜 드래그 이동)는 그대로 반영한다.
+                if (isStylePatch && (f === 'x' || f === 'y')) continue
+                if (v === null) delete entry[f]
+                else entry[f] = v
+              }
+              // x/y는 항상 있어야 한다 — 스타일만 바꾼 신규 키가 좌표 없이 저장되면 읽는 쪽이 NaN이 된다
+              if (typeof entry['x'] !== 'number' || typeof entry['y'] !== 'number') {
+                res.statusCode = 400; res.end(`missing x/y: ${name}`); return
+              }
+              cur[name] = entry
+            }
+            fs.writeFileSync(abs, JSON.stringify(cur, null, 2) + '\n')
+            const mods = server.moduleGraph.getModulesByFile(abs)
+            if (mods) for (const m of mods) server.moduleGraph.invalidateModule(m)
+            res.end('ok')
+          } catch { res.statusCode = 400; res.end('invalid json') }
+        })
+      })
+    },
+  }
+}
+
 // 개발용: 스킨 배율 저장 팩토리 (char.html·ui.html) — 매니페스트 slot.scale 갱신 + 전 클라이언트 푸시 (1~2배 · 0.2 단위)
 function scaleSavePlugin(route: string, manifestFile: string,
   collect: (m: unknown) => Array<{ id: string; scale?: number }>, event: string): Plugin {
@@ -164,9 +259,12 @@ function scaleSavePlugin(route: string, manifestFile: string,
     configureServer(server) {
       server.middlewares.use(route, (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
-        let body = ''
-        req.on('data', (d: Buffer) => { body += d.toString() })
+        // 청크를 모아 한 번에 디코딩한다 — 청크마다 toString()하면 UTF-8 멀티바이트(한글 3바이트)가
+        // 경계에서 잘려 그 글자가 깨진다. 큰 문서(beats)를 저장할 때마다 몇 글자씩 손상되던 원인.
+        const chunks: Buffer[] = []
+        req.on('data', (d: Buffer) => { chunks.push(d) })
         req.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8')
           try {
             const { slot, scale } = JSON.parse(body) as { slot: string; scale: number }
             // 세밀 배율 슬롯은 0.1배 축소까지 허용 (0.1 단위) — 범위 제한은 에디터 드롭다운이 담당
@@ -198,9 +296,12 @@ function opacitySavePlugin(route: string, manifestFile: string,
     configureServer(server) {
       server.middlewares.use(route, (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
-        let body = ''
-        req.on('data', (d: Buffer) => { body += d.toString() })
+        // 청크를 모아 한 번에 디코딩한다 — 청크마다 toString()하면 UTF-8 멀티바이트(한글 3바이트)가
+        // 경계에서 잘려 그 글자가 깨진다. 큰 문서(beats)를 저장할 때마다 몇 글자씩 손상되던 원인.
+        const chunks: Buffer[] = []
+        req.on('data', (d: Buffer) => { chunks.push(d) })
         req.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8')
           try {
             const { slot, opacity } = JSON.parse(body) as { slot: string; opacity: number }
             if (!/^[a-z0-9-]+$/.test(slot) || typeof opacity !== 'number' || opacity < -0.5 || opacity > 0.5) {
@@ -225,6 +326,51 @@ function opacitySavePlugin(route: string, manifestFile: string,
   }
 }
 
+// dev 편의: 플로우 에디터의 미저장 대사를 게임에 실시간 반영 (문구만).
+// 저장 전 임시본이라 파일에 쓰지 않고 서버 메모리에만 둔다 — dev 서버를 재시작하면 사라진다.
+// 설계: docs/superpowers/specs/2026-08-08-beats-live-preview-design.md
+let beatsOverlay: Record<string, unknown> = {}
+
+function beatsPreviewPlugin(): Plugin {
+  return {
+    name: 'beats-preview',
+    configureServer(server) {
+      server.middlewares.use('/__beatspreview', (req, res) => {
+        if (req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ overlay: beatsOverlay }))
+          return
+        }
+        if (req.method === 'DELETE') {
+          beatsOverlay = {}
+          server.ws.send({ type: 'custom', event: 'beats-preview', data: { overlay: beatsOverlay } })
+          res.end('ok')
+          return
+        }
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
+        // 청크를 모아 한 번에 디코딩 — 청크마다 toString()하면 한글(3바이트)이 경계에서 깨진다
+        const chunks: Buffer[] = []
+        req.on('data', (d: Buffer) => { chunks.push(d) })
+        req.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8')
+          try {
+            const patch = JSON.parse(body) as Record<string, unknown>
+            if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+              res.statusCode = 400; res.end('bad overlay'); return
+            }
+            for (const [id, v] of Object.entries(patch)) {
+              if (v === null) delete beatsOverlay[id]   // null = 이 비트 되돌리기
+              else beatsOverlay[id] = v
+            }
+            server.ws.send({ type: 'custom', event: 'beats-preview', data: { overlay: beatsOverlay } })
+            res.end('ok')
+          } catch { res.statusCode = 400; res.end('invalid json') }
+        })
+      })
+    },
+  }
+}
+
 function editorSavePlugin(): Plugin {
   return {
     name: 'editor-save',
@@ -241,16 +387,41 @@ function editorSavePlugin(): Plugin {
             return
           }
           if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
-          let body = ''
-          req.on('data', (d: Buffer) => { body += d.toString() })
+          // 청크를 모아 한 번에 디코딩한다 — 청크마다 toString()하면 UTF-8 멀티바이트(한글 3바이트)가
+          // 경계에서 잘려 그 글자가 깨진다. beats처럼 큰 문서를 저장할 때마다 몇 글자씩 손상되던 원인.
+          const chunks: Buffer[] = []
+          req.on('data', (d: Buffer) => { chunks.push(d) })
           req.on('end', () => {
+            const body = Buffer.concat(chunks).toString('utf8')
             try {
               const parsed: unknown = JSON.parse(body) // 유효성 검증
               const abs = path.resolve(process.cwd(), file)
+              if (route === '/__beats') {
+                // 통째 덮어쓰기 저장이라, 탭 두 개(또는 오래된 탭 하나)가 번갈아 저장하면
+                // 나중 저장이 먼저 저장분을 조용히 지운다. 프로토콜을 고칠 시간은 없으니
+                // 최소한 덮어써지기 직전의 상태를 타임스탬프로 남겨 복구는 가능하게 한다.
+                const backupDir = path.join(path.dirname(abs), '.backups')
+                try {
+                  if (fs.existsSync(abs)) {
+                    fs.mkdirSync(backupDir, { recursive: true })
+                    const d = new Date()
+                    const pad = (v: number): string => String(v).padStart(2, '0')
+                    const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
+                    const base = path.basename(abs, '.json')
+                    fs.copyFileSync(abs, path.join(backupDir, `${base}-${stamp}.json`))
+                  }
+                } catch { /* 백업 실패는 저장 자체를 막지 않는다 */ }
+              }
               fs.writeFileSync(abs, JSON.stringify(parsed, null, 2) + '\n')
               // watch 제외 파일은 모듈 캐시가 안 갱신됨 → 직접 무효화 (리로드 없이, 다음 새로고침부터 새 값)
               const mods = server.moduleGraph.getModulesByFile(abs)
               if (mods) for (const m of mods) server.moduleGraph.invalidateModule(m)
+              if (route === '/__beats') {
+                // 파일에 들어갔으니 임시본은 필요 없다. 게임은 이 신호를 받아
+                // 지금 화면의 문구를 기준값으로 승격한다 (비우기만 하면 옛 문구로 되돌아간다).
+                beatsOverlay = {}
+                server.ws.send({ type: 'custom', event: 'beats-committed', data: {} })
+              }
               res.end('ok')
             } catch {
               res.statusCode = 400
@@ -461,6 +632,8 @@ export default defineConfig({
   build: { target: 'es2020' },
   plugins: [
     uploadedAssetServePlugin(),
+    layoutSavePlugin(), // /__layout — 키 단위 병합 (editorSavePlugin의 통짜 저장과 분리)
+    beatsPreviewPlugin(),
     editorSavePlugin(),
     scaleSavePlugin('/__charscale', 'src/data/charskins.json',
       (m) => (m as CharSkinManifest).chars.flatMap((c) => c.slots), 'char-scale-updated'),
@@ -497,6 +670,7 @@ export default defineConfig({
         '**/src/data/layout.json', '**/src/data/tuning.json', '**/src/data/cards.json',
         '**/src/data/bgm.json', '**/src/data/backgrounds.json', '**/src/data/uiskins.json',
         '**/src/data/charskins.json', '**/src/data/beatmaps.json',
+        '**/src/data/beats/*.json', // 저장해도 게임을 리로드하지 않는다 — 반영은 프리뷰 채널이 담당
       ],
     },
   },
