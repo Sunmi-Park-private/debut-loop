@@ -986,7 +986,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       syms.forEach((sp, k) => { if (sp) sp.visible = k === n; });
       if (syms[n]) { ic.visible = false; return; }
       ic.visible = true;
-      ic.text = ICONS[n] ?? "🎴";
+      ic.text = ICONS[n] ?? "";
       ic.x = cellCx(i) - ic.width / 2;
       ic.y = cellCy - ic.height / 2;
     };
@@ -1055,7 +1055,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
         spr.y = (frame ? 73 : 65) - symT.height * ss;
         card.addChild(spr);
       } else {
-        const t = txt(ICONS[n] ?? "🎴", 28, INK);
+        const t = txt(ICONS[n] ?? "", 28, INK);
         t.x = (SHOT_W - t.width) / 2;
         t.y = 16;
         card.addChild(t);
@@ -1972,7 +1972,7 @@ export function renderGate(
           ic.x = -CW / 2;
           ic.y = -CH + 8;
         } else {
-          const e = txt(t?.icon ?? "🎴", 22, INK);
+          const e = txt(t?.icon ?? "", 22, INK);
           e.x = -e.width / 2;
           e.y = -CH + 12;
           ic = e;

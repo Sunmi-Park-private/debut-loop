@@ -243,12 +243,12 @@
     "y": 176
   },
   "dance_mirror_hint": {
-    "x": -1,
-    "y": -74
+    "x": 5,
+    "y": -60
   },
   "dance_mirror_info": {
-    "x": -2,
-    "y": -93,
+    "x": 94,
+    "y": -124,
     "color": "#ffffff"
   },
   "dance_mirror_track": {
@@ -258,7 +258,10 @@
   "dance_stop_desc": {
     "x": -5,
     "y": -60,
-    "color": "#ffffff"
+    "color": "#ffffff",
+    "texts": [
+      ""
+    ]
   },
   "dance_train_res_btn": {
     "x": 4,
@@ -683,9 +686,8 @@
     ]
   },
   "train_row_bond": {
-    "x": 222,
-    "y": 390,
-    "color": "#5b4a70"
+    "x": 225,
+    "y": 390
   },
   "train_row_dance": {
     "x": 222,
@@ -863,8 +865,8 @@
   },
   "dance_train_game_title": {
     "x": -15,
-    "y": 20,
-    "scale": 1.5,
+    "y": 32,
+    "scale": 1.6,
     "color": "#ffffff"
   },
   "story_lbl_mental": {

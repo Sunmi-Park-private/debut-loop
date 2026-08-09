@@ -304,7 +304,7 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
     const s = ctrl!.state;
     const clueTxt = s.clues.size > 0 ? ` · 🔍 ${s.clues.size}/4` : "";
     const head = new Text({
-      text: `${s.loopCount}회차 · ${Math.min(6, Math.floor(s.week / 4) + 1)}개월 · W${s.week} · 데뷔까지 ${ddayWeeks(config.debutWeek, s.week)}주 · 🎴 ${s.cards.length}${clueTxt}`,
+      text: `${s.loopCount}회차 · ${Math.min(6, Math.floor(s.week / 4) + 1)}개월 · W${s.week} · 데뷔까지 ${ddayWeeks(config.debutWeek, s.week)}주 · 카드 ${s.cards.length}${clueTxt}`,
       style: { fontSize: 12, fill: 0xa99bc0 },
     });
     const p = pos("header");

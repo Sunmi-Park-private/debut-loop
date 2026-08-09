@@ -402,7 +402,7 @@ export function initCheatMenu(): void {
 
   function renderCardEditor(): void {
     modal.innerHTML =
-      "<b>🎴 카드 구성 에디터</b> <small style='color:#a99bc0'>· 수치=★기준(등급 배율 자동)</small>" +
+      "<b>카드 구성 에디터</b> <small style='color:#a99bc0'>· 수치=★기준(등급 배율 자동)</small>" +
       "<hr style='border:none;border-top:1px solid #ece4f4'>";
 
     for (const t of cardTemplates) {
@@ -609,7 +609,7 @@ export function initCheatMenu(): void {
     );
     modal.appendChild(item("♻️ 회귀 생존 카드 설정", () => renderTuning()));
     modal.appendChild(item("⏱ 타이밍 튜닝", () => renderTiming()));
-    modal.appendChild(item("🎴 카드 구성 에디터", () => renderCardEditor()));
+    modal.appendChild(item("카드 구성 에디터", () => renderCardEditor()));
     modal.appendChild(item("\ud83d\ude80 회차 이동", () => renderJump()));
     for (const c of cheats.filter((x) => !x.gameOnly)) {
       modal.appendChild(item(c.label, () => { c.run(); overlay.style.display = "none"; }));

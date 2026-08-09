@@ -117,7 +117,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
     const gx = Math.round((W - COLS * CW - (COLS - 1) * GAP) / 2);
     const gridG = grp("side_daily_grid", gx, 84);
 
-    const rewards = ["⭐5", "⭐10", "🎴×1", "⭐15", "🎴×2", "⭐20", "🎴★★★"];
+    const rewards = ["⭐5", "⭐10", "카드×1", "⭐15", "카드×2", "⭐20", "카드★★★"];
     rewards.forEach((r, i) => {
       const day = i + 1;
       const done = day <= 3 || (day === 4 && mock.dailyClaimed);
@@ -242,7 +242,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
     grp("side_shop_coin", W - 70, 58, purse);
 
     const items: Array<[string, string, string, string]> = [
-      ["🎴", "카드팩", "랜덤 카드 3장", "⭐ 15"],
+      ["", "카드팩", "랜덤 카드 3장", "⭐ 15"],
       ["🎟", "패자부활권", "탈락 위기에서 한 번 부활", "⭐ 20"],
       ["✨", "스타터 부스트", "다음 런 시작 게이지 +5", "⭐ 10"],
       ["💎", "스페셜 팩", "에픽 확정 + 포토 1장", "₩3,300"],

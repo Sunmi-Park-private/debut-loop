@@ -192,7 +192,7 @@ export function renderCardDeckSheet(parent: Container, opts: CardDeckSheetOpts):
     const symRow = gaugeSymbol(card, CW, SYM);
     if (symRow) igrp("card_deck_item_sym", symRow, 0, 8);
     else {
-      const ic = mkText(t?.icon ?? "🎴", 22, 0x5b4a70);
+      const ic = mkText(t?.icon ?? "", 22, 0x5b4a70);
       igrp("card_deck_item_sym", ic, (CW - ic.width) / 2, 12);
     }
 

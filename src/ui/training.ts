@@ -46,7 +46,7 @@ const ACT_NAME: Record<TrainingId, string> = {
   vocal: "보컬 연습", dance: "안무 연습", promo: "SNS 홍보", funds: "알바", audition: "오디션 대비", bond: "휴식",
 };
 
-/** 커맨드 목록의 카드 표기 — "🎴 유대 카드 2장 (유대·멘탈)".
+/** 커맨드 목록의 카드 표기 — "유대 카드 2장 (유대·멘탈)".
  *  원형이 올리는 게이지마다 한 장씩 주므로 이름만 적으면 실제 장수와 어긋난다. */
 const cardChipLabel = (id: TrainingId): string => {
   const t = cardTemplates.find((c) => c.id === id);
@@ -54,7 +54,7 @@ const cardChipLabel = (id: TrainingId): string => {
   const gauges = templateGauges(t);
   const names = gauges.map((g) => GLBL[g] ?? g).join("·");
   const count = gauges.length > 1 ? ` ${gauges.length}장` : "";
-  return `🎴 ${t.name}${count} (${names})`;
+  return `${t.name}${count} (${names})`;
 };
 
 const drainLabel = (id: TrainingId): string => {
@@ -378,6 +378,19 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
       chip.x = tx;
       chip.y = banner ? 38 : 46;
       row.addChild(nm, fx, chip);
+      if (a.id === "bond") {
+        // 휴식 행만 문구 3종을 개별 컴포넌트로 등록 — 행 전체 색 덮어쓰기가 세 줄을 한꺼번에
+        // 물들이던 문제. 줄마다 문구·색·위치를 따로 조정한다 (행 위치는 train_row_bond 그대로)
+        const reg = (suffix: string, t2: Text): void => {
+          const q = pos(`train_row_bond_${suffix}`, { x: Math.round(t2.x), y: Math.round(t2.y) });
+          t2.x = q.x;
+          t2.y = q.y;
+          editable(`train_row_bond_${suffix}`, t2);
+        };
+        reg("name", nm);
+        reg("info", fx);
+        reg("card", chip);
+      }
       // 터치 영역을 패널 안쪽까지로 제한 — 마스크는 표시만 자르고 히트테스트는 못 막음
       // (hitArea는 row 자신에 남으므로 pressable이 내용물을 감싸도 판정 범위는 그대로다)
       const bw = banner ? 246 : 166;
@@ -511,7 +524,7 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
           ic = sym;
           ic.y = 28;
         } else {
-          const e = txt(t?.icon ?? "🎴", 36, INK);
+          const e = txt(t?.icon ?? "", 36, INK);
           e.x = (CW2 - e.width) / 2;
           e.y = 30;
           ic = e;

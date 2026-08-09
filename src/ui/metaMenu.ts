@@ -240,7 +240,7 @@ function ensureCore(): void {
     shopTop.append(shopName, purse);
     modal.appendChild(shopTop);
     const items: Array<[string, string, string, string]> = [
-      ["🎴", "카드팩", "랜덤 카드 3장", "⭐ 15"],
+      ["", "카드팩", "랜덤 카드 3장", "⭐ 15"],
       ["🎟", "패자부활권", "탈락 위기에서 한 번 부활", "⭐ 20"],
       ["✨", "스타터 부스트", "다음 런 시작 게이지 +5", "⭐ 10"],
       ["💎", "스페셜 팩", "에픽 확정 + 포토 1장", "₩3,300"],
@@ -268,7 +268,7 @@ function ensureCore(): void {
     modal.appendChild(section(`<b style='font-size:13px'>출석 보상</b> <small style='color:${SUB}'>· 매일 접속하고 보상을 받아요</small>`));
     const grid = document.createElement("div");
     grid.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px";
-    const rewards = ["⭐5", "⭐10", "🎴×1", "⭐15", "🎴×2", "⭐20", "🎴★★★"];
+    const rewards = ["⭐5", "⭐10", "카드×1", "⭐15", "카드×2", "⭐20", "카드★★★"];
     rewards.forEach((r, i) => {
       const day = i + 1;
       const done = day <= 3 || (day === 4 && mock.dailyClaimed);

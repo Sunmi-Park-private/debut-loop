@@ -72,7 +72,7 @@ export async function playLevelUpFx(parent: Container, ticker: Ticker, deltaText
   // 흡수될 카드
   const cardG = new Container();
   const cg = new Graphics().roundRect(-26, -34, 52, 68, 8).fill(0xfdf6fa).stroke({ width: 2.5, color: 0xff7fb0 });
-  const ci = new Text({ text: "🎴", style: { fontSize: 26 } });
+  const ci = new Text({ text: "", style: { fontSize: 26 } });
   ci.x = -ci.width / 2;
   ci.y = -ci.height / 2;
   cardG.addChild(cg, ci);
