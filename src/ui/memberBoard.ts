@@ -8,7 +8,7 @@ import type { RunController } from "./runController";
 import { mountEngine, txt, btn, btnText, MG_W, MG_H, INK, SUB, PINK, LAV } from "./minigames";
 import { skinFit, skinNatural, skinNode, skinTex, skinTexTrim } from "./uiSkin";
 import { pos } from "./layout";
-import { editable, setRedrawHook } from "./editor";
+import { editable, editableClone, setRedrawHook } from "./editor";
 import { fullRect } from "./stage";
 import { toast } from "./metaMenu";
 import { playBgm } from "./audio";
@@ -31,6 +31,7 @@ export interface MemberBoardOpts {
   onClose: () => void;    // 닫기 (컨트롤러 closeMemberWindow는 호출측)
   onChanged: () => void;  // 상태 변형 후 HUD 갱신용
   startAudition?: boolean; // true면 곧장 오디션 씬으로 (치트 "오디션 보기")
+  previewResult?: MiniGameGrade; // 치트: 리듬 없이 곧장 판정결과 화면 (레이아웃 확인용)
   bustOf?: (characterId: string) => Texture | null; // 대형 프로필용 상반신 (캐릭터 에디터 bust 재활용)
 }
 
@@ -73,7 +74,8 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
   // 패널 프레임 = 점검 화면 배경판(board-bg). 다른 화면의 아트(train-panel)로 폴백하지 않는다.
   // 자기 배경판을 따로 까는 화면(audition-recruit-bg·recheck-bg)은 이 프레임을 감춘다 —
   // 안 감추면 배경판 뒤에서 프레임이 비쳐 남는다.
-  const bg = skinFit("board-bg", W, H) ?? skinNode("audition-panel", W, H) ?? skinNode("ui-frame", W, H)
+  const boardArt = skinFit("board-bg", W, H); // 이름판·게이지 트랙이 그려진 점검 화면 아트
+  const bg = boardArt ?? skinNode("audition-panel", W, H) ?? skinNode("ui-frame", W, H)
     ?? new Graphics().roundRect(0, 0, W, H, 24).fill({ color: 0xffffff, alpha: 0.94 }).stroke({ width: 2, color: 0xece4f4 });
   panel.addChild(bg);
   /** 자체 배경판을 깐 화면에서 프레임을 감춘다 — clear()가 매번 다시 켜므로 화면마다 선언적으로 부른다 */
@@ -272,24 +274,28 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     roleT.x = (W - roleT.width) / 2;
     bgrp("board_role", 0, 172, roleT);
     if (mSel) {
-      const barW = 170;
+      // board-bg 아트의 이름판에 트랙이 그려져 있다 — 코드 채움 바를 그 위에 정확히 겹친다 (실측: body 기준 x112~234, y155)
+      const barW = 120;
       const statG = new Container();
       const track = skinNode("member-stat-bar", barW, 8);
       if (track) statG.addChild(track);
-      else statG.addChild(new Graphics().roundRect(0, 0, barW, 8, 4).fill(0xefe9f6));
+      else if (!boardArt) statG.addChild(new Graphics().roundRect(0, 0, barW, 8, 4).fill(0xefe9f6)); // 아트가 있으면 그림의 트랙이 곧 트랙
       statG.addChild(new Graphics().roundRect(0, 0, Math.max(4, barW * mSel.stat / 100), 8, 4)
         .fill(mSel.stat >= 70 ? 0x3fb98a : mSel.stat >= 50 ? GOLD : 0xff6f91));
       const sv = txt(`${mSel.stat}`, 12, 0xffffff, true);
-      sv.x = barW + 8;
-      sv.y = -5;
+      const svp = pos("board_stat_text", { x: barW + 8, y: -5 }); // 숫자만 따로 조정 (board_stat 그룹 내부 좌표)
+      sv.x = svp.x;
+      sv.y = svp.y;
       statG.addChild(sv);
-      bgrp("board_stat", (W - barW) / 2 - 14, 192, statG);
+      editable("board_stat_text", sv);
+      bgrp("board_stat", 113, 155, statG);
     }
 
     // 썸네일 5개 — 탭하면 상단 대형 프로필 교체. 선택 링 강조, 빈 슬롯은 물음표
     const THUMB = 46, TGAP = 13;
     const tx0 = (W - (THUMB * 5 + TGAP * 4)) / 2;
     const thumbs = new Container();
+    const thumbStats = new Container(); // 썸네일 아래 기량 숫자 묶음 — 썸네일과 별도 키로 조정
     for (let i = 0; i < 5; i++) {
       const m = s.members[i];
       const c = m ? charOf(m.characterId) : undefined;
@@ -310,9 +316,9 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
       }
       if (m?.stat !== undefined) {
         const sp2 = txt(`${m.stat}`, 9, 0xffffff, true);
-        sp2.x = THUMB / 2 - sp2.width / 2;
+        sp2.x = cell.x + THUMB / 2 - sp2.width / 2; // 묶음 그룹 내부 좌표 (셀과 같은 열)
         sp2.y = THUMB + 2;
-        cell.addChild(sp2);
+        thumbStats.addChild(sp2);
       }
       cell.eventMode = "static";
       cell.cursor = "pointer";
@@ -320,12 +326,20 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
       thumbs.addChild(cell);
     }
     bgrp("board_thumbs", tx0, 214, thumbs);
+    bgrp("board_thumbs_stats", tx0, 214, thumbStats);
     let y = 282;
 
     // 기량 설명 캡션
     // 오디션의 실제 가치(자동충원 50 초과 확보)와 마지막 기회(W17 📷)를 전달
     const statCap = txt("기량은 무대 성적으로 오르내려요\nW18 자동충원 기준은 50\n오디션으로 더 나은 멤버를 확보하세요 (마지막 기회 W17)", 10, 0xffffff);
-    bgrp("board_caption", 20, y + 2, statCap);
+    statCap.style.wordWrapWidth = W - 60; // 에디터로 긴 한 줄 문구를 넣어도 패널 안에서 줄바꿈
+    statCap.style.breakWords = true;
+    // 텍스트 자신을 등록 — 그룹 등록이면 문구 덮어쓰기 때 중심 보정이 걸려 좌표가 밀린다
+    const cp = pos("board_caption", { x: 20, y: y + 2 });
+    statCap.x = cp.x;
+    statCap.y = cp.y;
+    body.addChild(statCap);
+    editable("board_caption", statCap);
     y += 46; // 3줄
 
     if (s.membersLocked) {
@@ -339,42 +353,59 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     // 보류 후보 — 오디션에서 기량이 측정된 풀 후보. 이 자리에서 바로 영입/버리기 (목록 전체가 하나의 레이아웃 그룹)
     const heldG = new Container();
     const heldY0 = y + 4;
+    // 행 조각(배경·프로필·이름·버튼·문구)을 각각 반복 키로 등록 — 첫 행이 대표, 나머지는 복제.
+    // 저장 좌표는 오프셋으로 모든 행에 공통 적용 (카드덱 8칸과 같은 규약)
+    const heldRegd = new Set<string>();
+    const hreg = (name: string, g: Container): void => {
+      if (heldRegd.has(name)) editableClone(name, g);
+      else { heldRegd.add(name); editable(name, g); }
+    };
     for (const c of held) {
       const stat = s.candidateStats[c.id] ?? 0;
       const row = new Container();
       row.y = y + 4 - heldY0; // 그룹 내부 로컬 좌표
       const rw = W - 28;
-      row.addChild(skinNode("audition-held-row", rw, 30)
-        ?? new Graphics().roundRect(0, 0, rw, 30, 10).fill(0xfdf8ff).stroke({ width: 1.5, color: 0xe0d2f0 }));
+      const hpiece = (name: string, child: Container, px: number, py: number): void => {
+        child.x = px;
+        child.y = py;
+        const g = new Container();
+        const q = pos(name, { x: 0, y: 0 }); // 저장값 = 오프셋
+        g.x = q.x;
+        g.y = q.y;
+        g.addChild(child);
+        row.addChild(g);
+        hreg(name, g);
+      };
+      hpiece("board_held_row", skinNode("audition-held-row", rw, 30)
+        ?? new Graphics().roundRect(0, 0, rw, 30, 10).fill(0xfdf8ff).stroke({ width: 1.5, color: 0xe0d2f0 }), 0, 0);
       const hf = profile(c.id, 24); // 보류 후보 행 프로필 (캐릭터별 슬롯 · 없으면 색 점)
-      if (hf) { hf.x = 4; hf.y = 3; row.addChild(hf); }
-      else row.addChild(new Graphics().circle(16, 15, 8).fill(c.temp ? 0xd9cdeb : parseInt(c.color.slice(1), 16)));
+      if (hf) hpiece("board_held_icon", hf, 4, 3);
+      else hpiece("board_held_icon", new Graphics().circle(12, 12, 8).fill(c.temp ? 0xd9cdeb : parseInt(c.color.slice(1), 16)), 4, 3);
       const nm = txt(`${c.name}${c.temp ? " (가칭)" : ""} · 기량 ${stat}`, 11.5, INK, true);
-      nm.x = 32;
-      nm.y = 7;
-      row.addChild(nm);
-      const mkMini = (label: string, x: number, color: number, fill: number, onTap: () => void): Container => {
+      hpiece("board_held_name", nm, 32, 7);
+      const mkMini = (key: string, label: string, x: number, color: number, fill: number, onTap: () => void): Container => {
         const b = new Container();
         // 스킨 1종 공용, 색 구분은 텍스트 색으로 유지
         b.addChild(skinNode("audition-btn-mini", 58, 22) ?? new Graphics().roundRect(0, 0, 58, 22, 8).fill(fill));
         const t2 = txt(label, 10.5, color, true);
-        t2.x = (58 - t2.width) / 2;
-        t2.y = 4;
+        const tq = pos(`${key}_text`, { x: Math.round((58 - t2.width) / 2), y: 4 });
+        t2.x = tq.x;
+        t2.y = tq.y;
         b.addChild(t2);
-        b.x = x;
-        b.y = 4;
         pressable(b, onTap);
+        hreg(`${key}_text`, t2);
+        hpiece(key, b, x, 4);
         return b;
       };
-      row.addChild(mkMini("영입", rw - 128, 0xffffff, PINK, () => {
+      mkMini("board_held_btn_recruit", "영입", rw - 128, 0xffffff, PINK, () => {
         if (ctrl.state.members.length >= 5) { showReplacePick(c.id); return; }
         ctrl.recruitCandidate(c.id);
         opts.onChanged();
         showBoard();
-      }));
+      });
       // 회차 내 복구 불가 행동이라 2-tap 확인 (기존 토스트 패턴 재사용, 행마다 독립)
       let dropArmed = false;
-      row.addChild(mkMini("버리기", rw - 64, 0x8a76a8, 0xefe9f6, () => {
+      mkMini("board_held_btn_drop", "버리기", rw - 64, 0x8a76a8, 0xefe9f6, () => {
         if (!dropArmed) {
           dropArmed = true;
           toast(`한 번 더 누르면 ${c.name}를 내보내요. 이번 회차엔 다시 만날 수 없어요`);
@@ -383,7 +414,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
         ctrl.dropCandidate(c.id);
         toast(`${c.name} · 후보에서 내보냈어요`);
         showBoard();
-      }));
+      });
       heldG.addChild(row);
       y += 36;
     }
@@ -397,12 +428,12 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
         : audCards >= cost
           ? `✨ 오디션 카드 ${cost}장이 모였어요! 진행권으로 바꿔요`
           : `🎯 오디션 카드 ${audCards}/${cost} · 주간 연습 '오디션 대비'에서 모아요`;
-    const taskBg = skinNode("audition-banner", W - 28, 28)
-      ?? new Graphics().roundRect(0, 0, W - 28, 28, 10).fill(0xfff3f8).stroke({ width: 1.5, color: 0xffd3e4 });
+    // 배너 배경은 투명 — 슬롯 아트 업로드 시에만 그린다 (분홍 폴백 박스는 배경판 아트와 겹쳐 보여 제거)
+    const taskBg = skinNode("audition-banner", W - 28, 28);
     const taskT = txt(task, 11, 0xc9527f, true);
     taskT.x = 10;
     taskT.y = 7;
-    bgrp("board_banner", 14, y + 4, taskBg, taskT);
+    bgrp("board_banner", 14, y + 4, ...(taskBg ? [taskBg, taskT] : [taskT]));
     y += 38;
 
     // 미측정 후보 + 보유 현황
@@ -610,8 +641,6 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     }
 
     const card = new Container();
-    card.x = (W - 180) / 2;
-    card.y = 70;
     const cbg = skinFit("audition-card", 180, 200); // 후보 카드 배경 — 원본 비율 유지 (빈 슬롯은 내용만)
     // 심사 결과 후보 프로필 — 캐릭터별 슬롯(member-icon-<id>), 미업로드 시 기존 색 원
     const face = profile(r.char.id, 68);
@@ -635,27 +664,35 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     rl.y = 172;
     if (cbg) card.addChild(cbg);
     card.addChild(dot, nm, st, rl);
-    body.addChild(card);
+    // 카드 프레임 + 내부 텍스트 각각 레이아웃 에디터 등록 (내부 좌표는 카드(180폭) 기준)
+    bgrp("board_res_card", (W - 180) / 2, 70, card);
+    const regIn = (suffix: string, t2: Text): void => {
+      const q = pos(`board_res_${suffix}`, { x: Math.round(t2.x), y: Math.round(t2.y) });
+      t2.x = q.x;
+      t2.y = q.y;
+      editable(`board_res_${suffix}`, t2);
+    };
+    regIn("card_name", nm);
+    regIn("card_stat", st);
+    regIn("card_role", rl);
 
     const full = ctrl.state.members.length >= 5;
     const cap = txt(full
       ? "슬롯이 가득 찼어요. 영입하려면 오디션 슬롯 멤버와 교체해요"
       : "포착률이 높을수록 진짜 실력이 보여요 · 영입하면 빈 슬롯에 합류", 10.5, SUB);
-    cap.x = (W - cap.width) / 2;
-    cap.y = 278;
-    body.addChild(cap);
+    const capX = Math.round((W - cap.width) / 2);
+    bgrp("board_res_caption", capX, 278, cap);
     const rec = abtn(full ? "영입 (교체 대상 선택)" : "영입한다", 220, PINK, () => {
       if (full) { showReplacePick(r.char.id); return; }
       ctrl.recruitCandidate(r.char.id);
       opts.onChanged();
       showBoard();
     }, "recruit");
-    rec.x = (W - 220) / 2;
-    rec.y = 300;
+    bgrp("board_res_btn_recruit", (W - 220) / 2, 300, rec);
+    btnLabel("board_res_btn_recruit", rec);
     const hold = abtn("보류 (보드에서 다시 영입 가능)", 220, 0xc4b8d6, showBoard, "sub");
-    hold.x = (W - 220) / 2;
-    hold.y = 364;
-    body.addChild(rec, hold);
+    bgrp("board_res_btn_hold", (W - 220) / 2, 364, hold);
+    btnLabel("board_res_btn_hold", hold);
   };
 
   // ── 만석 교체: 방출할 오디션 슬롯 멤버 선택 ──
@@ -692,6 +729,8 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
 
   const canAudition = ctrl.state.deck.includes("audition") && !ctrl.state.membersLocked
     && candidatePool(characters, ctrl.state).length > 0;
-  if (opts.startAudition && canAudition) showAudition();
+  const previewChar = opts.previewResult ? candidatePool(characters, ctrl.state)[0] ?? characters[0] : undefined;
+  if (opts.previewResult && previewChar) showResult({ char: previewChar, stat: 82 }, opts.previewResult); // 치트 미리보기
+  else if (opts.startAudition && canAudition) showAudition();
   else showBoard();
 }

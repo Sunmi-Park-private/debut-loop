@@ -37,6 +37,7 @@ let ctrl: RunController | null = null;
 let freeTraining = false;               // 🎹 자유 연습 모드 (치트 전용)
 let memberBoardForced = false;          // 👥 멤버 보드 강제 오픈 (👥 멤버 버튼·치트 공용)
 let memberBoardAudition = false;        // 🎤 오디션 씬 직행 (치트 "오디션 보기" — 1회 소비)
+let memberBoardResult = false;          // 🏅 판정결과 화면 직행 (치트 — 리듬 없이 레이아웃 확인용, 1회 소비)
 let lastTrainWeek = 0;                  // 주간 연습 기준 주 — state.week가 이보다 커지면 연습 오픈
 let loop2Mode: "fast" | "normal" | null = null; // 2회차 진행 모드 (회귀 화면에서 선택, 새 런 시 초기화)
 let currentDraw: () => void = () => {}; // 현재 진입의 draw (치트·에디터가 호출)
@@ -138,6 +139,10 @@ export function initGameCheats(): void {
     toast("오디션 카드 3장 + 진행권 1장 지급");
   }), true);
   registerCheat("👥 멤버 보드 열기", needGame(() => { memberBoardForced = true; }), true);
+  registerCheat("🏅 오디션 판정결과 화면 (GOOD)", needGame(() => {
+    memberBoardForced = true;
+    memberBoardResult = true;
+  }), true);
   registerCheat("🎤 오디션 보기", needGame((c) => {
     if (c.state.membersLocked) { toast("데뷔조 확정 후엔 오디션 불가 — 새 런에서 시도하세요"); return; }
     if (!c.state.deck.includes("audition")) c.state.deck.push("audition"); // 진행권 없으면 지급
@@ -418,8 +423,10 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
         ]);
       const startAudition = memberBoardAudition;
       memberBoardAudition = false; // 1회 소비 — 이후 리드로우는 점검 화면부터
+      const previewResult = memberBoardResult ? "good" as const : undefined;
+      memberBoardResult = false; // 1회 소비
       renderMemberBoard(root, {
-        ctrl: c, ticker: app.ticker, startAudition,
+        ctrl: c, ticker: app.ticker, startAudition, previewResult,
         // 센터 스테이지 대형 프로필 — bust 우선, 미제작 캐릭터는 전신 아트로 폴백 (보드가 상반신만 크롭)
         bustOf: (id) => { const a = assets.char(id); return a.profileFace ?? a.bust ?? a.daily ?? a.stand ?? a.stage; }, // 밝은 표정 우선
         onClose: () => { c.closeMemberWindow(); memberBoardForced = false; draw(); },

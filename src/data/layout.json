@@ -67,8 +67,9 @@
     "y": 130
   },
   "board_banner": {
-    "x": 15,
-    "y": 250
+    "x": 45,
+    "y": 254,
+    "fontSize": 12
   },
   "board_bg": {
     "x": 15,
@@ -76,16 +77,19 @@
   },
   "board_btn_exchange": {
     "x": 15,
-    "y": 330
+    "y": 315
   },
   "board_btn_hold": {
     "x": 195,
-    "y": 330
+    "y": 315
   },
   "board_caption": {
-    "x": 35,
-    "y": 480,
-    "color": "#5b4a70"
+    "x": 15,
+    "y": 0,
+    "color": "#ffffff",
+    "texts": [
+      "기량은 무대 성적으로 오르내려요\\n오디션으로 더 나은 멤버를 확보하세요 \\n(마지막 기회 W17)"
+    ]
   },
   "board_close_x": {
     "x": 345,
@@ -97,7 +101,7 @@
   },
   "board_held": {
     "x": 15,
-    "y": 391,
+    "y": 370,
     "scale": 1
   },
   "board_name": {
@@ -126,7 +130,7 @@
     "color": "#5b4a70"
   },
   "board_stat": {
-    "x": 115,
+    "x": 113,
     "y": 156
   },
   "board_thumbs": {
@@ -135,12 +139,14 @@
     "color": "#000000"
   },
   "board_title": {
-    "x": 155,
-    "y": -20
+    "x": 150,
+    "y": -15,
+    "color": "#ffffff"
   },
   "board_week": {
-    "x": -55,
-    "y": -20
+    "x": -35,
+    "y": 30,
+    "color": "#ff7fb0"
   },
   "bond_train_res_btn": {
     "x": 4,
@@ -195,21 +201,21 @@
     "scale": 1
   },
   "card_deck_content": {
-    "x": 5,
+    "x": -3,
     "y": -20
   },
   "card_deck_item_name": {
-    "x": 5,
+    "x": 6,
     "y": 0,
     "scale": 0.8
   },
   "card_deck_item_star": {
-    "x": -1,
+    "x": 0,
     "y": 27
   },
   "card_deck_item_sym": {
-    "x": 28,
-    "y": 18,
+    "x": 29,
+    "y": 20,
     "scale": 1
   },
   "card_deck_sub": {
@@ -292,24 +298,28 @@
     "y": 170
   },
   "funds_stop_desc": {
-    "x": 34,
-    "y": -90
+    "x": 5,
+    "y": -60,
+    "color": "#dbefff"
   },
   "funds_stop_hint": {
     "x": 19,
     "y": 108
   },
   "funds_stop_info": {
-    "x": 33,
-    "y": -118
+    "x": 43,
+    "y": -133,
+    "color": "#dbefff"
   },
   "funds_stop_track": {
     "x": 1,
     "y": 58
   },
   "funds_train_game_title": {
-    "x": -5,
-    "y": 0
+    "x": -8,
+    "y": 22,
+    "scale": 1.5,
+    "color": "#dbefff"
   },
   "funds_train_res_card_icon": {
     "x": 2,
@@ -384,8 +394,8 @@
     "y": -477
   },
   "gate_title": {
-    "x": 53,
-    "y": 6,
+    "x": 105,
+    "y": 10,
     "scale": 1.1
   },
   "gauges": {
@@ -521,8 +531,9 @@
   },
   "promo_match_desc": {
     "x": -5,
-    "y": -90,
-    "color": "#000000"
+    "y": -104,
+    "color": "#5b4a70",
+    "scale": 1.3
   },
   "promo_match_grid": {
     "x": -1,
@@ -533,8 +544,9 @@
     "y": -37
   },
   "promo_match_info": {
-    "x": -6,
-    "y": -116
+    "x": 2,
+    "y": -110,
+    "color": "#5b4a70"
   },
   "promo_mini_bg": {
     "x": -2,
@@ -677,13 +689,14 @@
     "y": 477
   },
   "train_row_audition": {
-    "x": 222,
+    "x": 225,
     "y": 328,
     "texts": [
       null,
       null,
       "오디션 카드 2장 (평판·실력)"
-    ]
+    ],
+    "scale": 1
   },
   "train_row_bond": {
     "x": 225,
@@ -739,8 +752,8 @@
     "fontSize": 16
   },
   "training": {
-    "x": 17,
-    "y": 80,
+    "x": 25,
+    "y": 100,
     "scale": 1
   },
   "vocal_mini_bg": {
@@ -1055,8 +1068,9 @@
   "promo_train_res_card": {
     "x": 0,
     "y": 0,
-    "color": "#dbefff",
-    "fontSize": 17
+    "color": "#5b4a70",
+    "fontSize": 17,
+    "scale": 1
   },
   "promo_train_res_btn_text": {
     "x": 68,
@@ -1066,8 +1080,8 @@
     ]
   },
   "easy_start_text": {
-    "x": 54,
-    "y": 15,
+    "x": 57,
+    "y": 14,
     "texts": [
       "이지 · 2열  (Space)"
     ]
@@ -1103,5 +1117,109 @@
     "texts": [
       "계속"
     ]
+  },
+  "block_dodge_msg": {
+    "x": 125,
+    "y": -20,
+    "color": "#5b4a70",
+    "texts": [
+      "밝은 타일에 올라타 반격하세요!"
+    ]
+  },
+  "block_dodge_enemy": {
+    "x": 135,
+    "y": -40,
+    "color": "#5b4a70",
+    "texts": [
+      "진범의 그림자"
+    ]
+  },
+  "block_dodge_desc": {
+    "x": -63,
+    "y": 70,
+    "color": "#5b4a70",
+    "texts": [
+      "사보타주 저지 · 화면 좌/우 탭 = 이동(한 줄 하강)                                  💥 회피 · ✨ 반격 · 💖 회복 · 🛡 방어"
+    ]
+  },
+  "card_deck_item_card": {
+    "x": 0,
+    "y": 0
+  },
+  "board_btn_hold_text": {
+    "x": 71,
+    "y": 14,
+    "fontSize": 12,
+    "texts": [
+      "오디션 개최"
+    ]
+  },
+  "board_btn_exchange_text": {
+    "x": 62,
+    "y": 14,
+    "fontSize": 12
+  },
+  "train_row_bond_card": {
+    "x": 65,
+    "y": 40
+  },
+  "board_stat_text": {
+    "x": 152,
+    "y": -5,
+    "color": "#ff7fb0"
+  },
+  "board_thumbs_stats": {
+    "x": 56,
+    "y": 185,
+    "color": "#5b4a70"
+  },
+  "promo_train_res_card_name": {
+    "x": 0,
+    "y": 0,
+    "fontSize": 18
+  },
+  "promo_train_res_card_icon": {
+    "x": 0,
+    "y": 5
+  },
+  "promo_train_res_drain": {
+    "x": 0,
+    "y": 0,
+    "color": "#ffffff",
+    "fontSize": 20
+  },
+  "board_held_name": {
+    "x": 17,
+    "y": 0,
+    "scale": 1
+  },
+  "board_held_icon": {
+    "x": 11,
+    "y": 0
+  },
+  "board_held_btn_recruit": {
+    "x": 59,
+    "y": 3,
+    "scale": 0.75
+  },
+  "board_held_btn_drop": {
+    "x": 70,
+    "y": 3,
+    "scale": 0.75
+  },
+  "promo_train_game_title_3x3": {
+    "x": 144,
+    "y": 94
+  },
+  "board_held_btn_drop_text": {
+    "x": 11,
+    "y": 4,
+    "color": "#ffffff",
+    "fontSize": 15
+  },
+  "board_held_btn_recruit_text": {
+    "x": 15,
+    "y": 4,
+    "fontSize": 15
   }
 }

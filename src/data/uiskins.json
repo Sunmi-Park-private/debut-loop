@@ -1913,7 +1913,8 @@
           ],
           "mode": "stretch",
           "small": true,
-          "natural": true
+          "natural": true,
+          "scale": 0.36
         }
       ]
     }

@@ -20,6 +20,15 @@ const visible = new Map<string, Container>();
 if (typeof window !== "undefined") {
   (window as unknown as { __layoutKeys?: () => string[] }).__layoutKeys =
     () => [...visible.entries()].map(([k, c]) => `${k}${c.destroyed ? "!d" : ""}${c.parent ? "" : "!p"}`);
+  (window as unknown as { __layoutProbe?: (name: string) => unknown }).__layoutProbe = (name: string) => {
+    const c = visible.get(name);
+    if (!c) return null;
+    const ts = scan(c).texts.map((t) => ({
+      text: String(t.text).slice(0, 40), x: t.x, y: t.y, w: t.width,
+      wrap: t.style.wordWrap, wrapW: t.style.wordWrapWidth, fs: t.style.fontSize,
+    }));
+    return { x: c.x, y: c.y, w: c.width, texts: ts };
+  };
 }
 
 // 같은 레이아웃 키를 여러 자리에서 되풀이해 쓰는 화면이 있다 (카드덱 8칸의 심볼·별·이름…).
@@ -268,7 +277,7 @@ function applyStoredStyle(name: string, c: Container): void {
       if (e.fontSize !== undefined && e.fontSize > 0) t.style.fontSize = e.fontSize;
       if (e.color !== undefined) t.style.fill = e.color;
       const ov = textEditable(name) ? e.texts?.[i] : undefined; // 동적 문구는 코드 값을 그대로 둔다
-      if (typeof ov === "string") t.text = ov;
+      if (typeof ov === "string") t.text = ov.replace(/\\n/g, "\n"); // 입력칸의 \n 표기 = 줄바꿈
     };
     if (owns) edit();
     else mutateTextKeepingCenter(t, edit);
@@ -332,6 +341,25 @@ function select(name: string | null): void {
 // ── 실드: 전화면 투명 레이어 — 게임 입력 차단 + 드래그 처리 (끄면 제거 = 원상복구) ──
 let shield: Graphics | null = null;
 
+/** 루트→노드까지의 자식 인덱스 경로 = 실제 렌더 순서. 경로가 큰 쪽이 화면 위에 그려진다.
+ *  겹침 선택·패널 정렬에서 "지금 눈에 보이는 화면"(멤버 보드·판정결과 같은 오버레이)을 우선하기 위한 기준 */
+function orderPath(c: Container): number[] {
+  const path: number[] = [];
+  let n: Container = c;
+  while (n.parent) {
+    path.unshift(n.parent.children.indexOf(n));
+    n = n.parent as Container;
+  }
+  return path;
+}
+function cmpPath(a: number[], b: number[]): number {
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const d = (a[i] ?? -1) - (b[i] ?? -1);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
 function mountShield(): void {
   const first = [...visible.values()].find((c) => !c.destroyed && c.parent);
   if (!first) return;
@@ -355,14 +383,16 @@ function mountShield(): void {
     // 되풀이 인스턴스도 후보에 넣는다 — 두 번째 카드의 심볼을 눌러도 그 조각이 잡히게
     const cands: Array<[string, Container]> = [...visible];
     for (const [name, list] of clones) for (const c of list) cands.push([name, c]);
-    let best: { name: string; c: Container; area: number } | null = null;
+    let best: { name: string; c: Container; path: number[] } | null = null;
     for (const [name, c] of cands) {
       if (c.destroyed || !c.parent) continue;
       const b = c.getBounds();
       if (b.width <= 0 || b.height <= 0) continue;
       if (e.globalX < b.x || e.globalX > b.x + b.width || e.globalY < b.y || e.globalY > b.y + b.height) continue;
-      const area = b.width * b.height;
-      if (!best || area < best.area) best = { name, c, area };
+      const path = orderPath(c);
+      // 렌더 순서상 위(지금 보이는 오버레이·안쪽 조각) 우선 — 아래 화면의 가려진 조각이 잡히지 않게.
+      // 같은 부모 아래 형제끼리 겹치면(예: 배경판 위 텍스트) 위에 그려진 쪽이 곧 눈에 보이는 쪽이다.
+      if (!best || cmpPath(path, best.path) > 0) best = { name, c, path };
     }
     target = best;
     if (!best) return;
@@ -664,7 +694,11 @@ function refreshPanel(): void {
       "<b>`</b> 또는 여기를 눌러 조작으로 (화면 진행)</span>";
   mode.onclick = () => setInteractMode(!interact);
   head.appendChild(mode); // 모드 토글도 머리말에 — 자주 오가는 컨트롤이라 항상 손에 닿아야 한다
-  const rows = [...visible].filter(([, c]) => !c.destroyed && c.parent); // 화면에 남아있는 것만
+  // 화면에 남아있는 것만 — 위 레이어(오버레이: 멤버 보드·판정결과 등)가 목록 상단에 오도록 정렬.
+  // 안 하면 뒤에 깔린 스토리 화면 컴포넌트들이 먼저 등록된 순서대로 위를 차지해, 지금 보이는
+  // 오버레이 화면의 컴포넌트가 목록 맨 아래 묻혀 "안 나오는" 것처럼 보인다.
+  const rows = [...visible].filter(([, c]) => !c.destroyed && c.parent)
+    .sort((a, b) => cmpPath(orderPath(b[1]), orderPath(a[1]))); // 렌더 순서 역순 = 눈에 보이는 위 화면부터
   if (rows.length === 0) {
     const empty = document.createElement("div");
     empty.style.cssText = "margin:8px 0 4px;font-size:11.5px;color:#a99bc0;line-height:1.6";
@@ -963,13 +997,14 @@ function buildTextInput(name: string, c: Container, info: Scan, idx: number, t: 
   row.style.cssText = "display:flex;gap:5px;align-items:center;flex:1;min-width:0;margin-top:3px";
   const inp = document.createElement("input");
   inp.type = "text";
-  inp.value = String(t.text);
+  inp.value = String(t.text).replace(/\n/g, "\\n"); // 실제 줄바꿈은 \n 표기로 보여준다 (한 줄 입력칸)
+  inp.title = "\\n 입력 = 줄바꿈";
   inp.style.cssText =
     "flex:1;min-width:0;padding:3px 6px;border:1px solid #ece4f4;border-radius:6px;" +
     "font:11.5px -apple-system,sans-serif;color:#5b4a70";
   // 실시간 반영 — 한 글자마다 화면과 layout 메모리에 쓴다 (파일 저장은 자동/💾)
   inp.oninput = () => {
-    mutateTextKeepingCenter(t, () => { t.text = inp.value; }); // 중심 유지 — 좌우로 밀리지 않게
+    mutateTextKeepingCenter(t, () => { t.text = inp.value.replace(/\\n/g, "\n"); }); // \n 표기 = 줄바꿈, 중심 유지
     const arr: Array<string | null> = [...(pos(name).texts ?? [])];
     while (arr.length < info.texts.length) arr.push(null);
     arr[idx] = inp.value;
