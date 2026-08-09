@@ -108,7 +108,7 @@
     {
       "id": "true-ending",
       "label": "트루 엔딩 영상 (🎬 mp4 · 화면 전체 · 위에 처음부터 버튼)",
-      "file": "",
+      "file": "assets/bg/true-ending.mp4",
       "vid": true
     }
   ]

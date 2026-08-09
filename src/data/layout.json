@@ -1430,5 +1430,42 @@
   "card_deck_item_count": {
     "x": -29,
     "y": 0
+  },
+  "end_action": {
+    "x": 135,
+    "y": 430,
+    "scale": 0.4
+  },
+  "end_body_text": {
+    "x": 195,
+    "y": 370,
+    "fontSize": 17,
+    "texts": [
+      "5명이 함께, 처음으로 끝까지. 0시가 지나간다."
+    ],
+    "color": "#000000",
+    "center": true
+  },
+  "end_action_text": {
+    "x": 155,
+    "y": 0,
+    "fontSize": 44,
+    "center": true,
+    "color": "#ffffff"
+  },
+  "end_title_text": {
+    "x": 195,
+    "y": 60,
+    "color": "#ffffff",
+    "fontSize": 37,
+    "texts": [
+      "데뷔 성공! 우리가 지켰어!"
+    ],
+    "center": true
+  },
+  "end_video": {
+    "x": 18,
+    "y": 0,
+    "scale": 1
   }
 }
