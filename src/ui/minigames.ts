@@ -18,6 +18,7 @@ import { pressable, type PressOpts } from "./press";
 import { cardTemplates, tuning, beatmaps, tickets } from "../data";
 import { skinNode, skinTex, skinTexTrim, skinFit, skinNatural, skinCover, skinScale } from "./uiSkin";
 import { pos } from "./layout";
+import { btnText, centerBtnLabel } from "./btnLabel";
 import { editable, editableClone, inputBlocked, setEditorToggleHook, setRedrawHook } from "./editor";
 import { buzz } from "./haptics";
 import { fullRect } from "./stage";
@@ -56,16 +57,7 @@ export const miniBgId = (ns: string, act: number): string => {
   return MINI_BG[ns] ?? "";
 };
 
-/** 버튼 컨테이너 안의 라벨 Text — pressable()이 자식들을 눌림 애니메이션용 inner 컨테이너로
- *  감싸므로 얕은 children 탐색으로는 못 찾는다(문구 분리 등록이 조용히 빠지던 원인). 깊이 우선 탐색 */
-export const btnText = (b: Container): Text | null => {
-  for (const c of b.children) {
-    if (c instanceof Text) return c;
-    const r = btnText(c);
-    if (r) return r;
-  }
-  return null;
-};
+export { btnText }; // 이전 위치에서 임포트하던 화면들(memberBoard 등) 호환
 
 export const btn = (label: string, w: number, color: number, onTap: () => void, skinId = "gate-btn", pressOpts?: PressOpts): Container => {
   const b = new Container();

@@ -13,7 +13,7 @@ import { setPos, setStyle, pos, dirtyPos, clearSent, hasEntry, onDirty } from ".
 import { BASE_W, stageTop, stageHeight } from "./stage";
 import { slotIdOf, slotMeta, type UiSkinSlot } from "./uiSkin";
 
-let on = new URLSearchParams(location.search).has("editor");
+let on = typeof location !== "undefined" && new URLSearchParams(location.search).has("editor");
 let redraw: () => void = () => {};
 const visible = new Map<string, Container>();
 // 개발용 검증 훅 — E2E에서 등록된 컴포넌트 목록을 조회 (게임 로직 미사용)
@@ -614,8 +614,10 @@ function flushBeacon(): void {
   const body = new Blob([JSON.stringify(changed)], { type: "application/json" });
   if (navigator.sendBeacon("/__layout", body)) clearSent(changed);
 }
-window.addEventListener("beforeunload", flushBeacon);
-window.addEventListener("pagehide", flushBeacon);
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", flushBeacon);
+  window.addEventListener("pagehide", flushBeacon);
+}
 if (import.meta.hot) {
   // vite가 모듈을 갈아끼우거나 새로고침하기 직전 — 저장되지 않은 편집을 먼저 보낸다
   import.meta.hot.on("vite:beforeFullReload", flushBeacon);
