@@ -383,9 +383,9 @@
     "scale": 1.1
   },
   "gate_pick_hand": {
-    "x": -39,
-    "y": -140,
-    "scale": 1.2
+    "x": 42,
+    "y": 20,
+    "scale": 0.8
   },
   "gate_pick_sum": {
     "x": -22,
@@ -927,8 +927,11 @@
     "scale": 1
   },
   "card_text": {
-    "x": 195,
-    "y": 80
+    "x": 197,
+    "y": 80,
+    "fontSize": 17,
+    "color": "#5b4a70",
+    "center": true
   },
   "side_album_cell_lock": {
     "x": 5,
@@ -1265,7 +1268,7 @@
     "scale": 0.75
   },
   "board_res_card_name": {
-    "x": 59,
+    "x": 75,
     "y": 100,
     "texts": [
       "리안"
@@ -1280,7 +1283,7 @@
     ]
   },
   "board_res_card_role": {
-    "x": 68,
+    "x": 79,
     "y": 120,
     "color": "#5b4a70"
   },
@@ -1609,5 +1612,26 @@
     "x": 37,
     "y": 16,
     "color": "#ffffff"
+  },
+  "card_seen_note": {
+    "x": 18,
+    "y": 31
+  },
+  "card_replay_chips": {
+    "x": 0,
+    "y": 10
+  },
+  "card_replay_choice": {
+    "x": 15,
+    "y": 130
+  },
+  "card_replay_tap": {
+    "x": 301,
+    "y": 143,
+    "color": "#a99bc0"
+  },
+  "gate_pick_more": {
+    "x": -5,
+    "y": -60
   }
 }
