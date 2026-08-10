@@ -1779,6 +1779,16 @@ export function renderGate(
   panel.y = p.y;
   parent.addChild(panel);
   editable(lk("gate"), panel);
+  // 이 관문의 고유 크기·자리 — 판정결과 화면(showCardPick)이 공통 규격으로 되돌려 놓기 때문에,
+  // 광고 후 재도전처럼 renderGate를 다시 타지 않고 라운드만 새로 시작하는 경로에서 복원해야 한다.
+  // (복원하지 않으면 배경판은 늘어난 크기 그대로인데 좌표만 기본값으로 계산돼 상하가 잘린다)
+  const gateW = W, gatePH = PH, gatePanelX = p.x, gatePanelY = p.y;
+  const restoreGateFrame = (): void => {
+    W = gateW;
+    PH = gatePH;
+    panel.x = gatePanelX;
+    panel.y = gatePanelY;
+  };
 
   // 패널 바탕: 배경 이미지가 있으면 흰 베이스(모서리 채움), 없으면 스킨(gate-panel) 전용 — 빈 슬롯은 미표시.
   // 리듬(센터대결)은 전면 배경판이 패널을 대체 — 뒤 레이어(흰 베이스·배경 이미지·셰이드·스트립) 전부 생략.
@@ -2206,6 +2216,7 @@ export function renderGate(
 
   const startRound = (): void => {
     setRedrawHook(startRound); // 배율·농도 변경 시 관문 밖으로 튕기지 않고 이 라운드만 다시 그림
+    restoreGateFrame(); // 판정결과 화면이 바꿔놓은 크기·자리를 이 관문 것으로 되돌린다 (광고 후 재도전)
     clear();
     drawTitle();
     mountEngine(body, {

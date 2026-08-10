@@ -475,6 +475,14 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
       : "main");
     const panel = renderGauges(root, c.state, { bump: nextBump, ticker: app.ticker });
     nextBump = {};
+    // 재도전 페널티(멘탈 −1)는 연습 화면이 스스로 다시 그리는 흐름이라 draw()를 타지 않는다.
+    // draw()를 부르면 연습이 활동 선택 화면으로 되돌아가므로, 게이지 바만 즉시 갱신한다.
+    // 델타는 실제 변화량으로 — 멘탈이 이미 0이면 깎이지 않아 −1로 표시하면 거짓말이 된다.
+    let mentalBefore = c.state.gauges.mental;
+    const commitRetryPenalty = (): void => {
+      panel.commit({ mental: c.state.gauges.mental - mentalBefore });
+      mentalBefore = c.state.gauges.mental;
+    };
     if (!skinTex("game-gauge-bar")) drawHeader(); // 상태바 스킨 사용 시 헤더 정보는 바 하단 탭에 통합됨
 
     if (endPreview) { // 💀 치트 미리보기 — 스토리 카드보다 먼저 (아래 정식 분기는 c.ended용)
@@ -489,7 +497,7 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
         preview: trainPreview ?? undefined, // 치트로 고른 연습 판정결과 (1회 소비)
         onFinish: (activity, grade) => { c.trainFree(activity, grade); freeTraining = false; trainPreview = null; draw(); },
         onSkip: () => { freeTraining = false; trainPreview = null; draw(); },
-        onRetryPenalty: () => { c.retryTraining(); }, // free여도 페널티는 컨트롤러 규칙 재사용
+        onRetryPenalty: () => { c.retryTraining(); commitRetryPenalty(); }, // free여도 페널티는 컨트롤러 규칙 재사용
       });
       return;
     }
@@ -529,7 +537,7 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
         charAssets: assets.char("haru"),
         onFinish: (activity, grade) => { c.trainFree(activity, grade); lastTrainWeek = c.state.week; draw(); },
         onSkip: () => { lastTrainWeek = c.state.week; draw(); },
-        onRetryPenalty: () => { c.retryTraining(); },
+        onRetryPenalty: () => { c.retryTraining(); commitRetryPenalty(); },
       });
       return;
     }
