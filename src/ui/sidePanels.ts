@@ -200,6 +200,9 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
     // 글자 크기·색은 에디터가 **다음 프레임**에 입히므로(pumpStyles), 칩은 매 프레임
     // 글자 상자가 바뀐 것만 다시 그린다. 바뀐 게 없으면 아무 일도 하지 않는다.
     const CHIP_PADX = 6, CHIP_PADY = 2, CHIP_R = 9, CHIP_LINE = 1.5;
+    // 칩 바탕 = 배경판 크림색(side-daily-bg.webp 실측 — 칸 안·칸 사이·여백 모두 #fef3e8 근처).
+    // 흰색을 깔면 칩만 도드라져 따로 논다.
+    const CHIP_BG = 0xfef3e8;
     const chips: Array<{ g: Graphics; t: Text; x: number; y: number; w: number; h: number; col: number }> = [];
     const chipFor = (t: Text): void => {
       const g = new Graphics();
@@ -218,7 +221,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
         const left = c.t.x - w * c.t.anchor.x;
         c.g.clear()
           .roundRect(left - CHIP_PADX, c.t.y - CHIP_PADY, w + CHIP_PADX * 2, h + CHIP_PADY * 2, CHIP_R)
-          .fill(0xffffff)
+          .fill(CHIP_BG)
           .stroke({ width: CHIP_LINE, color: col });
       }
     };
