@@ -1315,19 +1315,29 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     const hardBtn = btn(aud ? "🏆 본선 무대 (3열 · 집중 심사 +3)" : "🔥 하드 · 3열 + 보너스", 220, LAV, () => begin(3), "gate-rhythm-hard");
     // 두 버튼을 따로 등록한다 — 한 묶음(rhythm_start)이면 둘이 함께만 움직여 간격·정렬을 못 잡는다.
     // 기본 좌표는 예전 묶음 앵커 + 각자의 y라 지금 배치가 그대로다.
+    // 나아가 **리듬을 쓰는 게임 3종**(센터 대결 · 무대 집중 · 오디션)은 버튼 문구가 제각각이라
+    // 폭·정렬이 달라진다. 한 키를 공유하면 한 게임을 맞출 때 나머지가 틀어지므로 게임별로 나눈다.
+    // 저장값이 없으면 기존 공용 키를 승계해 분리 직후 배치는 그대로다.
+    const rgame = aud ? "aud" : opts.boardSkin === "gate-rhythm-board-2" ? "stage" : "center";
+    const sk = (base: string): string => {
+      const k = `${rgame}_${base}`;
+      inheritEntry(k, base);
+      return k;
+    };
     const BX = (MG_W - 220) / 2; // 고정 기준 폭 (관문별 W 무관)
-    const pEasy = pos("easy_start", { x: BX, y: 252 });
+    const kEasy = sk("easy_start"), kHard = sk("hard_start");
+    const pEasy = pos(kEasy, { x: BX, y: 252 });
     easyBtn.x = pEasy.x;
     easyBtn.y = pEasy.y;
-    const pHard = pos("hard_start", { x: BX, y: 316 });
+    const pHard = pos(kHard, { x: BX, y: 316 });
     hardBtn.x = pHard.x;
     hardBtn.y = pHard.y;
     startUi.addChild(easyBtn, hardBtn);
     body.addChild(startUi);
-    editable("easy_start", easyBtn);
-    editable("hard_start", hardBtn);
-    chromeLabel2(easyBtn, "easy_start");
-    chromeLabel2(hardBtn, "hard_start");
+    editable(kEasy, easyBtn);
+    editable(kHard, hardBtn);
+    chromeLabel2(easyBtn, kEasy); // → <게임>_easy_start_text
+    chromeLabel2(hardBtn, kHard); // → <게임>_hard_start_text
 
     const begin = (laneCount: number): void => {
       if (started) return;
@@ -1779,6 +1789,16 @@ export function renderGate(
   panel.y = p.y;
   parent.addChild(panel);
   editable(lk("gate"), panel);
+  // 이 관문의 고유 크기·자리 — 판정결과 화면(showCardPick)이 공통 규격으로 되돌려 놓기 때문에,
+  // 광고 후 재도전처럼 renderGate를 다시 타지 않고 라운드만 새로 시작하는 경로에서 복원해야 한다.
+  // (복원하지 않으면 배경판은 늘어난 크기 그대로인데 좌표만 기본값으로 계산돼 상하가 잘린다)
+  const gateW = W, gatePH = PH, gatePanelX = p.x, gatePanelY = p.y;
+  const restoreGateFrame = (): void => {
+    W = gateW;
+    PH = gatePH;
+    panel.x = gatePanelX;
+    panel.y = gatePanelY;
+  };
 
   // 패널 바탕: 배경 이미지가 있으면 흰 베이스(모서리 채움), 없으면 스킨(gate-panel) 전용 — 빈 슬롯은 미표시.
   // 리듬(센터대결)은 전면 배경판이 패널을 대체 — 뒤 레이어(흰 베이스·배경 이미지·셰이드·스트립) 전부 생략.
@@ -2206,6 +2226,7 @@ export function renderGate(
 
   const startRound = (): void => {
     setRedrawHook(startRound); // 배율·농도 변경 시 관문 밖으로 튕기지 않고 이 라운드만 다시 그림
+    restoreGateFrame(); // 판정결과 화면이 바꿔놓은 크기·자리를 이 관문 것으로 되돌린다 (광고 후 재도전)
     clear();
     drawTitle();
     mountEngine(body, {

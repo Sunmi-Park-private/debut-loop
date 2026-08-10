@@ -1,7 +1,7 @@
 {
   "audition_mini_bg": {
-    "x": -2,
-    "y": -63
+    "x": 2,
+    "y": -60
   },
   "audition_rps_desc": {
     "x": 195,
@@ -13,16 +13,16 @@
     "fontSize": 13
   },
   "audition_rps_hand_paper": {
-    "x": 0,
-    "y": 1
+    "x": 5,
+    "y": 5
   },
   "audition_rps_hand_rock": {
-    "x": 30,
-    "y": 2
+    "x": 35,
+    "y": 5
   },
   "audition_rps_hand_scissors": {
-    "x": -33,
-    "y": 3
+    "x": -29,
+    "y": 5
   },
   "audition_rps_hands": {
     "x": 33,
@@ -91,7 +91,7 @@
     "y": 0,
     "color": "#ffffff",
     "texts": [
-      "기량은 무대 성적으로 오르내려요\\n오디션으로 더 나은 멤버를 확보하세요 \\n(마지막 기회 W17)"
+      "기량은 무대 성적으로 오르내려요\\n오디션으로 더 나은 멤버를\\n확보하세요 (마지막 기회 W17)"
     ]
   },
   "board_close_x": {
@@ -108,8 +108,8 @@
     "scale": 1
   },
   "board_name": {
-    "x": 1,
-    "y": 113,
+    "x": 0,
+    "y": 121,
     "color": "#5b4a70",
     "scale": 1
   },
@@ -123,7 +123,7 @@
   },
   "board_profile": {
     "x": 125,
-    "y": -36
+    "y": -20
   },
   "board_role": {
     "x": 5,
@@ -133,7 +133,8 @@
   "board_skip": {
     "x": 35,
     "y": 540,
-    "color": "#5b4a70"
+    "color": "#5b4a70",
+    "fontSize": 14
   },
   "board_stat": {
     "x": 113,
@@ -382,9 +383,9 @@
     "scale": 1.1
   },
   "gate_pick_hand": {
-    "x": -39,
-    "y": -140,
-    "scale": 1.2
+    "x": 42,
+    "y": 20,
+    "scale": 0.8
   },
   "gate_pick_sum": {
     "x": -22,
@@ -566,11 +567,14 @@
   },
   "rhythm2_key1": {
     "x": 95,
-    "y": 30
+    "y": 34,
+    "color": "#ffffff",
+    "fontSize": 15
   },
   "rhythm2_key2": {
     "x": 294,
-    "y": 28
+    "y": 34,
+    "fontSize": 15
   },
   "rhythm2_lane1": {
     "x": 93,
@@ -593,16 +597,20 @@
     "y": 172
   },
   "rhythm3_key1": {
-    "x": 85,
-    "y": 0
+    "x": 82,
+    "y": 0,
+    "fontSize": 15
   },
   "rhythm3_key2": {
     "x": 196,
-    "y": -1
+    "y": -1,
+    "fontSize": 15
   },
   "rhythm3_key3": {
-    "x": 320,
-    "y": 0
+    "x": 316,
+    "y": 0,
+    "color": "#ffffff",
+    "fontSize": 15
   },
   "rhythm3_lane1": {
     "x": 83,
@@ -677,16 +685,16 @@
   "story_tab": {
     "x": 200,
     "y": 71,
-    "color": "#ffffff"
+    "color": "#5b4a70"
   },
   "train_bubble": {
     "x": 20,
     "y": -60
   },
   "train_char": {
-    "x": -125,
-    "y": -300,
-    "scale": 2.15
+    "x": -124,
+    "y": -330,
+    "scale": 2.2
   },
   "train_close": {
     "x": -106,
@@ -721,7 +729,7 @@
   },
   "train_row_funds": {
     "x": 225,
-    "y": 264,
+    "y": 265,
     "texts": [
       null,
       null,
@@ -882,7 +890,8 @@
   "lobby_status_tab": {
     "x": 243,
     "y": 107,
-    "color": "#5b4a70"
+    "color": "#5b4a70",
+    "hidden": true
   },
   "dance_train_game_title": {
     "x": -15,
@@ -896,11 +905,12 @@
     "color": "#5b4a70"
   },
   "board_btn_ok": {
-    "x": 111,
-    "y": 370,
+    "x": 90,
+    "y": 390,
     "texts": [
       "확인 "
-    ]
+    ],
+    "scale": 1.2
   },
   "card_speaker": {
     "x": 164,
@@ -917,8 +927,11 @@
     "scale": 1
   },
   "card_text": {
-    "x": 195,
-    "y": 80
+    "x": 197,
+    "y": 80,
+    "fontSize": 17,
+    "color": "#5b4a70",
+    "center": true
   },
   "side_album_cell_lock": {
     "x": 5,
@@ -941,11 +954,12 @@
     "color": "#5b4a70"
   },
   "train_bubble_text": {
-    "x": 35,
+    "x": 27,
     "y": 450,
     "texts": [
-      "어떤 연습을 할까요?                  몸 상태를 보고 정해요!"
-    ]
+      "어떤 연습을 할까요?\\n몸 상태를 보고 정해요!"
+    ],
+    "fontSize": 14
   },
   "train_frame": {
     "x": 15,
@@ -979,9 +993,13 @@
     "scale": 0.85
   },
   "board_locked_note": {
-    "x": 95,
-    "y": 330,
-    "color": "#000000"
+    "x": 85,
+    "y": 340,
+    "color": "#000000",
+    "fontSize": 19,
+    "texts": [
+      "다섯 자리가 모두 정해졌다.\\n      이제 무대만 남았다."
+    ]
   },
   "dance_train_fail_title": {
     "x": 5,
@@ -1037,7 +1055,7 @@
     "color": "#ffe4f0"
   },
   "audition_train_fail_bg": {
-    "x": -5,
+    "x": 0,
     "y": 0,
     "scale": 1
   },
@@ -1070,10 +1088,11 @@
   },
   "promo_train_res_btn_text": {
     "x": 68,
-    "y": 16,
+    "y": 15,
     "texts": [
       "계속"
-    ]
+    ],
+    "fontSize": 20
   },
   "easy_start_text": {
     "x": 56,
@@ -1088,11 +1107,8 @@
     "y": 80
   },
   "hard_start_text": {
-    "x": 45,
-    "y": 14,
-    "texts": [
-      "하드 · 3열 + 보너스"
-    ],
+    "x": 20,
+    "y": 15,
     "fontSize": 13
   },
   "funds_train_fail_retry": {
@@ -1232,8 +1248,9 @@
     "color": "#ffffff"
   },
   "board_res_card_stat": {
-    "x": 40,
-    "y": 137
+    "x": 90,
+    "y": 137,
+    "center": true
   },
   "board_res_card": {
     "x": 82,
@@ -1252,11 +1269,12 @@
     "scale": 0.75
   },
   "board_res_card_name": {
-    "x": 77,
+    "x": 90,
     "y": 100,
     "texts": [
       "리안"
-    ]
+    ],
+    "center": true
   },
   "board_res_btn_hold_text": {
     "x": 92,
@@ -1267,9 +1285,10 @@
     ]
   },
   "board_res_card_role": {
-    "x": 81,
+    "x": 90,
     "y": 120,
-    "color": "#5b4a70"
+    "color": "#5b4a70",
+    "center": true
   },
   "board_res_grade": {
     "x": -15,
@@ -1414,12 +1433,12 @@
     "scale": 1
   },
   "gate_act3_exit": {
-    "x": 5,
-    "y": -10
+    "x": -165,
+    "y": 720
   },
   "gate_act3": {
     "x": 15,
-    "y": 100
+    "y": 40
   },
   "gate_act3_title": {
     "x": 55,
@@ -1508,7 +1527,7 @@
   "recheck_title": {
     "x": 5,
     "y": 20,
-    "color": "#ffffff",
+    "color": "#5b4a70",
     "fontSize": 21
   },
   "side_daily_t1": {
@@ -1558,9 +1577,9 @@
     "y": 160
   },
   "doom_end_action": {
-    "x": 98,
+    "x": 79,
     "y": 430,
-    "scale": 0.65
+    "scale": 0.75
   },
   "doom_end_body_text": {
     "x": 115,
@@ -1582,7 +1601,7 @@
   "doom_end_action_text": {
     "x": 154,
     "y": 14,
-    "fontSize": 27,
+    "fontSize": 25,
     "color": "#ffffff",
     "center": true
   },
@@ -1591,5 +1610,31 @@
     "y": 4,
     "scale": 1.1,
     "color": "#5b4a70"
+  },
+  "recheck_btn_back_text": {
+    "x": 37,
+    "y": 16,
+    "color": "#ffffff"
+  },
+  "card_seen_note": {
+    "x": 18,
+    "y": 31
+  },
+  "card_replay_chips": {
+    "x": 0,
+    "y": 10
+  },
+  "card_replay_choice": {
+    "x": 15,
+    "y": 130
+  },
+  "card_replay_tap": {
+    "x": 301,
+    "y": 143,
+    "color": "#a99bc0"
+  },
+  "gate_pick_more": {
+    "x": -5,
+    "y": -60
   }
 }

@@ -159,7 +159,7 @@ export function initGameCheats(): void {
   // 지나온 비트는 좌측 선택으로 넘기고 관문은 건너뛴다(치트 "1회차 완주"와 같은 방식).
   // 자동 진행은 선택 효과를 그대로 받으므로 게이지가 바닥나 런이 끝날 수 있다 —
   // 목적지에 닿는 것이 목적이므로 매 걸음 게이지를 안전선 위로 되올린다.
-  registerJumpOps((loop, act) => {
+  registerJumpOps((loop, act, loop2) => {
     const SAFE = Math.round(config.gaugeMax * 0.6);
     const topUp = (c: RunController): void => {
       for (const k of ["skill", "mental", "reputation", "bond", "capital"] as const)
@@ -170,7 +170,9 @@ export function initGameCheats(): void {
       c.state.loopCount > loop || (c.state.loopCount === loop && c.state.act > act);
     if (!ctrl || ctrl.ended?.type === "ending" || past(ctrl)) ctrl = newRun();
     const c = ctrl;
-    loop2Mode = null;
+    // 2회차 진행 모드는 **목적지 기준**으로 정한다. 회귀 시점에만 넣으면, 이미 2회차인 상태에서
+    // 다시 2회차로 이동할 때 회귀가 일어나지 않아 null로 남고 빠른 모드 카드가 안 나온다.
+    loop2Mode = loop === 2 ? loop2 : null;
     topUp(c);
 
     const step = (): void => {
@@ -182,7 +184,7 @@ export function initGameCheats(): void {
     // ① 목표 회차까지 (1→2회차는 1회차를 완주하고 회귀)
     while (c.state.loopCount < loop && guard-- > 0) {
       if (c.current) step();
-      else if (c.ended?.type === "regress") { loop2Mode = "normal"; c.regress(); }
+      else if (c.ended?.type === "regress") c.regress(); // 회귀 화면(모드 선택)은 건너뛴다 — 모드는 위에서 이미 정했다
       else break;
     }
     // ② 목표 막의 첫 비트까지
@@ -475,6 +477,14 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
       : "main");
     const panel = renderGauges(root, c.state, { bump: nextBump, ticker: app.ticker });
     nextBump = {};
+    // 재도전 페널티(멘탈 −1)는 연습 화면이 스스로 다시 그리는 흐름이라 draw()를 타지 않는다.
+    // draw()를 부르면 연습이 활동 선택 화면으로 되돌아가므로, 게이지 바만 즉시 갱신한다.
+    // 델타는 실제 변화량으로 — 멘탈이 이미 0이면 깎이지 않아 −1로 표시하면 거짓말이 된다.
+    let mentalBefore = c.state.gauges.mental;
+    const commitRetryPenalty = (): void => {
+      panel.commit({ mental: c.state.gauges.mental - mentalBefore });
+      mentalBefore = c.state.gauges.mental;
+    };
     if (!skinTex("game-gauge-bar")) drawHeader(); // 상태바 스킨 사용 시 헤더 정보는 바 하단 탭에 통합됨
 
     if (endPreview) { // 💀 치트 미리보기 — 스토리 카드보다 먼저 (아래 정식 분기는 c.ended용)
@@ -489,7 +499,7 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
         preview: trainPreview ?? undefined, // 치트로 고른 연습 판정결과 (1회 소비)
         onFinish: (activity, grade) => { c.trainFree(activity, grade); freeTraining = false; trainPreview = null; draw(); },
         onSkip: () => { freeTraining = false; trainPreview = null; draw(); },
-        onRetryPenalty: () => { c.retryTraining(); }, // free여도 페널티는 컨트롤러 규칙 재사용
+        onRetryPenalty: () => { c.retryTraining(); commitRetryPenalty(); }, // free여도 페널티는 컨트롤러 규칙 재사용
       });
       return;
     }
@@ -529,7 +539,7 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
         charAssets: assets.char("haru"),
         onFinish: (activity, grade) => { c.trainFree(activity, grade); lastTrainWeek = c.state.week; draw(); },
         onSkip: () => { lastTrainWeek = c.state.week; draw(); },
-        onRetryPenalty: () => { c.retryTraining(); },
+        onRetryPenalty: () => { c.retryTraining(); commitRetryPenalty(); },
       });
       return;
     }
