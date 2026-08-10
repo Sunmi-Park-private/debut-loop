@@ -91,7 +91,7 @@
     "y": 0,
     "color": "#ffffff",
     "texts": [
-      "기량은 무대 성적으로 오르내려요\\n오디션으로 더 나은 멤버를 확보하세요 \\n(마지막 기회 W17)"
+      "기량은 무대 성적으로 오르내려요\\n오디션으로 더 나은 멤버를\\n확보하세요 (마지막 기회 W17)"
     ]
   },
   "board_close_x": {
@@ -108,8 +108,8 @@
     "scale": 1
   },
   "board_name": {
-    "x": 1,
-    "y": 113,
+    "x": 0,
+    "y": 121,
     "color": "#5b4a70",
     "scale": 1
   },
@@ -123,7 +123,7 @@
   },
   "board_profile": {
     "x": 125,
-    "y": -36
+    "y": -20
   },
   "board_role": {
     "x": 5,
@@ -133,7 +133,8 @@
   "board_skip": {
     "x": 35,
     "y": 540,
-    "color": "#5b4a70"
+    "color": "#5b4a70",
+    "fontSize": 14
   },
   "board_stat": {
     "x": 113,
@@ -596,16 +597,20 @@
     "y": 172
   },
   "rhythm3_key1": {
-    "x": 85,
-    "y": 0
+    "x": 82,
+    "y": 0,
+    "fontSize": 15
   },
   "rhythm3_key2": {
     "x": 196,
-    "y": -1
+    "y": -1,
+    "fontSize": 15
   },
   "rhythm3_key3": {
-    "x": 320,
-    "y": 0
+    "x": 316,
+    "y": 0,
+    "color": "#ffffff",
+    "fontSize": 15
   },
   "rhythm3_lane1": {
     "x": 83,
@@ -1092,11 +1097,8 @@
     "y": 80
   },
   "hard_start_text": {
-    "x": 45,
-    "y": 14,
-    "texts": [
-      "하드 · 3열 + 보너스"
-    ],
+    "x": 20,
+    "y": 15,
     "fontSize": 13
   },
   "funds_train_fail_retry": {
@@ -1256,7 +1258,7 @@
     "scale": 0.75
   },
   "board_res_card_name": {
-    "x": 77,
+    "x": 59,
     "y": 100,
     "texts": [
       "리안"
@@ -1271,7 +1273,7 @@
     ]
   },
   "board_res_card_role": {
-    "x": 81,
+    "x": 68,
     "y": 120,
     "color": "#5b4a70"
   },
@@ -1418,12 +1420,12 @@
     "scale": 1
   },
   "gate_act3_exit": {
-    "x": 5,
-    "y": -10
+    "x": -165,
+    "y": 720
   },
   "gate_act3": {
     "x": 15,
-    "y": 100
+    "y": 40
   },
   "gate_act3_title": {
     "x": 55,
@@ -1512,7 +1514,7 @@
   "recheck_title": {
     "x": 5,
     "y": 20,
-    "color": "#ffffff",
+    "color": "#5b4a70",
     "fontSize": 21
   },
   "side_daily_t1": {
@@ -1562,9 +1564,9 @@
     "y": 160
   },
   "doom_end_action": {
-    "x": 98,
+    "x": 79,
     "y": 430,
-    "scale": 0.65
+    "scale": 0.75
   },
   "doom_end_body_text": {
     "x": 115,
@@ -1586,7 +1588,7 @@
   "doom_end_action_text": {
     "x": 154,
     "y": 14,
-    "fontSize": 27,
+    "fontSize": 25,
     "color": "#ffffff",
     "center": true
   },
@@ -1595,5 +1597,10 @@
     "y": 4,
     "scale": 1.1,
     "color": "#5b4a70"
+  },
+  "recheck_btn_back_text": {
+    "x": 37,
+    "y": 16,
+    "color": "#ffffff"
   }
 }
