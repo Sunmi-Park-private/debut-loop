@@ -24,8 +24,19 @@ npm run test     # 유닛 테스트
 ### 모바일 빌드
 
 ```bash
-npm run apk:debug      # 안드로이드 디버그 APK
+npm run apk:debug      # 안드로이드 APK (치트 메뉴 포함 — 팀 테스트용)
+npm run apk:release    # 안드로이드 APK (치트 제외 — 제출·외부 공유용)
 npm run build:single   # 단일 HTML (로컬 파일로 실행)
+```
+
+빌드된 APK는 에디터 허브(`/editor.html`) 우측 상단에서 바로 내려받을 수 있습니다.
+
+JDK와 안드로이드 SDK가 필요합니다. Android Studio를 설치하면 둘 다 들어오고,
+SDK 경로는 `android/local.properties`(git 미포함)에 적습니다.
+
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+echo "sdk.dir=$HOME/Library/Android/sdk" > android/local.properties
 ```
 
 ## 아키텍처
@@ -52,7 +63,7 @@ src/
   tools/       콘텐츠 에디터 7종 (dev 전용)
   subgames/    데모 단서 분석 (미구현)
 public/assets/ 배경·캐릭터·UI·음원
-tests/         engine·ui 유닛 (8 spec)
+tests/         engine·ui 유닛 (12 spec · 150 케이스)
 docs/          설계 문서 · 계획 · QA 체크리스트
 mockup/        단독 HTML 프로토타입
 ```
@@ -81,6 +92,8 @@ dev 서버에서 브라우저로 콘텐츠를 편집해 `src/data/*.json`에 바
 | `/beat.html` | 리듬 채보 |
 | `/char.html` `/ui.html` `/bg.html` | 캐릭터·UI·배경 슬롯 |
 | `/bgm.html` | 음원 |
+
+허브에서는 최신 APK(치트 포함/제외)와 iOS 프로젝트 zip도 내려받을 수 있습니다.
 
 dev 서버에서 ⚙️ 치트 메뉴와 레이아웃 에디터가 자동 활성화됩니다.
 프로덕션 빌드에서는 숨겨지며 `?dev=1`로 켤 수 있습니다.
