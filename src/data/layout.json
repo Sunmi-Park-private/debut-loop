@@ -945,10 +945,6 @@
     "x": 195,
     "y": 80
   },
-  "side_album_cell_text_lock": {
-    "x": 45,
-    "y": 80
-  },
   "side_album_cell_lock": {
     "x": 5,
     "y": 0
@@ -1571,5 +1567,17 @@
   "side_daily_t7": {
     "x": 285,
     "y": 180
+  },
+  "side_album_head": {
+    "x": 66,
+    "y": 68
+  },
+  "side_album_title": {
+    "x": 63,
+    "y": 37
+  },
+  "side_shop_coin": {
+    "x": 285,
+    "y": 60
   }
 }

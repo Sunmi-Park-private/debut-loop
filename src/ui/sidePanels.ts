@@ -383,12 +383,22 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
 
   // ── 📔 포토앨범 ──
   function renderAlbum(): void {
+    // 큰 제목 — 데일리 배경판 아트의 "DAILY BONUS"와 같은 결(세리프 대문자·자간)로 맞춘다.
+    // 앨범은 아직 전용 배경판 아트가 없어서 코드가 그린다. 아트가 올라오면 이 키를 숨기면 된다.
+    const title = new Text({
+      text: "PHOTO ALBUM",
+      style: { fontFamily: "Georgia, serif", fontSize: 26, fontWeight: "900", fill: INK, letterSpacing: 2 },
+    });
+    grp("side_album_title", Math.round((W - title.width) / 2), 22, title);
+
     const head = txt("포토앨범 · 3/12 수집 — 회귀를 반복하며 모아보세요", 11, SUB);
     grp("side_album_head", 18, 58, head);
 
-    const CW = 104, CH = 132, GAP = 9, COLS = 3;
+    // 칸이 창을 꽉 채워 답답해 보여서 두 치수 줄였다 — 좌우 53px·아래 130px 여백이 남는다
+    // (예전: 104×132·간격 9 → 좌우 15px). 세로 비율(약 1.27)은 유지.
+    const CW = 76, CH = 96, GAP = 13, COLS = 3;
     const gx = Math.round((W - COLS * CW - (COLS - 1) * GAP) / 2);
-    const gridG = grp("side_album_grid", gx, 84);
+    const gridG = grp("side_album_grid", gx, 110);
 
     const items: Array<[string, string, boolean]> = [
       ["🌑", "0시의 사고", true], ["🖐", "다섯 손가락", true], ["🎤", "지하 첫 무대", true],
@@ -413,14 +423,14 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       reg(bgName, art);
 
       const icT = txt(open ? ic : "🔒", open ? 26 : 22, INK);
-      const pIc = pos(`side_album_cell_icon_${state}`, { x: Math.round((CW - icT.width) / 2), y: 34 });
+      const pIc = pos(`side_album_cell_icon_${state}`, { x: Math.round((CW - icT.width) / 2), y: 24 });
       icT.x = pIc.x;
       icT.y = pIc.y;
       cell.addChild(icT);
       reg(`side_album_cell_icon_${state}`, icT);
 
       const capT = txt(open ? cap : "???", 10, open ? INK : SUB, true);
-      const pCap = pos(`side_album_cell_text_${state}`, { x: Math.round((CW - capT.width) / 2), y: 84 });
+      const pCap = pos(`side_album_cell_text_${state}`, { x: Math.round((CW - capT.width) / 2), y: 66 });
       capT.x = pCap.x;
       capT.y = pCap.y;
       cell.addChild(capT);
@@ -429,6 +439,31 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       pressable(cell, () => toast(open ? `"${cap}" — 데모에서 해금된 장면이에요 📔` : "아직 만나지 못한 장면이에요 🔒"));
       gridG.addChild(cell);
     });
+
+    // 준비 중 안내 — 칸 위에 반투명 블록을 한 겹 더 얹는다. 뒤 그림이 비쳐 보여서
+    // "이런 게 들어올 자리"라는 게 읽히고, 탭은 이 블록이 삼켜 칸이 눌리지 않는다.
+    const NW = W - 44, NH = 168, NR = 18;
+    const noticeG = grp("side_album_soon", Math.round((W - NW) / 2), 238);
+    const box = new Graphics()
+      .roundRect(0, 0, NW, NH, NR)
+      .fill({ color: 0xfdfaff, alpha: 0.88 })
+      .stroke({ width: 2.5, color: 0xd9c9f0 });
+    box.eventMode = "static"; // 뒤 칸으로 탭이 새지 않게
+    noticeG.addChild(box);
+
+    const nTitle = txt("📔 포토앨범은 준비 중이에요", 13, INK, true);
+    nTitle.x = Math.round((NW - nTitle.width) / 2);
+    nTitle.y = 34;
+    noticeG.addChild(nTitle);
+    reg("side_album_soon_title", nTitle);
+
+    const nBody = txt("회귀를 반복하며 모은 장면을\n여기에 모아 볼 수 있게 준비하고 있어요.\n지금 보이는 칸은 미리보기예요.", 11, SUB);
+    nBody.style.align = "center";
+    nBody.style.lineHeight = 18;
+    nBody.x = Math.round((NW - nBody.width) / 2);
+    nBody.y = 72;
+    noticeG.addChild(nBody);
+    reg("side_album_soon_body", nBody);
   }
 
   // ── 🛍 상점 ──
