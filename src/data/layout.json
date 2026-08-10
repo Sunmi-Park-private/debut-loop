@@ -1,7 +1,7 @@
 {
   "audition_mini_bg": {
-    "x": -2,
-    "y": -63
+    "x": 2,
+    "y": -60
   },
   "audition_rps_desc": {
     "x": 195,
@@ -13,16 +13,16 @@
     "fontSize": 13
   },
   "audition_rps_hand_paper": {
-    "x": 0,
-    "y": 1
+    "x": 5,
+    "y": 5
   },
   "audition_rps_hand_rock": {
-    "x": 30,
-    "y": 2
+    "x": 35,
+    "y": 5
   },
   "audition_rps_hand_scissors": {
-    "x": -33,
-    "y": 3
+    "x": -29,
+    "y": 5
   },
   "audition_rps_hands": {
     "x": 33,
@@ -566,11 +566,14 @@
   },
   "rhythm2_key1": {
     "x": 95,
-    "y": 30
+    "y": 34,
+    "color": "#ffffff",
+    "fontSize": 15
   },
   "rhythm2_key2": {
     "x": 294,
-    "y": 28
+    "y": 34,
+    "fontSize": 15
   },
   "rhythm2_lane1": {
     "x": 93,
@@ -721,7 +724,7 @@
   },
   "train_row_funds": {
     "x": 225,
-    "y": 264,
+    "y": 265,
     "texts": [
       null,
       null,
@@ -1038,7 +1041,7 @@
     "color": "#ffe4f0"
   },
   "audition_train_fail_bg": {
-    "x": -5,
+    "x": 0,
     "y": 0,
     "scale": 1
   },

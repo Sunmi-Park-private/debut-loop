@@ -591,8 +591,14 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     setNs(a.id, () => showFail(a)); // 활동별 전용 키 + 배율 변경 시 이 화면만 재렌더
     // 미니게임이 깔았던 종목 배경판을 실패 화면에서도 그대로 유지 — 안 깔면 뒤로 연습 메뉴가 비쳐 보인다.
     // 재도전·종료를 누르면 다음 화면이 clear()로 body를 비우므로 실패 창과 함께 사라진다.
-    const mini = skinFit(miniBgId(a.id, opts.act), W, H);
-    if (mini) grp("mini_bg", mini); // 게임 화면과 같은 키(<종목>_mini_bg) — 위치 조정도 공유
+    // 게임 화면과 **똑같은 기준**으로 깔아야 실패 창이 뜰 때 배경판이 튀지 않는다.
+    // 게임은 mountEngine을 y=10인 gameArea에 얹고 박스 높이로 MG_H(600)를 쓴다 —
+    // 여기서 H(610)로 맞추면 skinFit의 가운데 정렬 기준이 달라져 세로로 어긋난다.
+    const mini = skinFit(miniBgId(a.id, opts.act), W, MG_H);
+    if (mini) {
+      mini.y += 10; // 게임 화면 gameArea.y와 동일
+      grp("mini_bg", mini); // 게임 화면과 같은 키(<종목>_mini_bg) — 위치 조정도 공유
+    }
     setChrome(!mini); // 배경판이 있으면 게임 화면과 동일하게 패널 프레임 숨김
     // 실패 화면 배경 프레임 — 배경판 위. 미업로드면 깔지 않는다
     const fbg = skinFit("train-fail-panel", W, H);
