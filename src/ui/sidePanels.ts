@@ -2,7 +2,7 @@
 // 예전엔 HTML/CSS로 그려서 레이아웃 에디터가 손댈 수 없었다(등록할 Pixi 대상이 없음).
 // 다른 게임 화면과 같은 패턴 — 딤 + 패널 + 조각별 그룹 + editable() 등록.
 // 아트는 기존 side-* 슬롯을 그대로 쓴다.
-import { Container, Graphics, Text, type Ticker } from "pixi.js";
+import { Color, Container, Graphics, Text, type ColorSource, type Ticker } from "pixi.js";
 import { pos } from "./layout";
 import { editable, editableClone } from "./editor";
 import { fullRect } from "./stage";
@@ -195,6 +195,34 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
     // 문구만 다듬을 수가 없다. 일곱 칸의 문구를 한 묶음(side_daily_texts)으로 뺀다.
     const textsG = grp("side_daily_texts", gx, onArt ? 0 : 84);
 
+    // 문구 칩 — 배경판 위 11px 글씨가 잘 안 읽혀서, 흰 바탕 + 테두리를 뒤에 깐다.
+    // 테두리 색은 글자 색을 그대로 따라간다 = 에디터 팔레트에서 고른 색이 곧 테두리 색.
+    // 글자 크기·색은 에디터가 **다음 프레임**에 입히므로(pumpStyles), 칩은 매 프레임
+    // 글자 상자가 바뀐 것만 다시 그린다. 바뀐 게 없으면 아무 일도 하지 않는다.
+    const CHIP_PADX = 6, CHIP_PADY = 2, CHIP_R = 9, CHIP_LINE = 1.5;
+    const chips: Array<{ g: Graphics; t: Text; x: number; y: number; w: number; h: number; col: number }> = [];
+    const chipFor = (t: Text): void => {
+      const g = new Graphics();
+      textsG.addChildAt(g, 0); // 칩은 전부 글자 아래로
+      chips.push({ g, t, x: NaN, y: NaN, w: NaN, h: NaN, col: NaN });
+    };
+    const fitChips = (): void => {
+      // 창을 닫으면 로비가 removeChildren()으로 떼어낸다(파괴는 안 한다) — 둘 다 확인해 리스너를 뗀다
+      if (textsG.destroyed || panel.destroyed || !panel.parent) { opts.ticker.remove(fitChips); return; }
+      for (const c of chips) {
+        const col = new Color(c.t.style.fill as ColorSource).toNumber();
+        const w = c.t.width, h = c.t.height;
+        if (c.x === c.t.x && c.y === c.t.y && c.w === w && c.h === h && c.col === col) continue;
+        c.x = c.t.x; c.y = c.t.y; c.w = w; c.h = h; c.col = col;
+        // 글자는 anchor.x가 0.5(가운데 정렬)일 수 있다 — 그 경우 x는 중심이다
+        const left = c.t.x - w * c.t.anchor.x;
+        c.g.clear()
+          .roundRect(left - CHIP_PADX, c.t.y - CHIP_PADY, w + CHIP_PADX * 2, h + CHIP_PADY * 2, CHIP_R)
+          .fill(0xffffff)
+          .stroke({ width: CHIP_LINE, color: col });
+      }
+    };
+
     // 상단 점선 게이지바 — 점은 아트가 그리고, 출석할 때마다 한 칸씩 보라색으로 찬다.
     // 그 위 1·4·7일차 점에만 선물상자를 얹는다 = 그날 받는 추가 보너스 표식.
     const TRACK_Y = 251, TRACK_X0 = 51, TRACK_STEP = 43; // 렌더 화면에서 점 중심 역산
@@ -260,6 +288,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       rw.x = cp.x + Math.round((cw - rw.width) / 2); // 묶음 기준 = 칸 좌표 + 칸 안 위치
       rw.y = cp.y + (onArt ? inY + inH - 25 : 20);
       textsG.addChild(rw);
+      if (onArt) chipFor(rw);
 
       if (today) {
         const now = txt("오늘!", 9, 0xc9527f, true);
@@ -267,6 +296,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
         now.x = cp.x + Math.round((cw - now.width) / 2);
         now.y = cp.y + (onArt ? -4 : 44);
         textsG.addChild(now);
+        if (onArt) chipFor(now);
         // 받는 순간 상자가 좌우로 한 바퀴 돈다 — 다 돌고 나서 화면을 다시 그린다
         // (먼저 그리면 칸이 새로 만들어져 도는 게 안 보인다)
         let claiming = false;
@@ -338,6 +368,9 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
         }
       }
     });
+
+    fitChips();                 // 첫 프레임 (에디터 스타일 적용 전 코드 값 기준)
+    opts.ticker.add(fitChips);  // 이후 글자 크기·색이 바뀌면 칩도 따라간다
 
     mock.justClaimed = 0; // 한 번만 돈다 — 창을 다시 열 때마다 돌면 산만하다
 
