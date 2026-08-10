@@ -61,8 +61,10 @@ export function registerGaugeOps(ops: GaugeOps): void {
 }
 
 // 회차 이동: app이 컨트롤러 조작을 등록 (회차·막 시작 지점으로 건너뛰기)
-/** 목표 지점으로 이동하고 결과 메시지를 돌려준다 (실패해도 메시지로 알린다) */
-export type JumpRun = (loop: 1 | 2, act: number) => string;
+/** 목표 지점으로 이동하고 결과 메시지를 돌려준다 (실패해도 메시지로 알린다).
+ *  loop2 = 2회차 진행 모드 — 정상 플레이라면 회귀 화면에서 고르는 값이라 치트도 골라 넘긴다
+ *  (1회차 이동에는 영향 없음) */
+export type JumpRun = (loop: 1 | 2, act: number, loop2: "fast" | "normal") => string;
 let jumpRun: JumpRun | null = null;
 export function registerJumpOps(fn: JumpRun): void {
   jumpRun = fn;
@@ -552,9 +554,12 @@ export function initCheatMenu(): void {
 
   // ── 회차 이동 — 회차(1·2) × 막(2~5)의 시작 지점으로 건너뛴다 ──
   // 1막은 런의 시작이라 목록에 없다("↺ 새 런 시작"이 그 역할).
-  const JUMP_TARGETS: Array<{ loop: 1 | 2; act: number }> = [
-    { loop: 1, act: 2 }, { loop: 1, act: 3 }, { loop: 1, act: 4 }, { loop: 1, act: 5 },
-    { loop: 2, act: 2 }, { loop: 2, act: 3 }, { loop: 2, act: 4 }, { loop: 2, act: 5 },
+  // 목적지 = 회차·막·(2회차라면)진행 모드까지 한 줄로. 선택기를 나누면 조합이 헷갈린다.
+  // 2회차 진행 모드는 정상 플레이라면 회귀 화면에서 고르는 값이라, 치트도 목적지의 일부로 본다.
+  const JUMP_TARGETS: Array<{ loop: 1 | 2; act: number; loop2: "fast" | "normal"; label: string }> = [
+    ...[2, 3, 4, 5].map((act) => ({ loop: 1 as const, act, loop2: "fast" as const, label: `1회차 — ${act}막 시작` })),
+    ...[2, 3, 4, 5].map((act) => ({ loop: 2 as const, act, loop2: "fast" as const, label: `2회차 ⚡ 빠른 — ${act}막 시작` })),
+    ...[2, 3, 4, 5].map((act) => ({ loop: 2 as const, act, loop2: "normal" as const, label: `2회차 정속 — ${act}막 시작` })),
   ];
   let jumpPick = 0; // 패널을 다시 열어도 마지막 선택을 유지
 
@@ -572,12 +577,13 @@ export function initCheatMenu(): void {
     JUMP_TARGETS.forEach((t, i) => {
       const o = document.createElement("option");
       o.value = String(i);
-      o.textContent = `${t.loop}회차 \u2014 ${t.act}막 시작`;
+      o.textContent = t.label;
       sel.appendChild(o);
     });
     sel.value = String(jumpPick);
     sel.onchange = () => { jumpPick = Number(sel.value); };
     modal.appendChild(sel);
+
 
     const status = document.createElement("div");
     status.style.cssText = "margin:10px 0 0;font-size:11.5px;color:#c9527f;font-weight:700;min-height:16px";
@@ -590,7 +596,7 @@ export function initCheatMenu(): void {
       const t = JUMP_TARGETS[jumpPick];
       if (!t) return;
       if (!jumpRun) { status.textContent = "이동 기능이 준비되지 않았어요"; return; }
-      status.textContent = jumpRun(t.loop, t.act);
+      status.textContent = jumpRun(t.loop, t.act, t.loop2);
     };
     modal.append(go, status, item("\u2190 치트 메뉴로", () => render()));
   }

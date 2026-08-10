@@ -692,9 +692,9 @@
     "y": -60
   },
   "train_char": {
-    "x": -125,
-    "y": -300,
-    "scale": 2.15
+    "x": -124,
+    "y": -330,
+    "scale": 2.2
   },
   "train_close": {
     "x": -106,
@@ -905,11 +905,12 @@
     "color": "#5b4a70"
   },
   "board_btn_ok": {
-    "x": 111,
-    "y": 370,
+    "x": 90,
+    "y": 390,
     "texts": [
       "확인 "
-    ]
+    ],
+    "scale": 1.2
   },
   "card_speaker": {
     "x": 164,
@@ -950,11 +951,12 @@
     "color": "#5b4a70"
   },
   "train_bubble_text": {
-    "x": 35,
+    "x": 27,
     "y": 450,
     "texts": [
-      "어떤 연습을 할까요?                  몸 상태를 보고 정해요!"
-    ]
+      "어떤 연습을 할까요?\\n몸 상태를 보고 정해요!"
+    ],
+    "fontSize": 14
   },
   "train_frame": {
     "x": 15,
@@ -988,9 +990,13 @@
     "scale": 0.85
   },
   "board_locked_note": {
-    "x": 95,
-    "y": 330,
-    "color": "#000000"
+    "x": 85,
+    "y": 340,
+    "color": "#000000",
+    "fontSize": 19,
+    "texts": [
+      "다섯 자리가 모두 정해졌다.\\n      이제 무대만 남았다."
+    ]
   },
   "dance_train_fail_title": {
     "x": 5,
@@ -1079,10 +1085,11 @@
   },
   "promo_train_res_btn_text": {
     "x": 68,
-    "y": 16,
+    "y": 15,
     "texts": [
       "계속"
-    ]
+    ],
+    "fontSize": 20
   },
   "easy_start_text": {
     "x": 56,
