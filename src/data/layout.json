@@ -1248,8 +1248,9 @@
     "color": "#ffffff"
   },
   "board_res_card_stat": {
-    "x": 40,
-    "y": 137
+    "x": 90,
+    "y": 137,
+    "center": true
   },
   "board_res_card": {
     "x": 82,
@@ -1268,11 +1269,12 @@
     "scale": 0.75
   },
   "board_res_card_name": {
-    "x": 75,
+    "x": 90,
     "y": 100,
     "texts": [
       "리안"
-    ]
+    ],
+    "center": true
   },
   "board_res_btn_hold_text": {
     "x": 92,
@@ -1283,9 +1285,10 @@
     ]
   },
   "board_res_card_role": {
-    "x": 79,
+    "x": 90,
     "y": 120,
-    "color": "#5b4a70"
+    "color": "#5b4a70",
+    "center": true
   },
   "board_res_grade": {
     "x": -15,
