@@ -677,7 +677,7 @@
   "story_tab": {
     "x": 200,
     "y": 71,
-    "color": "#ffffff"
+    "color": "#5b4a70"
   },
   "train_bubble": {
     "x": 20,
@@ -882,7 +882,8 @@
   "lobby_status_tab": {
     "x": 243,
     "y": 107,
-    "color": "#5b4a70"
+    "color": "#5b4a70",
+    "hidden": true
   },
   "dance_train_game_title": {
     "x": -15,
