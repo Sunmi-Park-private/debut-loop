@@ -40,7 +40,7 @@
           "file": "",
           "size": [
             394,
-            600
+            700
           ],
           "mode": "9slice",
           "slice": 24,
@@ -570,7 +570,7 @@
           "file": "assets/ui/train-panel.webp",
           "size": [
             394,
-            612
+            700
           ],
           "mode": "stretch",
           "opacity": -0.5

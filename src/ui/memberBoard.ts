@@ -33,6 +33,7 @@ export interface MemberBoardOpts {
   onChanged: () => void;  // 상태 변형 후 HUD 갱신용
   startAudition?: boolean; // true면 곧장 오디션 씬으로 (치트 "오디션 보기")
   previewResult?: MiniGameGrade; // 치트: 리듬 없이 곧장 판정결과 화면 (레이아웃 확인용)
+  previewRecheck?: boolean;      // 치트: "새로 만날 후보가 없어요" 재심사 확인 화면부터 (레이아웃 확인용)
   bustOf?: (characterId: string) => Texture | null; // 대형 프로필용 상반신 (캐릭터 에디터 bust 재활용)
 }
 
@@ -727,6 +728,7 @@ export function renderMemberBoard(parent: Container, opts: MemberBoardOpts): voi
     && candidatePool(characters, ctrl.state).length > 0;
   const previewChar = opts.previewResult ? candidatePool(characters, ctrl.state)[0] ?? characters[0] : undefined;
   if (opts.previewResult && previewChar) showResult({ char: previewChar, stat: 82 }, opts.previewResult); // 치트 미리보기
+  else if (opts.previewRecheck) showRecheckConfirm(); // 치트 미리보기
   else if (opts.startAudition && canAudition) showAudition();
   else showBoard();
 }

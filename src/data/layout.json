@@ -355,50 +355,25 @@
     "x": 26,
     "y": 167
   },
-  "gate_photo_pick_btn": {
-    "x": 25,
-    "y": -90,
-    "texts": [
-      "확인"
-    ],
-    "scale": 0.85
-  },
-  "gate_photo_pick_grade": {
-    "x": -5,
-    "y": 50
-  },
-  "gate_photo_pick_hand": {
-    "x": 33,
-    "y": -100,
-    "scale": 0.8
-  },
-  "gate_photo_pick_sum": {
-    "x": -5,
-    "y": -200
-  },
-  "gate_photo_pick_ticket": {
-    "x": 35,
-    "y": -480
-  },
   "gate_photo_title": {
     "x": 14,
     "y": -2
   },
   "gate_pick_btn": {
-    "x": 55,
-    "y": 120,
+    "x": 50,
+    "y": 70,
     "texts": [
       "확인"
     ],
     "scale": 0.75
   },
   "gate_pick_desc": {
-    "x": 55,
-    "y": 440,
+    "x": 50,
+    "y": 400,
     "color": "#5b4a70",
     "scale": 0.75,
     "texts": [
-      "사용할 카드를 2장까지 선택하세요.                                                 효과가 게이지에 적용됩니다"
+      "사용할 카드를 2장까지 선택하세요.\\n효과가 게이지에 적용됩니다"
     ]
   },
   "gate_pick_grade": {
@@ -407,13 +382,13 @@
     "scale": 1.1
   },
   "gate_pick_hand": {
-    "x": -35,
-    "y": -120,
+    "x": -39,
+    "y": -140,
     "scale": 1.2
   },
   "gate_pick_sum": {
-    "x": -15,
-    "y": -80,
+    "x": -22,
+    "y": -110,
     "scale": 1.1
   },
   "gate_pick_ticket": {
@@ -1041,7 +1016,7 @@
   "audition_train_res_drain": {
     "x": 0,
     "y": 3,
-    "color": "#ffe4f0",
+    "color": "#c9527f",
     "fontSize": 15
   },
   "audition_rps_opp_scissors": {
@@ -1305,13 +1280,6 @@
     "x": 31,
     "y": 10
   },
-  "gate_photo_pick_desc": {
-    "x": -5,
-    "y": 250,
-    "texts": [
-      "사용할 카드를 1장까지 선택하세요.                                                   효과가 게이지에 적용됩니다."
-    ]
-  },
   "gate_photo_tab": {
     "x": 0,
     "y": 0,
@@ -1376,11 +1344,6 @@
     "x": -15,
     "y": -10
   },
-  "gate_photo_pick_sheet": {
-    "x": -125,
-    "y": -140,
-    "scale": 1.6
-  },
   "clue_dodge_board": {
     "x": 2,
     "y": 80
@@ -1400,14 +1363,6 @@
   "board_recruit_bg": {
     "x": 0,
     "y": 0
-  },
-  "gate_clue_pick_ticket": {
-    "x": 135,
-    "y": -310,
-    "color": "#5b4a70",
-    "texts": [
-      "센터 대결 통과증 +3"
-    ]
   },
   "gate_block_title": {
     "x": 95,
@@ -1601,5 +1556,34 @@
   "side_set_sns_google": {
     "x": 18,
     "y": 160
+  },
+  "doom_end_action": {
+    "x": 110,
+    "y": 430,
+    "scale": 0.55
+  },
+  "doom_end_body_text": {
+    "x": 115,
+    "y": 320,
+    "texts": [
+      "게이지 하나가 바닥났다.\\n(실제: 강등→패자부활전→탈락)"
+    ],
+    "color": "#ffffff"
+  },
+  "doom_end_title_text": {
+    "x": 125,
+    "y": 270,
+    "color": "#ffffff"
+  },
+  "doom_end_emoji_text": {
+    "x": 175,
+    "y": 210
+  },
+  "doom_end_action_text": {
+    "x": 154,
+    "y": 14,
+    "fontSize": 29,
+    "color": "#ffffff",
+    "center": true
   }
 }

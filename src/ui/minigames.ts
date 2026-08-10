@@ -1733,6 +1733,7 @@ export function renderGate(
   bgTex?: Texture | null,                                   // 관문 배경 (목업 이식 — 없으면 흰 패널)
   hardBonus?: () => void,                                   // 리듬 하드(3열) 클리어 보너스
   tabText?: string,                                          // 상단 탭 정보 (회차·주차·D-day·카드) — 포토카드 배경판 아트용
+  previewGrade?: MiniGameGrade,                              // 치트 — 게임을 건너뛰고 판정결과(카드 선택) 화면부터 (레이아웃 점검용)
 ): void {
   const dim = fullRect(0x5b4a70, 0.35);
   dim.eventMode = "static"; // 뒤 클릭 차단
@@ -1871,9 +1872,30 @@ export function renderGate(
   const STORY_TICKET: Record<string, string> = { audition_pass: "센터 대결 통과증", clue_piece: "단서 조각", true_gate: "진실 무대 입장권" };
   const ticketName = (id: string): string => tickets.find((t) => t.id === id)?.name ?? STORY_TICKET[id] ?? id;
 
+  // 판정결과 화면 전용 그룹 — **관문별 키를 쓰지 않는다**.
+  // 관문마다 배경판 비율이 달라 패널 크기·위치가 제각각이고, 키까지 나뉘어 있으면
+  // 다섯 관문의 결과 화면이 전부 다른 배치가 된다. 결과 화면은 게임 화면과 달리
+  // 아트에 얹히는 게 아니라 자체 시트 위에 그리므로, 크기·자리·키를 하나로 묶는다.
+  const pickGrp = (name: string, ...items: Container[]): void => {
+    const g2 = new Container();
+    const gp = pos(name, { x: 0, y: 0 }); // 공용 키 (gate_pick_*)
+    g2.x = gp.x;
+    g2.y = gp.y;
+    g2.addChild(...items);
+    body.addChild(g2);
+    editable(name, g2);
+  };
+  const pickLabel = (name: string, b: Container): void => { registerBtnLabel(`${name}_text`, b); };
+
   const showCardPick = (grade: MiniGameGrade, onPicked: (picked: number[]) => void): void => {
     setRedrawHook(() => showCardPick(grade, onPicked)); // 배율 변경 시 이 화면만 재렌더
     clear();
+    // 결과 화면은 관문과 무관하게 같은 크기·자리 (4·5막 격자회피 기준)
+    W = MG_W;
+    PH = MG_H;
+    const rp = pos("gate_pick_panel", { x: Math.round((430 - MG_W) / 2), y: 145 });
+    panel.x = rp.x;
+    panel.y = rp.y;
     // 레이아웃 에디터 토글 시 리드로우 생략 — 이 화면은 판정 결과 1회성이라 다시 그리면 사라진다.
     // (등록된 gate_pick_* 항목은 그대로 남아 그 자리에서 조정 가능)
     setEditorToggleHook(() => true);
@@ -1890,7 +1912,7 @@ export function renderGate(
       sp.y = 2 + (PH - 14 - sheetTex.height * ss) / 2;
       sheetSkin = sp;
     }
-    chromeGrp("gate_pick_sheet", sheetSkin
+    pickGrp("gate_pick_sheet", sheetSkin
       ?? new Graphics().roundRect(10, 2, W - 20, PH - 14, 20).fill({ color: 0xffffff, alpha: 0.88 }));
     // 첫 등장 시 카드 선택 시스템 안내 (기기당 1회)
     guide("gate_pick", "yuwol", "무대 성적이 좋을수록 <b>연습으로 모은 카드</b>를 더 많이 쓸 수 있어! 고른 카드의 효과는 <b>게이지에 적용되고 소모</b>돼. PERFECT면 2장까지!");
@@ -1901,12 +1923,12 @@ export function renderGate(
     if (stamp) {
       stamp.x = (W - 180) / 2;
       stamp.y = 0;
-      chromeGrp("gate_pick_grade", stamp);
+      pickGrp("gate_pick_grade", stamp);
     } else {
       const t1 = txt(`${GN[grade]}`, 22, INK, true);
       t1.x = (W - t1.width) / 2;
       t1.y = 8;
-      chromeGrp("gate_pick_grade", t1);
+      pickGrp("gate_pick_grade", t1);
     }
 
     // 라운드마다 즉시 정산·소모되므로 현재 덱을 재조회 (인덱스 = 현재 덱 기준)
@@ -1929,9 +1951,9 @@ export function renderGate(
       const go = btn("계속 →", 180, PINK, finish0, "gate-btn-confirm");
       go.x = (W - 180) / 2;
       go.y = 410;
-      chromeGrp("gate_pick_empty", none, hint);
-      chromeGrp("gate_pick_ticket", info);
-      chromeGrp("gate_pick_btn", go);
+      pickGrp("gate_pick_empty", none, hint);
+      pickGrp("gate_pick_ticket", info);
+      pickGrp("gate_pick_btn", go);
       const offSpace0 = pairSpace(finish0, () => !done0 && !go.destroyed); // 탭=Space
       return;
     }
@@ -1940,10 +1962,10 @@ export function renderGate(
     const sub2 = txt(`사용할 카드를 ${n}장까지 선택하세요 — 효과가 게이지에 적용됩니다`, 12, SUB, true);
     sub2.x = (W - sub2.width) / 2;
     sub2.y = 44;
-    chromeGrp("gate_pick_desc", sub2);
+    pickGrp("gate_pick_desc", sub2);
     const sumT = txt("", 12.5, 0x3fb98a, true);
     sumT.y = 460;
-    chromeGrp("gate_pick_sum", sumT);
+    pickGrp("gate_pick_sum", sumT);
 
     const refreshSum = (): void => {
       const picked = [...sel].map((i) => cards[i]).filter((c): c is Card => c !== undefined);
@@ -1960,7 +1982,7 @@ export function renderGate(
     const hand = new Container();
     hand.x = W / 2;
     hand.y = 430; // 부채꼴 기준점(카드 하단)
-    chromeGrp("gate_pick_hand", hand);
+    pickGrp("gate_pick_hand", hand);
 
     const CW = 86;
     const CH = 118;
@@ -2052,7 +2074,7 @@ export function renderGate(
       const more = txt(`외 ${avail.length - shown.length}장은 다음 관문에서`, 10, SUB);
       more.x = (W - more.width) / 2;
       more.y = 436;
-      chromeGrp("gate_pick_more", more);
+      pickGrp("gate_pick_more", more);
     }
 
     const info = txt(`🎟 ${ticketName(gate.ticket)} · +${GRADE_POINTS[grade]}⭐`, 11.5, SUB);
@@ -2064,8 +2086,8 @@ export function renderGate(
     const go = btn("확인 →", 180, PINK, finish1, "gate-btn-confirm");
     go.x = (W - 180) / 2;
     go.y = 522;
-    chromeGrp("gate_pick_ticket", info);
-    chromeGrp("gate_pick_btn", go);
+    pickGrp("gate_pick_ticket", info);
+    pickGrp("gate_pick_btn", go);
     const offSpace1 = pairSpace(finish1, () => !done1 && !go.destroyed); // 탭=Space
   };
 
@@ -2250,5 +2272,7 @@ export function renderGate(
     const noH = no.onclick as () => void; no.onclick = () => { offSpace(); noH(); };
   };
 
-  startRound();
+  // 치트로 판정결과만 볼 때는 라운드를 돌리지 않고 곧장 그 화면으로 간다
+  if (previewGrade) showCardPick(previewGrade, () => { onExit(); });
+  else startRound();
 }

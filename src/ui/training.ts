@@ -74,6 +74,8 @@ export interface TrainingOpts {
   onFinish: (activity: TrainingId, grade: MiniGameGrade) => void;
   onSkip: () => void;          // 건너뛰기/닫기
   onRetryPenalty: () => void;  // 재도전 멘탈 −1 (화면은 여기서 다시 그림)
+  /** 치트 — 메뉴를 건너뛰고 해당 연습의 판정결과 화면부터 연다 (레이아웃 점검용) */
+  preview?: { id: TrainingId; grade: MiniGameGrade };
 }
 
 export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void {
@@ -96,9 +98,18 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     for (const c of chrome) c.visible = v;
   };
 
-  // 패널 프레임 — 전용 스킨 → 공통 프레임(ui-frame) 순 폴백 (둘 다 없으면 미표시)
-  const panelSkin = skinNode("train-panel", W, H) ?? skinNode("ui-frame", W, H);
-  if (panelSkin) { panel.addChild(panelSkin); chrome.push(panelSkin); }
+  // 패널 바탕 — 사이드 팝업(설정 창)과 같은 크림 바탕 + 연보라 테두리로 통일한다.
+  // 선 두께·모서리는 디자이너 시안(1170 기준 선 14 · 모서리 73) 비율을 폭에 옮긴 값.
+  // 예전엔 train-panel 아트를 깔았는데, 창마다 프레임이 달라 보여 벡터 한 겹으로 맞췄다.
+  const PANEL_BG = 0xfaf0ea, PANEL_LINE = 0xd6bbe8;
+  const pbw = Math.max(2, Math.round(W * 14 / 1170));
+  const pbr = Math.round(W * 73 / 1170);
+  const panelBase = new Graphics()
+    .roundRect(pbw / 2, pbw / 2, W - pbw, H - pbw, pbr)
+    .fill(PANEL_BG)
+    .stroke({ width: pbw, color: PANEL_LINE });
+  panel.addChild(panelBase);
+  chrome.push(panelBase);
 
   // 테두리 라인 — 배경 위에 덧그리는 별도 레이어. 배경을 바꿔도 테두리는 그대로 남고,
   // 위치·배율은 레이아웃 에디터(train_frame)에서 따로 잡는다.
@@ -602,5 +613,9 @@ export function renderTrainingBoard(parent: Container, opts: TrainingOpts): void
     btnLabel("train_fail_quit", quit);
   };
 
-  showMenu();
+  // 치트로 판정결과를 바로 볼 때는 메뉴를 건너뛴다
+  const pv = opts.preview;
+  const pvAct = pv ? ACTIVITIES.find((a) => a.id === pv.id) : undefined;
+  if (pv && pvAct) showResult(pvAct, pv.grade);
+  else showMenu();
 }
