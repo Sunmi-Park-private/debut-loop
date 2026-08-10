@@ -1086,9 +1086,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
       t.x = (w - t.width) / 2;
       t.y = (56 - t.height) / 2;
       b.addChild(t);
-      b.eventMode = "static";
-      b.cursor = "pointer";
-      b.on("pointertap", onTap);
+      pressable(b, onTap); // eventMode·cursor 배선 + 눌림(easeIn/Out 스케일) 효과까지 여기서
       return b;
     };
 
@@ -1099,8 +1097,7 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
     const onShootTap = (): void => { if (grade === null) doShoot(); }; // 판정 표시 중엔 무동작 (재촬영 버튼 전용)
     let shootBtn: Container;
     if (camSkin) {
-      camSkin.eventMode = "static";
-      camSkin.on("pointertap", onShootTap);
+      pressable(camSkin, onShootTap); // 다른 버튼과 동일한 눌림 효과 (직접 pointertap 배선은 효과가 빠진다)
       shootBtn = camSkin;
     } else {
       shootBtn = mkCap("📸 찰칵!  (Space)", 240, 0xff6f9f, onShootTap);
@@ -1693,7 +1690,9 @@ export function mountEngine(body: Container, opts: EngineOpts): void {
 
     // 입력: 좌/우 절반 탭 + 방향키
     for (const dir of [-1, 1]) {
-      const z = new Graphics().rect(dir < 0 ? 0 : W / 2, 70, W / 2, MG_H - 90).fill({ color: 0xffffff, alpha: 0.001 });
+      // 탭존은 늘어난 패널 전체(PH) 기준 — MG_H(기본 높이)로 잡으면 배경판 아트로 패널이 커졌을 때
+      // 격자 하단·주인공 행이 존 밖으로 밀려나 탭이 먹지 않는다 (리듬 레인과 동일 처리)
+      const z = new Graphics().rect(dir < 0 ? 0 : W / 2, 70, W / 2, PH - 90).fill({ color: 0xffffff, alpha: 0.001 });
       z.eventMode = "static";
       z.on("pointerdown", () => step(dir));
       body.addChild(z);

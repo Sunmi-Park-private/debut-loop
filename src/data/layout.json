@@ -1585,5 +1585,11 @@
     "fontSize": 27,
     "color": "#ffffff",
     "center": true
+  },
+  "gate_act2_title": {
+    "x": 55,
+    "y": 4,
+    "scale": 1.1,
+    "color": "#5b4a70"
   }
 }
