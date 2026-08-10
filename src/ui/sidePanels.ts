@@ -8,6 +8,7 @@ import { editable, editableClone } from "./editor";
 import { fullRect } from "./stage";
 import { skinFit, skinNode } from "./uiSkin";
 import { pressable } from "./press";
+import { easeIn, easeOut, easeInOut, lerp } from "./ease";
 import { toast } from "./metaMenu";
 import { bgmVolume, setBgmVolume, bgmMuted, setBgmMuted } from "./audio";
 
@@ -38,6 +39,42 @@ export function advanceMockDailyDay(): number {
 const mockSns: Record<"google" | "apple", boolean> = { google: false, apple: false };
 let mockSfx = 70;        // 효과음은 아직 실제 배선이 없다 (목업)
 let mockSfxMuted = false;
+
+// ── 수령 모션 ── 카드덱과 같은 손맛을 쓴다 (곡선·시간 모두 cardDeckSheet와 같은 값).
+// 받을 수 있는 날 = 좌우로 한 바퀴 도는 뒤집기, 아직 못 받는 날 = 살짝 떠올랐다 제자리.
+const FLIP_HALF = 130; // 반바퀴(ms) — 폭이 0이 되는 지점
+const LIFT_DY = 14;
+const LIFT_DUR = 150;
+
+const tween = (dur: number, node: Container, step: (t: number) => void, done?: () => void): void => {
+  const t0 = performance.now();
+  const frame = (now: number): void => {
+    if (node.destroyed) return; // 창이 닫혀 컨테이너가 사라졌으면 중단
+    const t = Math.min(1, (now - t0) / dur);
+    step(t);
+    if (t < 1) requestAnimationFrame(frame);
+    else done?.();
+  };
+  requestAnimationFrame(frame);
+};
+
+/** 좌우로 한 바퀴 — 폭을 0까지 좁혔다가 다시 편다 (음수 배율이 없어 그림이 뒤집히지 않는다) */
+const spinNode = (node: Container, done?: () => void): void => {
+  tween(FLIP_HALF, node, (t) => { node.scale.x = 1 - easeIn(t); }, () => {
+    tween(FLIP_HALF, node, (t) => { node.scale.x = easeOut(t); }, () => {
+      node.scale.x = 1;
+      done?.();
+    });
+  });
+};
+
+/** 살짝 떠올랐다 제자리 — 스토리 카드덱의 반응과 같다 */
+const liftNode = (node: Container): void => {
+  const home = node.y;
+  tween(LIFT_DUR, node, (t) => { node.y = lerp(home, home - LIFT_DY, easeInOut(t)); }, () => {
+    tween(LIFT_DUR, node, (t) => { node.y = lerp(home - LIFT_DY, home, easeInOut(t)); }, () => { node.y = home; });
+  });
+};
 
 const txt = (s: string, size: number, fill: number, bold = false): Text =>
   new Text({ text: s, style: { fontSize: size, fill, fontWeight: bold ? "bold" : "normal" } });
@@ -199,9 +236,15 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
         ?? new Graphics().roundRect(0, 0, inW, inH, 12)
           .fill(done ? 0xf2fbf8 : today ? 0xfff2f9 : 0xf8f4fc)
           .stroke({ width: today ? 2.5 : 2, color: done ? 0x6fd8c4 : today ? PINK : LINE });
-      art.x = inX;
-      art.y = inY;
-      cell.addChild(art);
+      // 상자는 회전축(가운데)을 가진 래퍼에 담는다 — 수령 효과로 좌우로 돌릴 때 대칭이 되게.
+      // 칸(cell)의 x·y는 레이아웃 저장값이라 건드리면 안 되므로 안쪽에 한 겹 더 둔다.
+      const spinner = new Container();
+      spinner.x = inX + inW / 2;
+      spinner.y = inY + inH / 2;
+      art.x = -inW / 2;
+      art.y = -inH / 2;
+      spinner.addChild(art);
+      cell.addChild(spinner);
 
       // D1·D2… 라벨은 배경판 아트에 이미 "DAY 1"로 그려져 있다 — 아트가 있으면 코드 라벨은 생략
       if (!onArt) {
@@ -223,10 +266,23 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
         now.x = cp.x + Math.round((cw - now.width) / 2);
         now.y = cp.y + (onArt ? -4 : 44);
         textsG.addChild(now);
+        // 받는 순간 상자가 좌우로 한 바퀴 돈다 — 다 돌고 나서 화면을 다시 그린다
+        // (먼저 그리면 칸이 새로 만들어져 도는 게 안 보인다)
+        let claiming = false;
         pressable(cell, () => {
-          mock.dailyClaimed = true;
-          toast(`${r} 획득! 내일 또 만나요 🎁`);
-          opts.onRedraw();
+          if (claiming) return;
+          claiming = true;
+          spinNode(spinner, () => {
+            mock.dailyClaimed = true;
+            toast(`${r} 획득! 내일 또 만나요 🎁`);
+            opts.onRedraw();
+          });
+        });
+      } else {
+        // 아직 못 받는 날(잠김)·이미 받은 날 — 스토리 카드덱처럼 살짝 떠올랐다 내려온다
+        pressable(cell, () => {
+          liftNode(spinner);
+          if (!done) toast(`${day}일차는 아직이에요 — 내일 또 만나요 🔒`);
         });
       }
       gridG.addChild(cell);
