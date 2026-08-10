@@ -28,7 +28,8 @@ const TITLE: Record<SideTab, string> = {
 };
 
 /** 목업 상태 — 실제 저장은 범위 밖 (DOM 판과 같은 값) */
-const mock = { dailyClaimed: false, dailyDay: 1 };
+// justClaimed = 방금 수령한 날짜 — 다시 그린 뒤 그날 추가 보너스 상자를 한 번 돌리는 데만 쓴다
+const mock = { dailyClaimed: false, dailyDay: 1, justClaimed: 0 };
 
 /** 목업 출석 날짜 넘기기 — 치트에서 부른다 (게이지 점이 하나씩 차는 걸 확인용) */
 export function advanceMockDailyDay(): number {
@@ -274,6 +275,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
           claiming = true;
           spinNode(spinner, () => {
             mock.dailyClaimed = true;
+            mock.justClaimed = day; // 다시 그린 직후 추가 보너스 상자도 돌게 (1·4·7일차)
             toast(`${r} 획득! 내일 또 만나요 🎁`);
             opts.onRedraw();
           });
@@ -315,12 +317,29 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
           const holder = new Container();
           holder.x = mp.x;
           holder.y = mp.y;
-          holder.addChild(mini);
+          // 칸 상자와 같은 방식 — 회전축(가운데)을 가진 래퍼에 담아 저장 좌표는 그대로 둔다
+          const mspin = new Container();
+          mspin.x = mw / 2;
+          mspin.y = mh / 2;
+          mini.x = -mw / 2;
+          mini.y = -mh / 2;
+          mspin.addChild(mini);
+          holder.addChild(mspin);
           panel.addChild(holder);
           reg(mk, holder);
+
+          // 칸과 같은 두 가지 반응 — 받은 날의 보너스는 좌우 회전, 아직이면 살짝 떠오르기
+          pressable(holder, () => {
+            if (done) spinNode(mspin);
+            else { liftNode(mspin); toast(`${day}일차 추가 보너스 — 그날 출석하면 함께 받아요 🎁`); }
+          });
+          // 그날 출석을 막 받았으면 추가 보너스 상자도 이어서 한 바퀴 돈다
+          if (mock.justClaimed === day) spinNode(mspin);
         }
       }
     });
+
+    mock.justClaimed = 0; // 한 번만 돈다 — 창을 다시 열 때마다 돌면 산만하다
 
     const note = txt("7일 연속 출석하면 ★★★ 에픽 카드!", 11, SUB);
     grp("side_daily_note", Math.round((W - note.width) / 2), onArt ? 540 : 258, note);
