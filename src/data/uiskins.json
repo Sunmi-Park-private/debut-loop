@@ -308,10 +308,10 @@
         {
           "id": "side-settings-bg",
           "label": "설정 · 배경판 — 원본 비율 유지",
-          "file": "",
+          "file": "assets/ui/side-settings-bg.webp",
           "size": [
             360,
-            330
+            640
           ],
           "mode": "stretch"
         },

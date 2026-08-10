@@ -6,7 +6,7 @@ import { Color, Container, Graphics, Text, type ColorSource, type Ticker } from 
 import { pos } from "./layout";
 import { editable, editableClone } from "./editor";
 import { fullRect } from "./stage";
-import { skinFit, skinNode } from "./uiSkin";
+import { skinFit, skinNode, skinTrimFill } from "./uiSkin";
 import { pressable } from "./press";
 import { easeIn, easeOut, easeInOut, lerp } from "./ease";
 import { toast } from "./metaMenu";
@@ -123,7 +123,13 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
   // 탭마다 내용 높이가 다르다 — 앨범 4줄(132+9)·상점 4줄(56+9)이 들어가야 한다
   // 데일리는 배경판 아트(955×1647) 비율에 맞춘 높이 — 폭 360 기준 621.
   // 박스가 아트보다 낮으면 skinFit이 높이에 맞춰 축소해 패널이 반쪽만 차던 문제.
-  const BODY_H: Record<SideTab, number> = { daily: 621, album: 664, shop: 362, settings: 330 };
+  // 데일리·앨범·상점은 창 크기를 맞춘다 — 기준은 데일리 배경판 아트(955×1647 → 폭 360에서 621).
+  // 탭을 옮길 때마다 창이 커졌다 작아지면 같은 창이 아닌 것처럼 보인다 — 설정도 전용 배경판이
+  // 올라와서 같이 맞춘다(941×1672 → 폭 349로 들어간다).
+  // 설정만 621이 아니다 — 배경판 아트(여백 뺀 판 694×995)를 폭 360에 맞추면 높이가 516이다.
+  // 621·601로 늘리면 그만큼 세로로 늘어나 안이 헐거워 보였다(=디자이너가 지적한 "늘어짐").
+  // 창 크기를 맞추는 것보다 아트를 왜곡하지 않는 쪽을 택한다.
+  const BODY_H: Record<SideTab, number> = { daily: 621, album: 621, shop: 621, settings: 516 };
   const bodyH = BODY_H[opts.tab];
 
   // ── 공용 셸 ──
@@ -132,7 +138,16 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
   const BG_SLOT: Record<SideTab, string> = {
     daily: "side-daily-bg", album: "side-album-bg", shop: "side-shop-bg", settings: "side-settings-bg",
   };
-  const tabBgArt = skinFit(BG_SLOT[opts.tab], W, bodyH); // 탭 전용 아트 (없으면 null → 공용 프레임)
+  // 설정 배경판은 둘레 투명 여백이 커서(941×1672 중 보이는 판은 122..815 · 326..1320)
+  // 그냥 넣으면 데일리 창보다 한참 작게 그려진다. 보이는 판만 창에 꽉 맞춘다.
+  // ※ 이 아트를 새로 올리면 여백이 달라지므로 값을 다시 재야 한다.
+  const BG_TRIM: Record<string, { x: number; y: number; w: number; h: number }> = {
+    "side-settings-bg": { x: 122, y: 326, w: 694, h: 995 },
+  };
+  const trim = BG_TRIM[BG_SLOT[opts.tab]];
+  const tabBgArt = trim // 탭 전용 아트 (없으면 null → 공용 프레임)
+    ? skinTrimFill(BG_SLOT[opts.tab], W, bodyH, trim)
+    : skinFit(BG_SLOT[opts.tab], W, bodyH);
   const onArt = tabBgArt !== null; // 탭 전용 배경판 위에 그리는 중 — 조각 배치가 아트 칸을 따른다
   const bg = tabBgArt
     ?? skinNode("side-panel", W, bodyH)
@@ -144,7 +159,19 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
   };
   const bgKey = BG_KEY[opts.tab];
   const bgP = pos(bgKey, pos("side_bg", { x: 0, y: 0 }));
-  grp(bgKey, bgP.x, bgP.y, bg);
+  const bgG = grp(bgKey, bgP.x, bgP.y, bg);
+
+  // 창 테두리 — 네 탭이 같은 선을 두른다. 색·두께·모서리는 디자이너 시안(1170×1800,
+  // 선 14px·모서리 73px·#d6bbe8)의 비율을 실제 배경 크기에 그대로 옮긴 값.
+  // 배경(아트든 프레임이든) 실제 크기를 재서 그리므로 탭마다 높이가 달라도 딱 맞는다.
+  // 배경 그룹 안에 넣어 배경을 옮기면 테두리도 함께 간다.
+  const BORDER_COLOR = 0xd6bbe8;
+  const bb = bg.getLocalBounds();
+  const bw = Math.max(2, Math.round(bb.width * 14 / 1170));
+  const br = Math.round(bb.width * 73 / 1170);
+  bgG.addChild(new Graphics()
+    .roundRect(bb.x + bw / 2, bb.y + bw / 2, bb.width - bw, bb.height - bw, br)
+    .stroke({ width: bw, color: BORDER_COLOR }));
 
   const bar = skinFit("side-title-bar", W - 24, 34);
   if (bar) grp("side_title_bar", 12, 12, bar);
@@ -164,6 +191,44 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
   }
   pressable(xBtn, opts.onClose);
   grp("side_close_x", W - 42, 14, xBtn);
+
+  /** 큰 제목 — 데일리 배경판 아트의 "DAILY BONUS"와 같은 결(세리프 대문자·자간).
+   *  전용 배경판 아트에 제목이 그려져 올라오면 에디터에서 이 키만 숨기면 된다. */
+  function bigTitle(key: string, label: string): void {
+    const t = new Text({
+      text: label,
+      style: { fontFamily: "Georgia, serif", fontSize: 26, fontWeight: "900", fill: INK, letterSpacing: 2 },
+    });
+    grp(key, Math.round((W - t.width) / 2), 22, t);
+  }
+
+  /** 준비 중 안내 — 내용 위에 반투명 블록을 한 겹 더 얹는다. 뒤가 비쳐 보여서
+   *  "이런 게 들어올 자리"라는 게 읽히고, 탭은 이 블록이 삼켜 뒤 버튼이 눌리지 않는다.
+   *  블록·제목·본문을 따로 등록해 위치와 문구를 에디터에서 각각 손볼 수 있다. */
+  function soonBlock(key: string, y: number, title: string, body: string): void {
+    const NW = W - 44, NH = 168, NR = 18;
+    const g = grp(key, Math.round((W - NW) / 2), y);
+    const box = new Graphics()
+      .roundRect(0, 0, NW, NH, NR)
+      .fill({ color: 0xfdfaff, alpha: 0.88 })
+      .stroke({ width: 2.5, color: 0xd9c9f0 });
+    box.eventMode = "static";
+    g.addChild(box);
+
+    const t = txt(title, 13, INK, true);
+    t.x = Math.round((NW - t.width) / 2);
+    t.y = 34;
+    g.addChild(t);
+    reg(`${key}_title`, t);
+
+    const bd = txt(body, 11, SUB);
+    bd.style.align = "center";
+    bd.style.lineHeight = 18;
+    bd.x = Math.round((NW - bd.width) / 2);
+    bd.y = 72;
+    g.addChild(bd);
+    reg(`${key}_body`, bd);
+  }
 
   if (opts.tab === "daily") renderDaily();
   else if (opts.tab === "album") renderAlbum();
@@ -383,13 +448,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
 
   // ── 📔 포토앨범 ──
   function renderAlbum(): void {
-    // 큰 제목 — 데일리 배경판 아트의 "DAILY BONUS"와 같은 결(세리프 대문자·자간)로 맞춘다.
-    // 앨범은 아직 전용 배경판 아트가 없어서 코드가 그린다. 아트가 올라오면 이 키를 숨기면 된다.
-    const title = new Text({
-      text: "PHOTO ALBUM",
-      style: { fontFamily: "Georgia, serif", fontSize: 26, fontWeight: "900", fill: INK, letterSpacing: 2 },
-    });
-    grp("side_album_title", Math.round((W - title.width) / 2), 22, title);
+    bigTitle("side_album_title", "PHOTO ALBUM");
 
     const head = txt("포토앨범 · 3/12 수집 — 회귀를 반복하며 모아보세요", 11, SUB);
     grp("side_album_head", 18, 58, head);
@@ -440,34 +499,15 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       gridG.addChild(cell);
     });
 
-    // 준비 중 안내 — 칸 위에 반투명 블록을 한 겹 더 얹는다. 뒤 그림이 비쳐 보여서
-    // "이런 게 들어올 자리"라는 게 읽히고, 탭은 이 블록이 삼켜 칸이 눌리지 않는다.
-    const NW = W - 44, NH = 168, NR = 18;
-    const noticeG = grp("side_album_soon", Math.round((W - NW) / 2), 238);
-    const box = new Graphics()
-      .roundRect(0, 0, NW, NH, NR)
-      .fill({ color: 0xfdfaff, alpha: 0.88 })
-      .stroke({ width: 2.5, color: 0xd9c9f0 });
-    box.eventMode = "static"; // 뒤 칸으로 탭이 새지 않게
-    noticeG.addChild(box);
-
-    const nTitle = txt("📔 포토앨범은 준비 중이에요", 13, INK, true);
-    nTitle.x = Math.round((NW - nTitle.width) / 2);
-    nTitle.y = 34;
-    noticeG.addChild(nTitle);
-    reg("side_album_soon_title", nTitle);
-
-    const nBody = txt("회귀를 반복하며 모은 장면을\n여기에 모아 볼 수 있게 준비하고 있어요.\n지금 보이는 칸은 미리보기예요.", 11, SUB);
-    nBody.style.align = "center";
-    nBody.style.lineHeight = 18;
-    nBody.x = Math.round((NW - nBody.width) / 2);
-    nBody.y = 72;
-    noticeG.addChild(nBody);
-    reg("side_album_soon_body", nBody);
+    soonBlock("side_album_soon", 238,
+      "📔 포토앨범은 준비 중이에요",
+      "회귀를 반복하며 모은 장면을\n여기에 모아 볼 수 있게 준비하고 있어요.\n지금 보이는 칸은 미리보기예요.");
   }
 
   // ── 🛍 상점 ──
   function renderShop(): void {
+    bigTitle("side_shop_title", "SHOP");
+
     const coinArt = skinFit("side-shop-coin", 18, 18);
     const purse = new Container();
     if (coinArt) purse.addChild(coinArt);
@@ -488,7 +528,7 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       ["💎", "스페셜 팩", "에픽 확정 + 포토 1장", "₩3,300"],
     ];
     const RW = W - 36, RH = 56, RGAP = 9;
-    const rowsG = grp("side_shop_rows", 18, 84);
+    const rowsG = grp("side_shop_rows", 18, 164); // 줄 묶음을 통째로 80px 내렸다(제목 아래 여백)
     items.forEach(([ic, name, desc, price], i) => {
       const row = new Container();
       row.y = i * (RH + RGAP);
@@ -501,12 +541,16 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       row.addChild(art);
       reg("side_shop_row_bg", art);
 
-      const icT = txt(ic, 22, INK);
-      const pIc = pos("side_shop_row_icon", { x: 12, y: 16 });
-      icT.x = pIc.x;
-      icT.y = pIc.y;
-      row.addChild(icT);
-      reg("side_shop_row_icon", icT);
+      // 카드팩만 그림 아이콘 — 카드 뒷면 아트를 그대로 쓴다(같은 카드가 뽑힌다는 게 바로 읽힌다).
+      // 나머지 줄은 이모지. 키를 나눠 둬야 카드 그림과 이모지를 따로 맞출 수 있다.
+      const packArt = i === 0 ? skinFit("train-result-card-back", 30, RH - 12) : null;
+      const icKey = packArt ? "side_shop_row_pack" : "side_shop_row_icon";
+      const icN: Container = packArt ?? txt(ic, 22, INK);
+      const pIc = pos(icKey, { x: 12, y: packArt ? 6 : 16 });
+      icN.x = pIc.x;
+      icN.y = pIc.y;
+      row.addChild(icN);
+      reg(icKey, icN);
 
       const nameT = txt(name, 13, INK, true);
       const pName = pos("side_shop_row_name", { x: 46, y: 11 });
@@ -541,33 +585,59 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
 
       rowsG.addChild(row);
     });
+
+    soonBlock("side_shop_soon", 205,
+      "🛍 상점은 준비 중이에요",
+      "카드팩과 아이템을 사고파는 기능을\n준비하고 있어요.\n지금 보이는 목록은 미리보기예요.");
   }
 
   // ── ⚙️ 설정 ──
   function renderSettings(): void {
+    // 배경판 아트에 계정 줄·안내 칸·볼륨 트랙이 이미 그려져 있다 — 그 자리에 얹는다.
+    // 아트(941×1672) 실측을 창 좌표(360×621)로 환산한 값. 아트가 없으면 예전 세로 흐름 그대로.
+    // 세로 값은 창 높이 621 기준 실측 — 창을 줄이면 아트도 같이 줄어드니 같은 비율로 따라간다
+    const vs = (v: number): number => Math.round(v * bodyH / 621);
+    const ART = {
+      sns: { google: vs(196), apple: vs(247) },  // 계정 두 줄의 윗변
+      snsBtnX: 277, snsBtnW: 52,                 // 아트에 그려진 버튼칸 (왼쪽·너비)
+      note: vs(360),                             // 안내 칸 윗변
+      trackX: 65, trackW: 263,
+      // 볼륨 트랙 두 줄의 중심. 아트에서 ★ 아이콘이 제 트랙보다 12px 아래에 그려져 있어
+      // (♫는 나란하다) 아이콘과 바가 어긋나 보인다. 아트는 못 고치니 **바를 아이콘 높이로**
+      // 내리고, 아트에 그려진 원래 바는 배경색으로 덮는다(artBar).
+      trackY: { bgm: vs(478), sfx: vs(533) },
+      artBar: { bgm: null, sfx: vs(521) - vs(533) }, // 덮어야 할 원래 바 (트랙 기준 상대 y)
+      // 아트에 그려진 스피커 아이콘(♫·★)의 중심 — 음소거 버튼을 여기에 얹는다
+      mute: { bgm: { x: 40, y: vs(477) }, sfx: { x: 40, y: vs(533) } },
+      cream: 0xfaf0ea, // 배경판 크림색 실측 (덮개용)
+    };
     let y = 58;
     const snsRow = (id: "google" | "apple", label: string): void => {
       const row = new Container();
       const nameT = txt(label, 12.5, INK, true);
-      nameT.y = 8;
+      nameT.x = onArt ? 60 : 0; // 아트에 로고가 그려져 있어 그 오른쪽으로
+      nameT.y = onArt ? 14 : 8;
       row.addChild(nameT);
       const on = mockSns[id];
       const btn = new Container();
-      const art = new Graphics().roundRect(0, 0, 84, 30, 10)
-        .fill(on ? 0xf2fbf8 : 0xffffff).stroke({ width: 1.5, color: on ? 0x6fd8c4 : LINE });
+      // 아트에 버튼칸이 그려져 있으면 상자는 그리지 않고 글자만 얹는다 (겹쳐 그리면 두 겹으로 보인다)
+      const bw2 = onArt ? ART.snsBtnW : 84;
+      const art = onArt
+        ? new Graphics().roundRect(0, 0, bw2, 30, 10).fill({ color: 0xffffff, alpha: 0.001 })
+        : new Graphics().roundRect(0, 0, bw2, 30, 10)
+          .fill(on ? 0xf2fbf8 : 0xffffff).stroke({ width: 1.5, color: on ? 0x6fd8c4 : LINE });
       btn.addChild(art);
-      const bt = txt(on ? "연동됨 ✓" : "연동하기", 11.5, on ? 0x2e9a80 : INK, true);
-      bt.x = Math.round((84 - bt.width) / 2);
+      const bt = txt(on ? "연동됨 ✓" : "연동하기", onArt ? 10 : 11.5, on ? 0x2e9a80 : INK, true);
+      bt.x = Math.round((bw2 - bt.width) / 2);
       bt.y = 8;
       btn.addChild(bt);
-      btn.x = W - 36 - 84;
-      pressable(btn, () => {
-        mockSns[id] = !mockSns[id];
-        if (mockSns[id]) toast(`${label} 계정과 연동되었어요 ✓`);
-        opts.onRedraw();
-      });
+      btn.x = onArt ? ART.snsBtnX - 18 : W - 36 - 84;
+      btn.y = onArt ? 10 : 0;
+      // 계정 연동은 아직 붙일 수 없다 — 눌리는 반응(90%로 줄었다 돌아오는 easeInOut)은 그대로 두고
+      // 상태는 바꾸지 않는다. 눌러도 아무 일 없으면 고장으로 보이므로 안내만 띄운다.
+      pressable(btn, () => { toast(`${label} 연동은 아직 준비 중이에요`); });
       row.addChild(btn);
-      grp(`side_set_sns_${id}`, 18, y, row);
+      grp(`side_set_sns_${id}`, 18, onArt ? ART.sns[id] : y, row);
       y += 42;
     };
     snsRow("google", "Google 계정");
@@ -578,22 +648,34 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
 
     /** 볼륨 슬라이더 — DOM <input type=range>를 Pixi로. 트랙을 끌거나 눌러 값 지정 */
     function slider(label: string, key: "bgm" | "sfx"): void {
-      const TW = W - 36 - 44; // 음소거 버튼(34) + 간격
+      // 아트 위에선 그려진 트랙 자리에 같은 길이로 얹는다(라벨은 아트의 ♫·★ 아이콘이 대신한다).
+      const TW = onArt ? ART.trackW : W - 36 - 44; // 음소거 버튼(34) + 간격
       const row = new Container();
-      const lblT = txt(label, 12.5, INK, true);
-      row.addChild(lblT);
+      if (!onArt) {
+        const lblT = txt(label, 12.5, INK, true);
+        row.addChild(lblT);
+      }
 
       const muted = key === "bgm" ? bgmMuted() : mockSfxMuted;
       const value = key === "bgm" ? bgmVolume() : mockSfx;
-      const valT = txt(String(Math.round(value)), 12, SUB, true);
+      // 꺼져 있으면 숫자 대신 "음소거" — 한 줄만 봐도 꺼진 게 읽힌다
+      const valT = txt(muted ? "음소거" : String(Math.round(value)), 12, muted ? 0xc4b8d6 : SUB, true);
       valT.x = TW - valT.width;
+      if (onArt) valT.y = -22; // 트랙 바로 위
       row.addChild(valT);
 
-      const trackY = 26;
+      const trackY = onArt ? 0 : 26;
+      // 아트가 그려 둔 바를 다른 높이로 옮겨야 하면 원래 자리를 배경색으로 지운다
+      const cover = onArt ? ART.artBar[key] : null;
+      // 맨 뒤에 깐다 — 나중에 붙이면 위에 있는 숫자까지 지운다
+      if (cover !== null) row.addChildAt(new Graphics().rect(-6, cover - 6, TW + 12, 14).fill(ART.cream), 0);
       const track = new Graphics().roundRect(0, trackY, TW, 6, 3).fill(0xf1eaf6);
-      const fill = new Graphics().roundRect(0, trackY, Math.max(1, (TW * value) / 100), 6, 3)
+      // 꺼졌을 땐 채움을 비운다 — 흐린 색으로 남겨 두면 "켜져 있는데 작은 값"처럼 보인다
+      const fill = new Graphics().roundRect(0, trackY, muted ? 0 : Math.max(1, (TW * value) / 100), 6, 3)
         .fill(muted ? 0xd9cdeb : PINK);
-      const knob = new Graphics().circle(0, 0, 9).fill(0xffffff).stroke({ width: 2, color: muted ? 0xd9cdeb : PINK });
+      const knob = new Graphics().circle(0, 0, 9)
+        .fill(muted ? 0xf3eefa : 0xffffff)
+        .stroke({ width: 2, color: muted ? 0xd9cdeb : PINK });
       knob.x = (TW * value) / 100;
       knob.y = trackY + 3;
       row.addChild(track, fill, knob);
@@ -602,44 +684,80 @@ export function renderSidePanel(parent: Container, opts: SidePanelOpts): void {
       const hit = new Graphics().rect(0, trackY - 12, TW, 30).fill({ color: 0xffffff, alpha: 0.001 });
       hit.eventMode = "static";
       hit.cursor = "pointer";
-      const apply = (localX: number): void => {
+      // 끄는 동안은 이 슬라이더 안에서만 그림을 고쳐 쓰고, 손을 뗄 때 한 번만 다시 그린다.
+      // 예전엔 움직일 때마다 opts.onRedraw()로 로비를 통째로 다시 그렸는데,
+      // globalpointermove가 **화면 어디서 끌든** 들어오는 탓에 레이아웃 에디터에서
+      // 컴포넌트를 끄는 동안에도 매 프레임 재구축이 돌아 버벅이고 위치가 되돌아갔다.
+      let dragging = false;
+      const paint = (v: number): void => {
+        fill.clear().roundRect(0, trackY, Math.max(1, (TW * v) / 100), 6, 3).fill(PINK); // 끄는 중 = 꺼진 상태가 아니다
+        knob.x = (TW * v) / 100;
+        valT.text = String(v);
+        valT.x = TW - valT.width;
+      };
+      const apply = (localX: number, commit: boolean): void => {
         if (muted) return;
         const v = Math.max(0, Math.min(100, Math.round((localX / TW) * 100)));
         if (key === "bgm") setBgmVolume(v);
         else mockSfx = v;
-        opts.onRedraw();
+        paint(v);
+        if (commit) opts.onRedraw();
       };
-      hit.on("pointerdown", (e) => apply(e.getLocalPosition(hit).x));
-      hit.on("globalpointermove", (e) => { if (e.buttons > 0) apply(e.getLocalPosition(hit).x); });
+      hit.on("pointerdown", (e) => { dragging = true; apply(e.getLocalPosition(hit).x, false); });
+      hit.on("globalpointermove", (e) => {
+        if (!dragging) return;          // 다른 곳을 끄는 중이면 남의 일
+        if (e.buttons === 0) { dragging = false; return; } // 밖에서 뗀 경우
+        apply(e.getLocalPosition(hit).x, false);
+      });
+      hit.on("pointerup", (e) => { if (dragging) { dragging = false; apply(e.getLocalPosition(hit).x, true); } });
+      hit.on("pointerupoutside", () => { if (dragging) { dragging = false; opts.onRedraw(); } });
       row.addChild(hit);
 
+      const sy = onArt ? ART.trackY[key] - 3 : y;
+      grp(`side_set_slider_${key}`, onArt ? ART.trackX : 18, sy, row);
+
+      // 음소거 — 아트에는 트랙 오른쪽에 버튼칸이 없다. 대신 아트가 그려 둔 왼쪽 ♫·★ 아이콘을 누른다.
+      // 아이콘 실측 자리에 맞춰야 해서 슬라이더 행이 아니라 **제 좌표를 가진 별도 컴포넌트**로 둔다
+      // (side_set_mute_bgm · _sfx — 두 개를 따로 옮길 수 있다).
+      const MW = 34, MH = 30;
       const mute = new Container();
-      const mArt = new Graphics().roundRect(0, 0, 34, 30, 9).fill(0xffffff).stroke({ width: 1.5, color: LINE });
+      const mArt = onArt
+        ? new Graphics().roundRect(0, 0, MW, MH, 9).fill({ color: 0xffffff, alpha: 0.001 })
+        : new Graphics().roundRect(0, 0, MW, MH, 9).fill(0xffffff).stroke({ width: 1.5, color: LINE });
       mute.addChild(mArt);
-      const mT = txt(muted ? "🔇" : "🔊", 14, INK);
-      mT.x = Math.round((34 - mT.width) / 2);
-      mT.y = 7;
-      mute.addChild(mT);
-      mute.x = TW + 10;
-      mute.y = trackY - 12;
+      // 켜져 있으면 아트의 아이콘을 그대로 보여 주고, 꺼졌을 때만 🔇를 덮는다
+      if (!onArt || muted) {
+        const mT = txt(muted ? "🔇" : "🔊", onArt ? 17 : 14, INK);
+        mT.x = Math.round((MW - mT.width) / 2);
+        mT.y = Math.round((MH - mT.height) / 2);
+        mute.addChild(mT);
+      }
       pressable(mute, () => {
         if (key === "bgm") setBgmMuted(!bgmMuted());
         else mockSfxMuted = !mockSfxMuted;
         opts.onRedraw();
       });
-      row.addChild(mute);
-
-      grp(`side_set_slider_${key}`, 18, y, row);
+      if (onArt) {
+        const m = ART.mute[key];
+        grp(`side_set_mute_${key}`, m.x - Math.round(MW / 2), m.y - Math.round(MH / 2), mute);
+      } else {
+        mute.x = TW + 10;
+        mute.y = trackY - 15;
+        row.addChild(mute);
+      }
       y += 56;
     }
 
     const reset = new Container();
-    const rArt = new Graphics().roundRect(0, 0, W - 36, 38, 11).fill(0xf8f4fc).stroke({ width: 1.5, color: LINE });
+    // 아트에 안내 칸이 그려져 있으면 상자는 생략하고 글자만
+    const rArt = onArt
+      ? new Graphics().roundRect(0, 0, W - 36, 38, 11).fill({ color: 0xffffff, alpha: 0.001 })
+      : new Graphics().roundRect(0, 0, W - 36, 38, 11).fill(0xf8f4fc).stroke({ width: 1.5, color: LINE });
     reset.addChild(rArt);
     const rT = txt("데모 안내 — 계정·결제는 준비 중이에요", 11.5, SUB);
     rT.x = Math.round((W - 36 - rT.width) / 2);
     rT.y = 12;
     reset.addChild(rT);
-    grp("side_set_note", 18, y, reset);
+    grp("side_set_note", 18, onArt ? ART.note : y, reset);
   }
 }

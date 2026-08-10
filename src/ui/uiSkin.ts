@@ -191,6 +191,27 @@ export function skinNatural(id: string, w: number, h: number): Container | null 
   return tagSlot(wrap, id);
 }
 
+/** 여백 잘라 채우기: 아트의 지정 영역(trim, 원본 픽셀 기준)만 박스(w×h)에 딱 맞춘다.
+ *  둘레에 투명 여백이 있는 배경판은 contain-fit으로 넣으면 여백만큼 작게 그려져,
+ *  같은 박스를 줘도 아트마다 창 크기가 달라 보인다. 보이는 판을 박스에 맞추는 용도.
+ *  trim은 호출측이 실측해 넘긴다(아트가 바뀌면 다시 재야 한다). */
+export function skinTrimFill(
+  id: string, w: number, h: number,
+  trim: { x: number; y: number; w: number; h: number },
+): Container | null {
+  const hit = loaded.get(id);
+  if (!hit) return null;
+  // 잘라낸 영역만 가리키는 하위 텍스처를 만들어 박스에 늘린다.
+  // (스프라이트를 음수 좌표로 밀어 넣는 방식은 바운즈가 여백까지 물어 다루기 번거롭다)
+  const src = new Texture({ source: hit.tex.source, frame: new Rectangle(trim.x, trim.y, trim.w, trim.h) });
+  const sp = new Sprite(src);
+  sp.scale.set(w / trim.w, h / trim.h);
+  applyDensity(sp, hit.slot);
+  const wrap = new Container();
+  wrap.addChild(sp);
+  return tagSlot(wrap, id);
+}
+
 /** 비율 유지 스킨: 박스(w×h) 안에 원본 비율 그대로 contain-fit (중앙 정렬) — 없으면 null.
  *  stretch/9slice와 달리 이미지가 절대 늘어나지 않음 (포토카드 심볼·버튼 등) */
 export function skinFit(id: string, w: number, h: number): Container | null {

@@ -938,7 +938,7 @@
   },
   "side": {
     "x": 35,
-    "y": 130,
+    "y": 133,
     "scale": 1
   },
   "card_text": {
@@ -1578,6 +1578,28 @@
   },
   "side_shop_coin": {
     "x": 285,
-    "y": 60
+    "y": 60,
+    "hidden": true
+  },
+  "side_shop_row_bg": {
+    "x": 0,
+    "y": 0
+  },
+  "side_shop_row_pack": {
+    "x": 16,
+    "y": 15,
+    "scale": 0.55
+  },
+  "side_shop_bg": {
+    "x": -5,
+    "y": 0
+  },
+  "side_shop_title": {
+    "x": 135,
+    "y": 50
+  },
+  "side_set_sns_google": {
+    "x": 18,
+    "y": 160
   }
 }
