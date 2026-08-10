@@ -4,7 +4,7 @@ import { bgManifest, type BgSlot } from "../ui/bgSlots";
 
 // 표시 그룹: ①프롤로그·로딩·타이틀 ②1~5막(스토리) ③게임 화면(관문·오디션) — 그룹 사이 구분선
 const GROUPS: Array<{ title: string; ids: string[] }> = [
-  { title: "🎬 인트로 (프롤로그 · 로딩 · 타이틀)", ids: ["prologue-01", "prologue-02", "loading", "title"] },
+  { title: "🎬 인트로 (프롤로그 · 로딩 · 타이틀)", ids: ["prologue-01", "prologue-02", "loading", "title", "true-ending"] },
   { title: "📖 스토리 (W0 · 1~5막)", ids: ["act0", "act1", "act2", "act3", "act4", "act5"] },
   { title: "🎮 게임 화면 (관문 · 오디션 · 연습)", ids: ["gate-act2", "gate-act3", "gate-act4", "gate-clue4", "gate-block", "audition", "training"] },
 ];
@@ -125,6 +125,21 @@ const upload = async (slot: BgSlot, file: File, cell: HTMLElement): Promise<void
   img.src = `${img.dataset["src"]}?v=${Date.now()}`;
 };
 
+// 슬롯 목록은 감시 제외라 Vite가 옛 모듈을 물고 있을 수 있다 — 디스크를 먼저 읽어 맞춘 뒤 그린다.
+// (안 하면 코드로 새로 추가한 슬롯이 에디터에 나타나지 않는다)
+async function syncFromDisk(): Promise<void> {
+  try {
+    const r = await fetch("/__backgrounds");
+    if (!r.ok) return;
+    const disk = await r.json() as Record<string, BgSlot[]>;
+    for (const k of ["story", "gates", "system"] as const) {
+      const next = disk[k];
+      if (Array.isArray(next)) bgManifest[k].splice(0, bgManifest[k].length, ...next);
+    }
+  } catch { /* dev 서버 없음 → 번들 값 그대로 */ }
+}
+
+function renderAll(): void {
 for (const [gi, group] of GROUPS.entries()) {
   const sec = document.createElement("div");
   sec.innerHTML = `
@@ -253,3 +268,6 @@ for (const [gi, group] of GROUPS.entries()) {
   grid.appendChild(cell);
   }
 }
+}
+
+void syncFromDisk().then(renderAll);

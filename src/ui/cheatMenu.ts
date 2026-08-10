@@ -20,6 +20,19 @@ export function registerCheat(label: string, run: () => void, gameOnly = false):
   cheats.push({ label, run, gameOnly });
 }
 
+/** 드롭다운으로 대상을 고르고 실행하는 치트 (관문·연습 판정결과처럼 종류가 여럿인 화면용).
+ *  선택 상자는 최대 두 개까지 — 보통 [화면] + [등급]. */
+export interface CheatPick {
+  label: string;
+  selects: Array<{ id: string; options: Array<{ value: string; label: string }> }>;
+  run: (v: Record<string, string>) => void;
+  gameOnly?: boolean;
+}
+const picks: CheatPick[] = [];
+export function registerCheatPick(p: CheatPick): void {
+  picks.push(p);
+}
+
 // 게임 화면 활성 여부 — app이 등록 (로비·부트에선 false → 게임 전용 항목 비활성화)
 let inGameCheck: () => boolean = () => false;
 export function setInGameCheck(fn: () => boolean): void {
@@ -112,16 +125,15 @@ export function initCheatMenu(): void {
     "border:2px solid #ece4f4;background:#fff;font-size:20px;cursor:pointer;" +
     "box-shadow:0 6px 18px rgba(167,139,230,.35)";
   document.body.appendChild(btn);
-  // 게임 화면(캔버스) **바깥 오른쪽**에 플로팅 — 화면 위 요소를 가리지 않는다.
-  // 레터박스 여백이 없는 좁은 창(모바일)에서는 밖에 자리가 없으므로 안쪽 구석으로 되돌린다.
-  const GAP = 10;
+  // 게임 화면(캔버스) **안쪽** 우측 하단에 플로팅.
+  // 한때 레터박스 여백이 있으면 화면 밖에 띄웠는데, 창 크기에 따라 버튼이 화면 밖으로
+  // 밀려나 안 보이는 일이 있어 언제나 안쪽 구석으로 되돌렸다.
   const SIZE = 46;
   const place = (): void => {
     const cv = document.querySelector("canvas");
     if (!cv) return;
     const r = cv.getBoundingClientRect();
-    const outside = r.right + GAP + SIZE <= window.innerWidth;
-    btn.style.left = `${outside ? r.right + GAP : r.right - SIZE - 8}px`;
+    btn.style.left = `${r.right - SIZE - 8}px`;
     btn.style.top = `${r.bottom - SIZE - 8}px`;
     btn.style.right = "auto";
     btn.style.bottom = "auto";
@@ -620,6 +632,40 @@ export function initCheatMenu(): void {
     for (const c of cheats.filter((x) => x.gameOnly)) {
       if (inGame) modal.appendChild(item(c.label, () => { c.run(); overlay.style.display = "none"; }));
       else disabledItem(c.label);
+    }
+    // 드롭다운 치트 — 라벨 + 선택 상자 + 열기 버튼을 한 줄로
+    for (const p of picks) {
+      if (p.gameOnly && !inGame) { disabledItem(`${p.label} (회차 진입 후)`); continue; }
+      const box = document.createElement("div");
+      box.style.cssText = "display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap";
+      const lb = document.createElement("span");
+      lb.textContent = p.label;
+      lb.style.cssText = "font-size:12px;font-weight:700;color:#5b4a70;flex:1 1 100%";
+      box.appendChild(lb);
+      const sels: Record<string, HTMLSelectElement> = {};
+      for (const s of p.selects) {
+        const el = document.createElement("select");
+        el.style.cssText = "flex:1;padding:7px;border:1px solid #ece4f4;border-radius:8px;font-size:12px;color:#5b4a70";
+        for (const o of s.options) {
+          const op = document.createElement("option");
+          op.value = o.value;
+          op.textContent = o.label;
+          el.appendChild(op);
+        }
+        sels[s.id] = el;
+        box.appendChild(el);
+      }
+      const go = document.createElement("button");
+      go.textContent = "열기";
+      go.style.cssText = "padding:7px 12px;border:0;border-radius:8px;background:#ff7fb0;color:#fff;font-weight:800;cursor:pointer";
+      go.onclick = () => {
+        const v: Record<string, string> = {};
+        for (const [k, el] of Object.entries(sels)) v[k] = el.value;
+        p.run(v);
+        overlay.style.display = "none";
+      };
+      box.appendChild(go);
+      modal.appendChild(box);
     }
   }
 }

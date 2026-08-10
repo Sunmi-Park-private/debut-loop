@@ -271,8 +271,9 @@ function ensureCore(): void {
     const rewards = ["⭐5", "⭐10", "카드×1", "⭐15", "카드×2", "⭐20", "카드★★★"];
     rewards.forEach((r, i) => {
       const day = i + 1;
-      const done = day <= 3 || (day === 4 && mock.dailyClaimed);
-      const today = day === 4 && !mock.dailyClaimed;
+      // 처음 여는 유저 기준 — 1일차부터 시작한다
+      const done = day === 1 && mock.dailyClaimed;
+      const today = day === 1 && !mock.dailyClaimed;
       const d = document.createElement("div");
       d.style.cssText =
         "border-radius:12px;padding:10px 4px;text-align:center;font-size:11px;font-weight:700;" +
@@ -281,7 +282,7 @@ function ensureCore(): void {
             `background:#f8f4fc;border:2px solid ${LINE};color:${SUB}`);
       d.innerHTML = `D${day}<br><span style='font-size:15px'>${done ? "✓" : r}</span>${today ? "<br><b style='font-size:9px'>오늘!</b>" : ""}`;
       skinBg(d, done ? "side-daily-cell-done" : today ? "side-daily-cell-today" : "side-daily-cell-lock");
-      if (today) d.onclick = () => { mock.dailyClaimed = true; toast("⭐15 획득! 내일 또 만나요 🎁"); renderDaily(); };
+      if (today) d.onclick = () => { mock.dailyClaimed = true; toast(`${r} 획득! 내일 또 만나요 🎁`); renderDaily(); };
       grid.appendChild(d);
     });
     modal.appendChild(grid);

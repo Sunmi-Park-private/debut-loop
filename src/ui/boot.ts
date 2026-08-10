@@ -271,7 +271,10 @@ export function showLoading(
     const barFill = new Graphics();
     root.addChild(barBg, barFill);
 
-    const MIN_MS = 500; // 최소 노출 시간 — 바가 한 번에 채워지는 깜빡임만 방지 (2000ms 테스트 바닥값이 로딩을 지배하던 것 제거)
+    // 최소 노출 시간 — APK는 에셋이 로컬이라 읽기가 순식간에 끝나 로딩 화면이 스쳐 지나가고,
+    // 그만큼의 부하가 로비 진입(첫 렌더 시 GPU 업로드)으로 몰린다. 진행률이 보이는 이 구간을
+    // 넉넉히 잡아 뒤 화면의 끊김을 줄인다.
+    const MIN_MS = 10000;
     let doneFlag = false;
     let elapsed = 0;
     void until.then(() => { doneFlag = true; });

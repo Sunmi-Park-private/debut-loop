@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#CFC5EC</color>
+    <!-- 적응형 아이콘 배경 — 아이콘 아트 네 모서리 평균색(짙은 남색). 전경이 안전 영역으로
+         줄어들면서 드러나는 둘레가 아트 가장자리와 이어져 보이게 맞췄다. -->
+    <color name="ic_launcher_background">#090C39</color>
 </resources>

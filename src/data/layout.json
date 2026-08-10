@@ -67,8 +67,12 @@
     "y": 130
   },
   "board_banner": {
-    "x": 15,
-    "y": 250
+    "x": 45,
+    "y": 254,
+    "fontSize": 12,
+    "texts": [
+      "보류 후보는 위에서 바로 [영입]하거나 [버리기]할 수 있어요"
+    ]
   },
   "board_bg": {
     "x": 15,
@@ -76,20 +80,23 @@
   },
   "board_btn_exchange": {
     "x": 15,
-    "y": 330
+    "y": 315
   },
   "board_btn_hold": {
     "x": 195,
-    "y": 330
+    "y": 315
   },
   "board_caption": {
-    "x": 35,
-    "y": 480,
-    "color": "#5b4a70"
+    "x": 15,
+    "y": 0,
+    "color": "#ffffff",
+    "texts": [
+      "기량은 무대 성적으로 오르내려요\\n오디션으로 더 나은 멤버를 확보하세요 \\n(마지막 기회 W17)"
+    ]
   },
   "board_close_x": {
-    "x": 345,
-    "y": 40
+    "x": 185,
+    "y": 660
   },
   "board_head": {
     "x": 2,
@@ -97,7 +104,7 @@
   },
   "board_held": {
     "x": 15,
-    "y": 391,
+    "y": 370,
     "scale": 1
   },
   "board_name": {
@@ -109,7 +116,10 @@
   "board_pool": {
     "x": 35,
     "y": 300,
-    "color": "#5b4a70"
+    "color": "#5b4a70",
+    "texts": [
+      "아직 못 만난 후보  시안 · 리안? · 다온?"
+    ]
   },
   "board_profile": {
     "x": 125,
@@ -126,7 +136,7 @@
     "color": "#5b4a70"
   },
   "board_stat": {
-    "x": 115,
+    "x": 113,
     "y": 156
   },
   "board_thumbs": {
@@ -135,12 +145,18 @@
     "color": "#000000"
   },
   "board_title": {
-    "x": 155,
-    "y": -20
+    "x": 115,
+    "y": -20,
+    "color": "#ffffff",
+    "texts": [
+      ""
+    ]
   },
   "board_week": {
-    "x": -55,
-    "y": -20
+    "x": -15,
+    "y": 110,
+    "color": "#ff7fb0",
+    "hidden": true
   },
   "bond_train_res_btn": {
     "x": 4,
@@ -195,21 +211,21 @@
     "scale": 1
   },
   "card_deck_content": {
-    "x": 5,
+    "x": -3,
     "y": -20
   },
   "card_deck_item_name": {
-    "x": 5,
+    "x": 6,
     "y": 0,
     "scale": 0.8
   },
   "card_deck_item_star": {
-    "x": -1,
+    "x": 0,
     "y": 27
   },
   "card_deck_item_sym": {
-    "x": 28,
-    "y": 18,
+    "x": 29,
+    "y": 20,
     "scale": 1
   },
   "card_deck_sub": {
@@ -292,24 +308,28 @@
     "y": 170
   },
   "funds_stop_desc": {
-    "x": 34,
-    "y": -90
+    "x": 5,
+    "y": -60,
+    "color": "#dbefff"
   },
   "funds_stop_hint": {
     "x": 19,
     "y": 108
   },
   "funds_stop_info": {
-    "x": 33,
-    "y": -118
+    "x": 43,
+    "y": -133,
+    "color": "#dbefff"
   },
   "funds_stop_track": {
     "x": 1,
     "y": 58
   },
   "funds_train_game_title": {
-    "x": -5,
-    "y": 0
+    "x": -8,
+    "y": 22,
+    "scale": 1.5,
+    "color": "#dbefff"
   },
   "funds_train_res_card_icon": {
     "x": 2,
@@ -324,76 +344,73 @@
     "y": -8
   },
   "gate": {
-    "x": 19,
-    "y": 43
+    "x": 15,
+    "y": 40
   },
   "gate_exit": {
-    "x": 4,
-    "y": -13
+    "x": -165,
+    "y": 730
   },
   "gate_photo": {
     "x": 26,
     "y": 167
-  },
-  "gate_photo_pick_btn": {
-    "x": -1,
-    "y": -163
-  },
-  "gate_photo_pick_grade": {
-    "x": 3,
-    "y": 69
-  },
-  "gate_photo_pick_hand": {
-    "x": -1,
-    "y": -136
-  },
-  "gate_photo_pick_sum": {
-    "x": -2,
-    "y": -149
-  },
-  "gate_photo_pick_ticket": {
-    "x": 11,
-    "y": -62
   },
   "gate_photo_title": {
     "x": 14,
     "y": -2
   },
   "gate_pick_btn": {
-    "x": 0,
-    "y": -41
+    "x": 50,
+    "y": 70,
+    "texts": [
+      "확인"
+    ],
+    "scale": 0.75
   },
   "gate_pick_desc": {
-    "x": -2,
-    "y": 1
+    "x": 50,
+    "y": 400,
+    "color": "#5b4a70",
+    "scale": 0.75,
+    "texts": [
+      "사용할 카드를 2장까지 선택하세요.\\n효과가 게이지에 적용됩니다"
+    ]
   },
   "gate_pick_grade": {
-    "x": 8,
-    "y": 86
+    "x": -15,
+    "y": 120,
+    "scale": 1.1
   },
   "gate_pick_hand": {
-    "x": 7,
-    "y": -48
+    "x": -39,
+    "y": -140,
+    "scale": 1.2
   },
   "gate_pick_sum": {
-    "x": -2,
-    "y": -41
+    "x": -22,
+    "y": -110,
+    "scale": 1.1
   },
   "gate_pick_ticket": {
-    "x": 21,
-    "y": -477
+    "x": 115,
+    "y": -310,
+    "color": "#5b4a70",
+    "texts": [
+      "센터 대결 통과증 +3"
+    ]
   },
   "gate_title": {
-    "x": 53,
-    "y": 6,
-    "scale": 1.1
+    "x": 95,
+    "y": 90,
+    "scale": 1.1,
+    "color": "#a99bc0"
   },
   "gauges": {
     "x": 64,
     "y": 37
   },
   "gauges_bar": {
-    "x": 18,
+    "x": 15,
     "y": 10
   },
   "header": {
@@ -454,7 +471,7 @@
     "fontSize": 22
   },
   "lobby_cta_sub": {
-    "x": -25,
+    "x": -24,
     "y": 27
   },
   "lobby_daily": {
@@ -486,8 +503,8 @@
     "y": 23
   },
   "lobby_status": {
-    "x": 17,
-    "y": -22
+    "x": 15,
+    "y": -20
   },
   "lobby_val_bond": {
     "x": 245,
@@ -521,8 +538,9 @@
   },
   "promo_match_desc": {
     "x": -5,
-    "y": -90,
-    "color": "#000000"
+    "y": -104,
+    "color": "#5b4a70",
+    "scale": 1.3
   },
   "promo_match_grid": {
     "x": -1,
@@ -533,8 +551,9 @@
     "y": -37
   },
   "promo_match_info": {
-    "x": -6,
-    "y": -116
+    "x": 2,
+    "y": -110,
+    "color": "#5b4a70"
   },
   "promo_mini_bg": {
     "x": -2,
@@ -610,12 +629,13 @@
     "y": 137
   },
   "rhythm_desc": {
-    "x": 24,
-    "y": 34,
-    "color": "#5b4a70"
+    "x": 21,
+    "y": 30,
+    "color": "#5b4a70",
+    "scale": 1.05
   },
   "rhythm_hud": {
-    "x": 46,
+    "x": 45,
     "y": 62
   },
   "rhythm_line": {
@@ -657,7 +677,7 @@
   "story_tab": {
     "x": 200,
     "y": 71,
-    "color": "#f0a93a"
+    "color": "#ffffff"
   },
   "train_bubble": {
     "x": 20,
@@ -677,13 +697,14 @@
     "y": 477
   },
   "train_row_audition": {
-    "x": 222,
+    "x": 225,
     "y": 328,
     "texts": [
       null,
       null,
       "오디션 카드 2장 (평판·실력)"
-    ]
+    ],
+    "scale": 1
   },
   "train_row_bond": {
     "x": 225,
@@ -739,8 +760,8 @@
     "fontSize": 16
   },
   "training": {
-    "x": 17,
-    "y": 80,
+    "x": 13,
+    "y": 110,
     "scale": 1
   },
   "vocal_mini_bg": {
@@ -892,23 +913,11 @@
   },
   "side": {
     "x": 35,
-    "y": 130,
+    "y": 133,
     "scale": 1
-  },
-  "side_daily_cell_done": {
-    "x": 5,
-    "y": 0
   },
   "card_text": {
     "x": 195,
-    "y": 80
-  },
-  "side_daily_cell_reward": {
-    "x": 35,
-    "y": 28
-  },
-  "side_album_cell_text_lock": {
-    "x": 45,
     "y": 80
   },
   "side_album_cell_lock": {
@@ -925,7 +934,7 @@
   },
   "hard_start": {
     "x": 85,
-    "y": 486,
+    "y": 490,
     "texts": [
       "하드모드(3열) + 보너스"
     ],
@@ -970,7 +979,7 @@
     "scale": 0.85
   },
   "board_locked_note": {
-    "x": 20,
+    "x": 95,
     "y": 330,
     "color": "#000000"
   },
@@ -1007,7 +1016,7 @@
   "audition_train_res_drain": {
     "x": 0,
     "y": 3,
-    "color": "#ffe4f0",
+    "color": "#c9527f",
     "fontSize": 15
   },
   "audition_rps_opp_scissors": {
@@ -1055,8 +1064,9 @@
   "promo_train_res_card": {
     "x": 0,
     "y": 0,
-    "color": "#dbefff",
-    "fontSize": 17
+    "color": "#5b4a70",
+    "fontSize": 17,
+    "scale": 1
   },
   "promo_train_res_btn_text": {
     "x": 68,
@@ -1066,11 +1076,8 @@
     ]
   },
   "easy_start_text": {
-    "x": 54,
-    "y": 15,
-    "texts": [
-      "이지 · 2열  (Space)"
-    ]
+    "x": 56,
+    "y": 14
   },
   "funds_train_fail_bg": {
     "x": 0,
@@ -1081,11 +1088,12 @@
     "y": 80
   },
   "hard_start_text": {
-    "x": 57,
+    "x": 45,
     "y": 14,
     "texts": [
       "하드 · 3열 + 보너스"
-    ]
+    ],
+    "fontSize": 13
   },
   "funds_train_fail_retry": {
     "x": 0,
@@ -1103,5 +1111,485 @@
     "texts": [
       "계속"
     ]
+  },
+  "block_dodge_msg": {
+    "x": 105,
+    "y": 40,
+    "color": "#5b4a70",
+    "texts": [
+      "밝은 타일에 올라타 반격하세요!"
+    ]
+  },
+  "block_dodge_enemy": {
+    "x": 85,
+    "y": 70,
+    "color": "#5b4a70",
+    "texts": [
+      "진범의 그림자"
+    ],
+    "hidden": true
+  },
+  "block_dodge_desc": {
+    "x": -75,
+    "y": 140,
+    "color": "#5b4a70",
+    "texts": [
+      "화면 좌/우 탭 = 이동(한 줄 하강)                                                          💥 회피 · ✨ 반격 · 💖 회복 · 🛡 방어.           "
+    ]
+  },
+  "card_deck_item_card": {
+    "x": 0,
+    "y": 0
+  },
+  "board_btn_hold_text": {
+    "x": 71,
+    "y": 14,
+    "fontSize": 12,
+    "texts": [
+      "오디션 개최"
+    ]
+  },
+  "board_btn_exchange_text": {
+    "x": 62,
+    "y": 14,
+    "fontSize": 12
+  },
+  "train_row_bond_card": {
+    "x": 65,
+    "y": 40
+  },
+  "board_stat_text": {
+    "x": 152,
+    "y": -5,
+    "color": "#ff7fb0"
+  },
+  "board_thumbs_stats": {
+    "x": 56,
+    "y": 185,
+    "color": "#5b4a70"
+  },
+  "promo_train_res_card_name": {
+    "x": 0,
+    "y": 0,
+    "fontSize": 18
+  },
+  "promo_train_res_card_icon": {
+    "x": 0,
+    "y": 5
+  },
+  "promo_train_res_drain": {
+    "x": 0,
+    "y": 0,
+    "color": "#ffffff",
+    "fontSize": 20
+  },
+  "board_held_name": {
+    "x": 17,
+    "y": 0,
+    "scale": 1
+  },
+  "board_held_icon": {
+    "x": 11,
+    "y": 0
+  },
+  "board_held_btn_recruit": {
+    "x": 59,
+    "y": 3,
+    "scale": 0.75
+  },
+  "board_held_btn_drop": {
+    "x": 70,
+    "y": 3,
+    "scale": 0.75
+  },
+  "promo_train_game_title_3x3": {
+    "x": 144,
+    "y": 94
+  },
+  "board_held_btn_drop_text": {
+    "x": 11,
+    "y": 4,
+    "color": "#ffffff",
+    "fontSize": 15
+  },
+  "board_held_btn_recruit_text": {
+    "x": 15,
+    "y": 4,
+    "fontSize": 15
+  },
+  "board_res_btn_recruit": {
+    "x": 115,
+    "y": 320,
+    "scale": 0.75
+  },
+  "board_res_btn_recruit_text": {
+    "x": 92,
+    "y": 13,
+    "fontSize": 22,
+    "texts": [
+      "영입 "
+    ],
+    "color": "#ffffff"
+  },
+  "board_res_card_stat": {
+    "x": 40,
+    "y": 137
+  },
+  "board_res_card": {
+    "x": 82,
+    "y": 100,
+    "scale": 1.3
+  },
+  "board_res_caption": {
+    "x": 75,
+    "y": 440,
+    "color": "#5b4a70",
+    "scale": 0.95
+  },
+  "board_res_btn_hold": {
+    "x": 116,
+    "y": 370,
+    "scale": 0.75
+  },
+  "board_res_card_name": {
+    "x": 77,
+    "y": 100,
+    "texts": [
+      "리안"
+    ]
+  },
+  "board_res_btn_hold_text": {
+    "x": 92,
+    "y": 12,
+    "fontSize": 22,
+    "texts": [
+      "보류 "
+    ]
+  },
+  "board_res_card_role": {
+    "x": 81,
+    "y": 120,
+    "color": "#5b4a70"
+  },
+  "board_res_grade": {
+    "x": -15,
+    "y": 70,
+    "scale": 1.1
+  },
+  "gate_pick_hand_sym": {
+    "x": 31,
+    "y": 10
+  },
+  "gate_photo_tab": {
+    "x": 0,
+    "y": 0,
+    "texts": [
+      "2회차 · W19 · D-35 · 카드 1 "
+    ]
+  },
+  "clue_dodge_msg": {
+    "x": 18,
+    "y": 110,
+    "texts": [
+      "밝은 타일에 올라타 반격하세요!"
+    ]
+  },
+  "clue_dodge_enemy": {
+    "x": -35,
+    "y": 110,
+    "texts": [
+      "진범의 그림자 "
+    ],
+    "color": "#ffffff"
+  },
+  "clue_dodge_desc": {
+    "x": 25,
+    "y": 90,
+    "texts": [
+      " 화면 좌/우 탭 = 이동(한 줄 하강) \\n💥 회피 · ✨ 반격 · 💖 회복 · 🛡 방어"
+    ]
+  },
+  "block_dodge_board": {
+    "x": 5,
+    "y": 80
+  },
+  "block_dodge_hp": {
+    "x": 5,
+    "y": 80
+  },
+  "block_dodge_grid": {
+    "x": 5,
+    "y": 80
+  },
+  "gate_photo_panel": {
+    "x": 14,
+    "y": 0,
+    "scale": 0.9,
+    "hidden": true
+  },
+  "gate_pick_sheet": {
+    "x": -37,
+    "y": -30,
+    "scale": 1.2
+  },
+  "gate_pick_hand_star": {
+    "x": 1,
+    "y": 0
+  },
+  "gate_photo_board": {
+    "x": 0,
+    "y": 0
+  },
+  "gate_photo_exit": {
+    "x": -15,
+    "y": -10
+  },
+  "clue_dodge_board": {
+    "x": 2,
+    "y": 80
+  },
+  "clue_dodge_hp": {
+    "x": 5,
+    "y": -20
+  },
+  "clue_dodge_grid": {
+    "x": 3,
+    "y": 80
+  },
+  "side_bg": {
+    "x": 0,
+    "y": 0
+  },
+  "board_recruit_bg": {
+    "x": 0,
+    "y": 0
+  },
+  "gate_block_title": {
+    "x": 95,
+    "y": 90,
+    "scale": 1.1,
+    "color": "#5b4a70"
+  },
+  "card_deck_item_count": {
+    "x": -29,
+    "y": 0
+  },
+  "end_action": {
+    "x": 135,
+    "y": 430,
+    "scale": 0.4
+  },
+  "end_body_text": {
+    "x": 195,
+    "y": 370,
+    "fontSize": 17,
+    "texts": [
+      "5명이 함께, 처음으로 끝까지. 0시가 지나간다."
+    ],
+    "color": "#000000",
+    "center": true,
+    "hidden": true
+  },
+  "end_action_text": {
+    "x": 155,
+    "y": 0,
+    "fontSize": 44,
+    "center": true,
+    "color": "#ffffff"
+  },
+  "end_title_text": {
+    "x": 195,
+    "y": 60,
+    "color": "#ffffff",
+    "fontSize": 37,
+    "texts": [
+      "데뷔 성공! 우리가 지켰어!"
+    ],
+    "center": true,
+    "hidden": true
+  },
+  "end_video": {
+    "x": 18,
+    "y": 0,
+    "scale": 1
+  },
+  "gate_act3_exit": {
+    "x": 5,
+    "y": -10
+  },
+  "gate_act3": {
+    "x": 15,
+    "y": 100
+  },
+  "gate_act3_title": {
+    "x": 55,
+    "y": 10,
+    "scale": 1.1,
+    "color": "#5b4a70"
+  },
+  "side_daily_bg": {
+    "x": -1,
+    "y": 0
+  },
+  "side_title_text": {
+    "x": 25,
+    "y": 30,
+    "hidden": true
+  },
+  "side_daily_cell_done": {
+    "x": 25,
+    "y": 40
+  },
+  "side_daily_note": {
+    "x": 95,
+    "y": 90
+  },
+  "side_daily_head": {
+    "x": 85,
+    "y": 70
+  },
+  "side_daily_cell_reward": {
+    "x": 35,
+    "y": 80
+  },
+  "side_daily_d1": {
+    "x": 25,
+    "y": 300
+  },
+  "side_daily_d2": {
+    "x": 135,
+    "y": 300
+  },
+  "side_daily_d3": {
+    "x": 245,
+    "y": 300
+  },
+  "side_daily_d4": {
+    "x": 25,
+    "y": 405
+  },
+  "side_daily_d5": {
+    "x": 135,
+    "y": 405
+  },
+  "side_daily_d6": {
+    "x": 245,
+    "y": 405
+  },
+  "side_daily_d7": {
+    "x": 41,
+    "y": 508
+  },
+  "side_daily_grid": {
+    "x": 0,
+    "y": 0
+  },
+  "side_daily_texts": {
+    "x": -1,
+    "y": 19,
+    "color": "#c9527f"
+  },
+  "recheck_btn_back": {
+    "x": -5,
+    "y": 50
+  },
+  "recheck_btn_go": {
+    "x": -5,
+    "y": 50
+  },
+  "recheck_line2": {
+    "x": -5,
+    "y": 70
+  },
+  "recheck_line1": {
+    "x": -5,
+    "y": 70
+  },
+  "recheck_title": {
+    "x": 5,
+    "y": 20,
+    "color": "#ffffff",
+    "fontSize": 21
+  },
+  "side_daily_t1": {
+    "x": 25,
+    "y": 180
+  },
+  "side_daily_t4": {
+    "x": 155,
+    "y": 180
+  },
+  "side_daily_t7": {
+    "x": 285,
+    "y": 180
+  },
+  "side_album_head": {
+    "x": 66,
+    "y": 68
+  },
+  "side_album_title": {
+    "x": 63,
+    "y": 37
+  },
+  "side_shop_coin": {
+    "x": 285,
+    "y": 60,
+    "hidden": true
+  },
+  "side_shop_row_bg": {
+    "x": 0,
+    "y": 0
+  },
+  "side_shop_row_pack": {
+    "x": 16,
+    "y": 15,
+    "scale": 0.55
+  },
+  "side_shop_bg": {
+    "x": -5,
+    "y": 0
+  },
+  "side_shop_title": {
+    "x": 135,
+    "y": 50
+  },
+  "side_set_sns_google": {
+    "x": 18,
+    "y": 160
+  },
+  "doom_end_action": {
+    "x": 98,
+    "y": 430,
+    "scale": 0.65
+  },
+  "doom_end_body_text": {
+    "x": 115,
+    "y": 320,
+    "texts": [
+      "게이지 하나가 바닥났다.\\n(실제: 강등→패자부활전→탈락)"
+    ],
+    "color": "#ffffff"
+  },
+  "doom_end_title_text": {
+    "x": 125,
+    "y": 270,
+    "color": "#ffffff"
+  },
+  "doom_end_emoji_text": {
+    "x": 175,
+    "y": 210
+  },
+  "doom_end_action_text": {
+    "x": 154,
+    "y": 14,
+    "fontSize": 27,
+    "color": "#ffffff",
+    "center": true
+  },
+  "gate_act2_title": {
+    "x": 55,
+    "y": 4,
+    "scale": 1.1,
+    "color": "#5b4a70"
   }
 }

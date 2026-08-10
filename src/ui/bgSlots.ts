@@ -17,6 +17,26 @@ export interface BgSlot {
 interface BgManifest { story: BgSlot[]; gates: BgSlot[]; system: BgSlot[] }
 export const bgManifest = backgroundsJson as unknown as BgManifest;
 
+// dev 서버는 backgrounds.json을 감시 대상에서 빼두었다(업로드마다 게임이 리로드되면 런이 날아가므로).
+// 그 탓에 Vite가 옛 모듈을 물고 있어, 슬롯을 새로 추가해도 배경 에디터·게임에 나타나지 않는다.
+// 부팅 때 디스크를 직접 읽어(/__backgrounds GET) 제자리 교체한다 — layout·uiskins와 같은 규약.
+if (import.meta.hot) {
+  void fetch("/__backgrounds")
+    .then((r) => (r.ok ? (r.json() as Promise<BgManifest>) : null))
+    .then((disk) => {
+      if (!disk) return;
+      let changed = false;
+      for (const k of ["story", "gates", "system"] as const) {
+        const next = disk[k];
+        if (!Array.isArray(next) || JSON.stringify(next) === JSON.stringify(bgManifest[k])) continue;
+        bgManifest[k].splice(0, bgManifest[k].length, ...next); // 참조를 쓰는 쪽(에디터·게임)이 그대로 보게 제자리 교체
+        changed = true;
+      }
+      if (changed) void import("./editor").then((e) => e.triggerRedraw());
+    })
+    .catch(() => {});
+}
+
 /** 스토리 배경 선택: beatId 일치 우선 → act 이하 최대 → null(기본 배경 폴백).
  *  빈(미업로드) 비트 슬롯은 건너뜀 — 막 슬롯(act0 프롤로그 공통 등)이 가려지지 않게 */
 export function pickBgSlot(beat: { id: string; act: number }, slots: BgSlot[] = bgManifest.story): BgSlot | null {

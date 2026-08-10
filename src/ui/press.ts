@@ -1,6 +1,7 @@
 // ui/press.ts — 버튼 눌림 효과 SSOT. 화면마다 손맛이 다르면 같은 게임으로 안 느껴져서 한 곳에 모았다.
 import { Container } from "pixi.js";
 import { easeInOut, lerp } from "./ease";
+import { buzz } from "./haptics";
 
 /** 눌렸을 때 크기 (100% → 90% → 100%) */
 export const PRESS_SCALE = 0.9;
@@ -72,6 +73,7 @@ export function pressable(node: Container, onTap?: () => void, opts: PressOpts =
   node.cursor = "pointer";
   node.on("pointerdown", () => {
     downAt = performance.now();
+    buzz("light"); // 진동도 눌림 효과의 일부 — 화면별로 따로 걸면 빠지는 버튼이 생긴다 (설정에서 끄면 무동작)
     scaleTo(PRESS_SCALE, PRESS_DOWN_MS);
   });
   node.on("pointerupoutside", () => release()); // 밖에서 뗐으면 복귀만

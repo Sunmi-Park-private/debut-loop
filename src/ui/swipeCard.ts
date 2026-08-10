@@ -333,8 +333,8 @@ export function renderCard(
       card.x = ax - PIVOT_X * cos;
       card.y = ay - PIVOT_X * sin;
       card.rotation = rot;
-      // 임계 접근 피드백: 카드 살짝 기울고 투명도 변화
-      card.alpha = 1 - Math.min(0.25, (Math.abs(dx) / DRAG_TH) * 0.15);
+      // 임계 접근 피드백은 기울기만 — 투명도는 주지 않는다 (아트가 비쳐 보여 완성도가 떨어진다)
+      card.alpha = 1;
       // 캐릭터를 카드에 강체로 부착 — 카드와 같은 축을 공유해 좌우가 대칭으로 기운다
       if (portraitSpr && portraitHome) {
         const offX = portraitHome.x - ax + dx; // 축 기준 가로 오프셋 (드래그와 무관한 고정값)

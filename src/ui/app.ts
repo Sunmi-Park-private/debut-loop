@@ -16,18 +16,19 @@ import { pos } from "./layout";
 import { fullRect, stageTop, stageHeight } from "./stage";
 import { beginFrame, editable, onRedraw, triggerRedraw } from "./editor";
 import { statusLine, ddayWeeks } from "./runStatus";
-import { initCheatMenu, registerCheat, registerCardOps, registerJumpOps, registerGaugeOps, drainPendingCards, getPendingCards, setInGameCheck } from "./cheatMenu";
+import { initCheatMenu, registerCheat, registerCheatPick, registerCardOps, registerJumpOps, registerGaugeOps, drainPendingCards, getPendingCards, setInGameCheck } from "./cheatMenu";
 import { addCard, removeCards } from "../engine/deck";
 import { isDevMode } from "./devMode";
 import { toast } from "./metaMenu";
 import { renderCardDeckSheet } from "./cardDeckSheet";
+import { advanceMockDailyDay } from "./sidePanels";
 import { pressable } from "./press";
 import { playBgm, setBgmVolume, setBgmMuted, DEFAULT_VOLUME } from "./audio";
 import { guide, guideSeq, resetTutorial } from "./tutorial";
 import { pickBgSlot, bgManifest } from "./bgSlots";
 import { skinNode, skinFit, skinNatural, skinTex } from "./uiSkin";
 import { assetUrl, assetVersion } from "./hotAssets";
-import type { Gauges, Card, GaugeId } from "../engine/types";
+import type { Gauges, Card, GaugeId, MiniGameGrade, TrainingId, RunEvent } from "../engine/types";
 
 const newRun = (): RunController => createRunController(beats, config, "small", gates, tuning);
 const BTN_INK = 0xe0d0fd; // 스토리 상단 버튼 글씨 — ui-btn 아트 바깥 연보라 테두리 실측값
@@ -37,6 +38,12 @@ let ctrl: RunController | null = null;
 let freeTraining = false;               // 🎹 자유 연습 모드 (치트 전용)
 let memberBoardForced = false;          // 👥 멤버 보드 강제 오픈 (👥 멤버 버튼·치트 공용)
 let memberBoardAudition = false;        // 🎤 오디션 씬 직행 (치트 "오디션 보기" — 1회 소비)
+let memberBoardResult = false;          // 🏅 판정결과 화면 직행 (치트 — 리듬 없이 레이아웃 확인용, 1회 소비)
+let memberBoardRecheck = false;         // 🙅 "새로 만날 후보가 없어요" 확인 화면 직행 (치트, 1회 소비)
+// 판정결과 화면 직행 치트 — 관문·연습은 게임을 돌리지 않고 결과 화면부터 띄운다 (레이아웃 점검용)
+let gatePreview: MiniGameGrade | null = null;
+let trainPreview: { id: TrainingId; grade: MiniGameGrade } | null = null;
+let endPreview: RunEvent | null = null; // 💀 파멸 붕괴 엔딩 화면 (치트)
 let lastTrainWeek = 0;                  // 주간 연습 기준 주 — state.week가 이보다 커지면 연습 오픈
 let loop2Mode: "fast" | "normal" | null = null; // 2회차 진행 모드 (회귀 화면에서 선택, 새 런 시 초기화)
 let currentDraw: () => void = () => {}; // 현재 진입의 draw (치트·에디터가 호출)
@@ -138,6 +145,10 @@ export function initGameCheats(): void {
     toast("오디션 카드 3장 + 진행권 1장 지급");
   }), true);
   registerCheat("👥 멤버 보드 열기", needGame(() => { memberBoardForced = true; }), true);
+  registerCheat("🏅 오디션 판정결과 화면 (GOOD)", needGame(() => {
+    memberBoardForced = true; // (배타 처리는 아래 resetPreviews를 쓰는 치트들과 같은 규칙)
+    memberBoardResult = true;
+  }), true);
   registerCheat("🎤 오디션 보기", needGame((c) => {
     if (c.state.membersLocked) { toast("데뷔조 확정 후엔 오디션 불가 — 새 런에서 시도하세요"); return; }
     if (!c.state.deck.includes("audition")) c.state.deck.push("audition"); // 진행권 없으면 지급
@@ -195,6 +206,75 @@ export function initGameCheats(): void {
     setBgmVolume(DEFAULT_VOLUME);
     setBgmMuted(false);
     toast(`튜토리얼 ${n}건 + 설정 초기화 (볼륨 ${DEFAULT_VOLUME})`);
+  });
+  // 화면 직행 치트끼리는 배타 — 앞선 미리보기가 켜져 있으면 그 화면이 먼저 그려져
+  // 새로 고른 화면이 안 뜬다(자유 연습 > 멤버 보드 > 관문 > 엔딩 순서로 그린다).
+  const resetPreviews = (): void => {
+    freeTraining = false;
+    trainPreview = null;
+    memberBoardForced = false;
+    memberBoardResult = false;
+    memberBoardRecheck = false;
+    memberBoardAudition = false;
+    gatePreview = null;
+    endPreview = null;
+  };
+  // ── 판정결과 화면 직행 (레이아웃 점검용) ──
+  // 관문·연습은 종류가 많아 드롭다운으로 고른다. 게임을 돌리지 않고 결과 화면부터 뜬다.
+  const GRADE_OPTS = [
+    { value: "perfect", label: "PERFECT" },
+    { value: "good", label: "GOOD" },
+    { value: "clear", label: "CLEAR" },
+  ];
+  registerCheatPick({
+    label: "🎮 관문게임 판정결과",
+    gameOnly: true,
+    selects: [
+      { id: "gate", options: gates.map((g) => ({ value: g.id, label: g.name })) },
+      { id: "grade", options: GRADE_OPTS },
+    ],
+    run: (v) => {
+      if (!ctrl || !gameActive) { toast("게임(회차) 진입 후 사용할 수 있어요"); return; }
+      const g = gates.find((x) => x.id === v.gate);
+      if (!g) return;
+      resetPreviews();
+      gatePreview = (v.grade as MiniGameGrade) ?? "good";
+      ctrl.forceGate(g);
+      currentDraw();
+    },
+  });
+  const TRAIN_OPTS: Array<{ value: TrainingId; label: string }> = [
+    { value: "vocal", label: "보컬 연습" }, { value: "dance", label: "안무 연습" },
+    { value: "promo", label: "SNS 홍보" }, { value: "funds", label: "알바" },
+    { value: "audition", label: "오디션 대비" }, { value: "bond", label: "휴식" },
+  ];
+  registerCheatPick({
+    label: "🏋️ 연습하기 판정결과",
+    gameOnly: true,
+    selects: [
+      { id: "act", options: TRAIN_OPTS },
+      { id: "grade", options: GRADE_OPTS },
+    ],
+    run: (v) => {
+      if (!ctrl || !gameActive) { toast("게임(회차) 진입 후 사용할 수 있어요"); return; }
+      resetPreviews();
+      trainPreview = { id: v.act as TrainingId, grade: (v.grade as MiniGameGrade) ?? "good" };
+      freeTraining = true;
+      currentDraw();
+    },
+  });
+  registerCheat("🙅 새로운 후보 없음 화면", needGame(() => {
+    resetPreviews();
+    memberBoardForced = true;
+    memberBoardRecheck = true;
+  }), true);
+  registerCheat("💀 파멸 붕괴 엔딩 화면", needGame(() => {
+    resetPreviews();
+    endPreview = { type: "ending", kind: "dark" };
+  }), true);
+  registerCheat("📅 데일리 출석 하루 넘기기", () => {
+    const d = advanceMockDailyDay();
+    toast(`데일리 ${d}일차 — 창을 다시 열면 반영됩니다`);
   });
   // 관문(스테이지 게임) 숏컷 — gates.json 기반 직접 실행
   const GATE_LABEL: Record<string, string> = {
@@ -397,19 +477,27 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
     nextBump = {};
     if (!skinTex("game-gauge-bar")) drawHeader(); // 상태바 스킨 사용 시 헤더 정보는 바 하단 탭에 통합됨
 
+    if (endPreview) { // 💀 치트 미리보기 — 스토리 카드보다 먼저 (아래 정식 분기는 c.ended용)
+      renderEndScreen(root, endPreview, c.state, () => { endPreview = null; draw(); });
+      return;
+    }
     if (freeTraining) { // 🎹 자유 연습 (비트 진행 없음)
       renderTrainingBoard(root, {
         act: c.state.act, week: c.state.week, loopCount: c.state.loopCount,
         ticker: app.ticker, free: true,
         charAssets: assets.char("haru"),
-        onFinish: (activity, grade) => { c.trainFree(activity, grade); freeTraining = false; draw(); },
-        onSkip: () => { freeTraining = false; draw(); },
+        preview: trainPreview ?? undefined, // 치트로 고른 연습 판정결과 (1회 소비)
+        onFinish: (activity, grade) => { c.trainFree(activity, grade); freeTraining = false; trainPreview = null; draw(); },
+        onSkip: () => { freeTraining = false; trainPreview = null; draw(); },
         onRetryPenalty: () => { c.retryTraining(); }, // free여도 페널티는 컨트롤러 규칙 재사용
       });
       return;
     }
     // 멤버 점검 보드 — 📷 이벤트 직후·W18 락인 연출·치트 (주간 연습보다 먼저)
-    if (c.memberWindowOpen || memberBoardForced) {
+    // 단, 관문이 진행 중이면 보드는 기다린다 — 안 그러면 미니게임 화면 위에 보드가 그려져
+    // 게임이 사라진 것처럼 보이고 키·탭이 전부 보드로 가버린다 (주간 연습도 같은 규칙).
+    // 치트(memberBoardForced)는 의도적 진입이므로 그대로 연다.
+    if ((c.memberWindowOpen && !c.pendingGate) || memberBoardForced) {
       if (!c.state.membersLocked) // 치트 진입에도 표시 — 자원 사슬(카드→진행권→개최) 3단계 안내
         guideSeq("memberBoard2", [
           ["yuwol", "여기가 <b>멤버 점검 보드</b>야. 남은 자리는 우리가 직접 채워 — 멤버를 탭하면 상태를 볼 수 있어."],
@@ -418,8 +506,12 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
         ]);
       const startAudition = memberBoardAudition;
       memberBoardAudition = false; // 1회 소비 — 이후 리드로우는 점검 화면부터
+      const previewResult = memberBoardResult ? "good" as const : undefined;
+      memberBoardResult = false; // 1회 소비
+      const previewRecheck = memberBoardRecheck;
+      memberBoardRecheck = false; // 1회 소비
       renderMemberBoard(root, {
-        ctrl: c, ticker: app.ticker, startAudition,
+        ctrl: c, ticker: app.ticker, startAudition, previewResult, previewRecheck,
         // 센터 스테이지 대형 프로필 — bust 우선, 미제작 캐릭터는 전신 아트로 폴백 (보드가 상반신만 크롭)
         bustOf: (id) => { const a = assets.char(id); return a.profileFace ?? a.bust ?? a.daily ?? a.stand ?? a.stage; }, // 밝은 표정 우선
         onClose: () => { c.closeMemberWindow(); memberBoardForced = false; draw(); },
@@ -460,7 +552,9 @@ export function startApp(app: Application, assets: GameAssets, openPractice = fa
         assets.gateBg(gate.engine, gate.id), // 관문 배경: id 슬롯(bg 에디터) 우선 → 엔진 기본
         () => { c.state.points += 1; }, // 리듬 하드(3열) 클리어 보너스 +1pt
         statusLine({ loop: c.state.loopCount, week: c.state.week, debutWeek: config.debutWeek,
-          cards: c.state.cards.length, clues: c.state.clues.size })); // 포토카드 배경판 상단 탭 — 로비·스토리와 같은 문구
+          cards: c.state.cards.length, clues: c.state.clues.size }), // 포토카드 배경판 상단 탭 — 로비·스토리와 같은 문구
+        gatePreview ?? undefined); // 치트로 고른 관문 판정결과 (아래에서 1회 소비)
+      gatePreview = null;
       return;
     }
     if (c.current) {

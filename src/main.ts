@@ -38,12 +38,16 @@ async function main(): Promise<void> {
     height: logicalH(),
     background: "#f8f5fd",
     antialias: true,
-    resolution: Math.max(2, window.devicePixelRatio || 1), // 레티나 선명도
+    // 렌더 배율 — 예전엔 항상 2 이상(기기 dpr이 3이면 3)이었는데, 폰에서 프레임버퍼가
+    // 1290×2868까지 커져(안티에일리어싱까지) 심하게 버벅였다. 2면 충분히 선명하다.
+    resolution: Math.min(2, Math.max(1, window.devicePixelRatio || 1)),
     autoDensity: true, // CSS 크기는 논리 픽셀 유지
   });
   const el = document.getElementById("app");
   if (!el) throw new Error("#app not found");
   el.appendChild(app.canvas);
+  // 여백은 두지 않는다 — 안전영역 패딩(좌우 4·12px)을 넣어 봤지만 실기에서 좌우 잘림은
+  // 그대로면서 화면만 작아지고 상하까지 잘렸다. 잘림의 원인이 캔버스 넘침이 아니라는 뜻.
   el.style.cssText = "display:flex;align-items:center;justify-content:center;width:100vw;height:100vh;overflow:hidden";
   const fit = (): void => {
     const s = fitScale();
@@ -60,17 +64,19 @@ async function main(): Promise<void> {
   initGameCheats(); // 게임 치트(관문 숏컷 포함) — 로비 치트 목록에도 항상 표시 (게임 밖에선 안내)
   initAudioUnlock(); // 첫 제스처에서 재생 언락 (자동재생 정책)
 
-  // 무거운 에셋은 프롤로그 뒤에서 백그라운드 로딩 시작 (로딩 화면 배경은 별도 선로드)
+  // 프롤로그·로딩 화면 배경만 먼저 — 이 둘은 부트 첫 화면이라 기다릴 수 없다
   const progress = { done: 0, total: 1 };
   const loadingBgPromise = loadLoadingBg();
   const prologueBgPromise = loadPrologueBg(); // 프롤로그 배경 — 기다리지 않고 도착 시 반영
-  const assetsPromise = loadGameAssets((d, t) => { progress.done = d; progress.total = t; }, app.renderer);
 
   // E2E 테스트용 씬 마커 — 현재 부트 단계 노출 (게임 로직에선 미사용)
   const mark = (s: string): void => { (window as unknown as { __scene?: string }).__scene = s; };
   mark("prologue");
   await playPrologue(app, prologueBgPromise);           // ① 프롤로그 (경량, 즉시)
   mark("loading");
+  // 무거운 에셋은 로딩 화면에 들어와서야 시작 — 프롤로그 재생과 겹치면 디코딩 부하로 영상이 끊긴다.
+  // 로딩이 길어져도 진행률 게이지가 보이는 구간이므로 체감이 낫다
+  const assetsPromise = loadGameAssets((d, t) => { progress.done = d; progress.total = t; }, app.renderer);
   await showLoading(app, progress, assetsPromise, loadingBgPromise); // ② 로딩 (남은 진행률)
   const assets = await assetsPromise;
   onHotAssetUpdate((update) => {

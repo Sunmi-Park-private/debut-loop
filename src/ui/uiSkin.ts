@@ -90,13 +90,10 @@ async function loadSlotTexture(slot: UiSkinSlot): Promise<{ tex: Texture; raw: T
   return { tex: trimAlpha(raw), raw };
 }
 
-/** 로딩 게이트에서 뺄 슬롯 — 관문·연습·오디션 아트는 첫 화면(타이틀·로비·스토리)에서 안 쓰여
- *  백그라운드 로드로 충분 (플레이어가 해당 화면에 도달하기 한참 전에 도착) */
-const DEFER_SLOT = /^(gate-|train-|audition-|member-|board-|grade-)/;
-
 /** 게임 에셋 로딩 시 1회 — 스킨 파일 시도 로드 (미업로드는 스킵 → 벡터 폴백).
- *  첫 화면용 이미지만 병렬로 대기하고, 영상(수 MB·canplay 대기)과 후반 화면 아트는
- *  로딩 게이트를 막지 않고 백그라운드 로드 — 도착 전 진입 시엔 해당 슬롯만 폴백 */
+ *  이미지는 관문·연습 아트까지 전부 로딩 게이트에서 대기한다 — 로딩 화면은 진행률 게이지가
+ *  보이는 구간이라 길어져도 낫고, 게임 진행 중 백그라운드 디코딩이 없어 버벅임이 줄어든다.
+ *  영상(수 MB·canplay 대기)만 게이트를 막지 않고 백그라운드 로드 — 도착 전 진입 시엔 폴백 */
 export async function loadUiSkins(onTick?: () => void): Promise<void> {
   await Promise.all(allUiSkinSlots().map(async (slot) => {
     if (!slot.file) { onTick?.(); return; } // 삭제된(빈) 슬롯 — 로드 시도 없음
@@ -107,11 +104,6 @@ export async function loadUiSkins(onTick?: () => void): Promise<void> {
         loaded.set(slot.id, { ...r, slot });
         void import("./editor").then((e) => e.triggerRedraw()); // 영상 도착 → 현재 화면 갱신 (타이틀 등 폴백으로 먼저 뜬 화면 교체)
       }).catch(() => {});
-      return;
-    }
-    if (DEFER_SLOT.test(slot.id)) {
-      onTick?.();
-      void loadSlotTexture(slot).then((r) => loaded.set(slot.id, { ...r, slot })).catch(() => {});
       return;
     }
     try {
@@ -185,6 +177,27 @@ export function skinNatural(id: string, w: number, h: number): Container | null 
   sp.scale.set(us);
   sp.x = (w - hit.tex.width * us) / 2;
   sp.y = (h - hit.tex.height * us) / 2;
+  applyDensity(sp, hit.slot);
+  const wrap = new Container();
+  wrap.addChild(sp);
+  return tagSlot(wrap, id);
+}
+
+/** 여백 잘라 채우기: 아트의 지정 영역(trim, 원본 픽셀 기준)만 박스(w×h)에 딱 맞춘다.
+ *  둘레에 투명 여백이 있는 배경판은 contain-fit으로 넣으면 여백만큼 작게 그려져,
+ *  같은 박스를 줘도 아트마다 창 크기가 달라 보인다. 보이는 판을 박스에 맞추는 용도.
+ *  trim은 호출측이 실측해 넘긴다(아트가 바뀌면 다시 재야 한다). */
+export function skinTrimFill(
+  id: string, w: number, h: number,
+  trim: { x: number; y: number; w: number; h: number },
+): Container | null {
+  const hit = loaded.get(id);
+  if (!hit) return null;
+  // 잘라낸 영역만 가리키는 하위 텍스처를 만들어 박스에 늘린다.
+  // (스프라이트를 음수 좌표로 밀어 넣는 방식은 바운즈가 여백까지 물어 다루기 번거롭다)
+  const src = new Texture({ source: hit.tex.source, frame: new Rectangle(trim.x, trim.y, trim.w, trim.h) });
+  const sp = new Sprite(src);
+  sp.scale.set(w / trim.w, h / trim.h);
   applyDensity(sp, hit.slot);
   const wrap = new Container();
   wrap.addChild(sp);

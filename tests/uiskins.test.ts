@@ -7,12 +7,12 @@ const screens = (uiskins as unknown as { screens: Array<{ id: string; slots: Slo
 const all = screens.flatMap((s) => s.slots);
 
 describe("uiskins.json", () => {
-  it("10화면 · 164슬롯", () => {
+  it("10화면 · 169슬롯", () => {
     expect(screens.length).toBe(10);
-    expect(all.length).toBe(164); // +「가위바위보 상대방 손 프레임」 1슬롯 (2026-08-09)
+    expect(all.length).toBe(169); // +「사이드 팝업 탭별 배경판」 4슬롯 (2026-08-10)
   });
   it("id 유일 + 파일 규약(assets/ui/<id>.*)", () => {
-    expect(new Set(all.map((s) => s.id)).size).toBe(164);
+    expect(new Set(all.map((s) => s.id)).size).toBe(169);
     // file=""은 삭제된(빈) 슬롯 — 에디터 🗑 삭제가 매니페스트를 해제한 정상 상태
     for (const s of all) expect(s.file === "" || s.file.startsWith(`assets/ui/${s.id}.`)).toBe(true);
   });

@@ -81,16 +81,13 @@ export function renderLobbyStatusBar(parent: Container, d: LobbyStatusData): voi
     lbl.y = pLbl.y;
     panel.addChild(lbl);
     editable(`lobby_lbl_${id}`, lbl);
-    // 값: 자본=화폐형(×125), 나머지=nn/100 (큰 수 + 작은 /100) — lobby_val_*로 항목별 에디터 조정 가능
+    // 값: 전 항목 nn/100 (큰 수 + 작은 /100) — lobby_val_*로 항목별 에디터 조정 가능.
+    // 자본도 예외 없이 원값이다 — 예전에 ×125 화폐형으로 찍어 스토리 상태패널(원값)과 숫자가 어긋났다.
     const valC = new Container();
     const pVal = pos(`lobby_val_${id}`, { x: ax(cx), y: ay(VAL_Y) });
     valC.x = pVal.x;
     valC.y = pVal.y;
-    if (id === "capital") {
-      const num = new Text({ text: (v * 125).toLocaleString("en-US"), style: { fontSize: 13, fill: 0x4a3a5e, fontWeight: "bold" } });
-      num.anchor.set(0.5);
-      valC.addChild(num);
-    } else {
+    {
       const num = new Text({ text: String(Math.round(v)), style: { fontSize: 14, fill: 0x4a3a5e, fontWeight: "bold" } });
       num.anchor.set(1, 0.5);
       num.x = 4;

@@ -13,13 +13,31 @@ import { setPos, setStyle, pos, dirtyPos, clearSent, hasEntry, onDirty } from ".
 import { BASE_W, stageTop, stageHeight } from "./stage";
 import { slotIdOf, slotMeta, type UiSkinSlot } from "./uiSkin";
 
-let on = new URLSearchParams(location.search).has("editor");
+let on = typeof location !== "undefined" && new URLSearchParams(location.search).has("editor");
 let redraw: () => void = () => {};
 const visible = new Map<string, Container>();
 // 개발용 검증 훅 — E2E에서 등록된 컴포넌트 목록을 조회 (게임 로직 미사용)
 if (typeof window !== "undefined") {
   (window as unknown as { __layoutKeys?: () => string[] }).__layoutKeys =
     () => [...visible.entries()].map(([k, c]) => `${k}${c.destroyed ? "!d" : ""}${c.parent ? "" : "!p"}`);
+  (window as unknown as { __layoutProbe?: (name: string) => unknown }).__layoutProbe = (name: string) => {
+    const c = visible.get(name);
+    if (!c) return null;
+    const ts = scan(c).texts.map((t) => ({
+      text: String(t.text).slice(0, 40), x: t.x, y: t.y, w: t.width,
+      wrap: t.style.wordWrap, wrapW: t.style.wordWrapWidth, fs: t.style.fontSize,
+      fill: String(t.style.fill), anchorX: t.anchor.x,
+    }));
+    // 어떤 UI 스킨 슬롯이 이 컴포넌트를 그렸는지 — "아트가 연결 안 된 것 같다"를 바로 가릴 수 있게
+    const slots: string[] = [];
+    const walk = (n: Container): void => {
+      const id = slotIdOf(n);
+      if (id) slots.push(id);
+      for (const k of n.children) walk(k);
+    };
+    walk(c);
+    return { x: c.x, y: c.y, w: c.width, visible: c.visible, slots, texts: ts };
+  };
 }
 
 // 같은 레이아웃 키를 여러 자리에서 되풀이해 쓰는 화면이 있다 (카드덱 8칸의 심볼·별·이름…).
@@ -88,7 +106,9 @@ export function setEditorMode(next: boolean): void {
   interact = false; // 에디터를 껐다 켜면 항상 편집 모드부터
   panelEl().style.display = on ? "block" : "none";
   const handled = toggleHook?.(next) ?? false;
-  if (!handled) redraw();
+  // redraw()를 직접 부르면 안 된다 — 판정결과·연습 보드 같은 오버레이가 등록한 redrawHook을
+  // 무시하고 앱 화면을 처음부터 다시 그려, 에디터를 켜는 순간 그 화면이 닫혀버린다(점검 화면으로 리셋).
+  if (!handled) triggerRedraw();
   if (on) { mountShield(); refreshPanel(); }
   else { unmountShield(); unmountGrid(); clearHighlight(); }
   notifyMode();
@@ -175,7 +195,9 @@ function scan(c: Container): Scan {
 export function mutateTextKeepingCenter(t: Text, edit: () => void): void {
   const w0 = t.width, h0 = t.height;
   edit();
-  t.x += (w0 - t.width) / 2;
+  // 가운데 정렬(anchor.x = 0.5)이 켜져 있으면 Pixi가 이미 중심을 잡아 준다 — 여기서 또 밀면 두 번 보정돼
+  // 문구를 고칠수록 왼쪽으로 흘러간다. 앵커 값에 비례한 보정만 남긴다(0 → 절반, 0.5 → 0).
+  t.x += (w0 - t.width) * (0.5 - t.anchor.x);
   t.y += (h0 - t.height) / 2;
 }
 
@@ -215,7 +237,8 @@ const isForced = (name: string): boolean => dynamicText.has(name) && pos(name).t
 /** 이 컴포넌트에 저장된 표시 속성이 하나라도 있는지 */
 function hasOverride(name: string): boolean {
   const e = pos(name);
-  return e.scale !== undefined || e.fontSize !== undefined || e.color !== undefined || e.texts !== undefined;
+  return e.scale !== undefined || e.fontSize !== undefined || e.color !== undefined || e.texts !== undefined
+    || e.hidden !== undefined || e.center !== undefined;
 }
 
 // 덮어쓰기가 걸린 컴포넌트를 매 프레임 다시 입힌다 — 에디터를 꺼도 동작해야 한다
@@ -256,6 +279,8 @@ function pumpStyles(): void {
 
 function applyStoredStyle(name: string, c: Container): void {
   const e = pos(name);
+  c.visible = e.hidden !== true;
+  if (c instanceof Text) c.anchor.x = e.center === true ? 0.5 : 0; // 가운데 정렬 스위치
   if (e.scale !== undefined && e.scale > 0) c.scale.set(e.scale);
   if (e.fontSize === undefined && e.color === undefined && e.texts === undefined) return;
   const { texts } = scan(c);
@@ -268,7 +293,7 @@ function applyStoredStyle(name: string, c: Container): void {
       if (e.fontSize !== undefined && e.fontSize > 0) t.style.fontSize = e.fontSize;
       if (e.color !== undefined) t.style.fill = e.color;
       const ov = textEditable(name) ? e.texts?.[i] : undefined; // 동적 문구는 코드 값을 그대로 둔다
-      if (typeof ov === "string") t.text = ov;
+      if (typeof ov === "string") t.text = ov.replace(/\\n/g, "\n"); // 입력칸의 \n 표기 = 줄바꿈
     };
     if (owns) edit();
     else mutateTextKeepingCenter(t, edit);
@@ -332,6 +357,25 @@ function select(name: string | null): void {
 // ── 실드: 전화면 투명 레이어 — 게임 입력 차단 + 드래그 처리 (끄면 제거 = 원상복구) ──
 let shield: Graphics | null = null;
 
+/** 루트→노드까지의 자식 인덱스 경로 = 실제 렌더 순서. 경로가 큰 쪽이 화면 위에 그려진다.
+ *  겹침 선택·패널 정렬에서 "지금 눈에 보이는 화면"(멤버 보드·판정결과 같은 오버레이)을 우선하기 위한 기준 */
+function orderPath(c: Container): number[] {
+  const path: number[] = [];
+  let n: Container = c;
+  while (n.parent) {
+    path.unshift(n.parent.children.indexOf(n));
+    n = n.parent as Container;
+  }
+  return path;
+}
+function cmpPath(a: number[], b: number[]): number {
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const d = (a[i] ?? -1) - (b[i] ?? -1);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
 function mountShield(): void {
   const first = [...visible.values()].find((c) => !c.destroyed && c.parent);
   if (!first) return;
@@ -355,14 +399,16 @@ function mountShield(): void {
     // 되풀이 인스턴스도 후보에 넣는다 — 두 번째 카드의 심볼을 눌러도 그 조각이 잡히게
     const cands: Array<[string, Container]> = [...visible];
     for (const [name, list] of clones) for (const c of list) cands.push([name, c]);
-    let best: { name: string; c: Container; area: number } | null = null;
+    let best: { name: string; c: Container; path: number[] } | null = null;
     for (const [name, c] of cands) {
       if (c.destroyed || !c.parent) continue;
       const b = c.getBounds();
       if (b.width <= 0 || b.height <= 0) continue;
       if (e.globalX < b.x || e.globalX > b.x + b.width || e.globalY < b.y || e.globalY > b.y + b.height) continue;
-      const area = b.width * b.height;
-      if (!best || area < best.area) best = { name, c, area };
+      const path = orderPath(c);
+      // 렌더 순서상 위(지금 보이는 오버레이·안쪽 조각) 우선 — 아래 화면의 가려진 조각이 잡히지 않게.
+      // 같은 부모 아래 형제끼리 겹치면(예: 배경판 위 텍스트) 위에 그려진 쪽이 곧 눈에 보이는 쪽이다.
+      if (!best || cmpPath(path, best.path) > 0) best = { name, c, path };
     }
     target = best;
     if (!best) return;
@@ -540,7 +586,13 @@ async function flushSave(): Promise<void> {
   setStatus(`저장 중… (${n}개)`);
   try {
     const r = await fetch("/__layout", { method: "POST", body: JSON.stringify(changed) });
-    if (!r.ok) { setStatus(`❌ 저장 실패 — ${await r.text()}`); retryPending = true; return; }
+    if (!r.ok) {
+      // 4xx = 서버가 이 패치를 거절한 것(알 수 없는 필드 등) — 다시 보내도 결과가 같다.
+      // 재시도를 걸면 600ms마다 "편집 중…"↔"저장 실패"가 무한히 깜빡이며 원인도 가려진다.
+      setStatus(`❌ 저장 실패 — ${await r.text()}`);
+      retryPending = r.status >= 500;
+      return;
+    }
     clearSent(changed); // 보낸 필드만 비운다 — 전송 중 새로 들어온 편집은 남겨 다음 저장에 실린다
     const t = new Date();
     const pad = (v: number): string => String(v).padStart(2, "0");
@@ -574,8 +626,10 @@ function flushBeacon(): void {
   const body = new Blob([JSON.stringify(changed)], { type: "application/json" });
   if (navigator.sendBeacon("/__layout", body)) clearSent(changed);
 }
-window.addEventListener("beforeunload", flushBeacon);
-window.addEventListener("pagehide", flushBeacon);
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", flushBeacon);
+  window.addEventListener("pagehide", flushBeacon);
+}
 if (import.meta.hot) {
   // vite가 모듈을 갈아끼우거나 새로고침하기 직전 — 저장되지 않은 편집을 먼저 보낸다
   import.meta.hot.on("vite:beforeFullReload", flushBeacon);
@@ -664,7 +718,11 @@ function refreshPanel(): void {
       "<b>`</b> 또는 여기를 눌러 조작으로 (화면 진행)</span>";
   mode.onclick = () => setInteractMode(!interact);
   head.appendChild(mode); // 모드 토글도 머리말에 — 자주 오가는 컨트롤이라 항상 손에 닿아야 한다
-  const rows = [...visible].filter(([, c]) => !c.destroyed && c.parent); // 화면에 남아있는 것만
+  // 화면에 남아있는 것만 — 위 레이어(오버레이: 멤버 보드·판정결과 등)가 목록 상단에 오도록 정렬.
+  // 안 하면 뒤에 깔린 스토리 화면 컴포넌트들이 먼저 등록된 순서대로 위를 차지해, 지금 보이는
+  // 오버레이 화면의 컴포넌트가 목록 맨 아래 묻혀 "안 나오는" 것처럼 보인다.
+  const rows = [...visible].filter(([, c]) => !c.destroyed && c.parent)
+    .sort((a, b) => cmpPath(orderPath(b[1]), orderPath(a[1]))); // 렌더 순서 역순 = 눈에 보이는 위 화면부터
   if (rows.length === 0) {
     const empty = document.createElement("div");
     empty.style.cssText = "margin:8px 0 4px;font-size:11.5px;color:#a99bc0;line-height:1.6";
@@ -826,6 +884,59 @@ function buildRow(name: string, c: Container): HTMLDivElement {
     wrap.appendChild(line);
   }
 
+  // 숨김 — 다른 컴포넌트(배경판 아트 등)가 대신하게 된 폴백 조각을 지우지 않고 끌 때 쓴다.
+  {
+    const line = document.createElement("div");
+    line.style.cssText = "display:flex;gap:5px;align-items:center;margin-top:3px;padding-left:2px";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = pos(name).hidden === true;
+    cb.style.cssText = "accent-color:#ff7fb0;cursor:pointer";
+    const lbl = document.createElement("label");
+    lbl.textContent = "숨김";
+    lbl.style.cssText = "font-size:10.5px;color:#a99bc0;cursor:pointer";
+    lbl.onclick = () => cb.click();
+    cb.onchange = () => {
+      ensureCoords(name, c);
+      setStyle(name, { hidden: cb.checked || undefined });
+      markStyled(name);
+      c.visible = !cb.checked;
+    };
+    line.append(cb, lbl);
+    wrap.appendChild(line);
+  }
+
+  // 가운데 정렬 — 켜면 저장 x가 글자 중심을 뜻해, 문구 길이가 달라져도 그 자리에 머문다.
+  // 버튼 문구처럼 게임마다 라벨 길이가 다른 곳에 쓴다. 켜고 끌 때 좌표를 환산해 문구가 움직이지 않게 한다.
+  if (info.texts.length > 0 && c instanceof Text) {
+    const line = document.createElement("div");
+    line.style.cssText = "display:flex;gap:5px;align-items:center;margin-top:3px;padding-left:2px";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = pos(name).center === true;
+    cb.style.cssText = "accent-color:#ff7fb0;cursor:pointer";
+    const lbl = document.createElement("label");
+    lbl.textContent = "가운데 정렬";
+    lbl.style.cssText = "font-size:10.5px;color:#a99bc0;cursor:pointer";
+    lbl.onclick = () => cb.click();
+    cb.onchange = () => {
+      // 앵커가 바뀌면 같은 x가 다른 자리를 뜻한다 — 지금 보이는 위치를 유지하도록 x를 환산한다
+      const half = c.width / 2;
+      const nx = Math.round(cb.checked ? c.x + half : c.x - half);
+      // 되풀이 인스턴스(editableClone)도 함께 — applyStoredStyle은 앵커만 입히고 x는 건드리지 않으므로,
+      // 여기서 빠뜨린 사본은 앵커만 바뀌어 제 폭의 절반만큼 밀린다
+      for (const t of instancesOf(name)) {
+        if (t instanceof Text) t.anchor.x = cb.checked ? 0.5 : 0;
+        t.x = nx;
+      }
+      setPos(name, { x: nx, y: Math.round(c.y) });
+      setStyle(name, { center: cb.checked || undefined });
+      markStyled(name);
+    };
+    line.append(cb, lbl);
+    wrap.appendChild(line);
+  }
+
   // 이미지·영상이 들어있으면 배율 — 텍스트만 있는 컴포넌트는 폰트 크기로 조절하므로 제외.
   // 버튼처럼 아트+라벨이 섞인 컴포넌트는 둘 다 노출한다(배율은 라벨까지 함께 커진다).
   if (info.hasVisual) {
@@ -963,13 +1074,14 @@ function buildTextInput(name: string, c: Container, info: Scan, idx: number, t: 
   row.style.cssText = "display:flex;gap:5px;align-items:center;flex:1;min-width:0;margin-top:3px";
   const inp = document.createElement("input");
   inp.type = "text";
-  inp.value = String(t.text);
+  inp.value = String(t.text).replace(/\n/g, "\\n"); // 실제 줄바꿈은 \n 표기로 보여준다 (한 줄 입력칸)
+  inp.title = "\\n 입력 = 줄바꿈";
   inp.style.cssText =
     "flex:1;min-width:0;padding:3px 6px;border:1px solid #ece4f4;border-radius:6px;" +
     "font:11.5px -apple-system,sans-serif;color:#5b4a70";
   // 실시간 반영 — 한 글자마다 화면과 layout 메모리에 쓴다 (파일 저장은 자동/💾)
   inp.oninput = () => {
-    mutateTextKeepingCenter(t, () => { t.text = inp.value; }); // 중심 유지 — 좌우로 밀리지 않게
+    mutateTextKeepingCenter(t, () => { t.text = inp.value.replace(/\\n/g, "\n"); }); // \n 표기 = 줄바꿈, 중심 유지
     const arr: Array<string | null> = [...(pos(name).texts ?? [])];
     while (arr.length < info.texts.length) arr.push(null);
     arr[idx] = inp.value;

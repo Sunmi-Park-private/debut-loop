@@ -1,5 +1,6 @@
 // tools/editorHub.ts — 에디터 통합 허브 (dev 전용, editor.html).
 // 새 에디터를 만들면 EDITORS 배열에 한 줄 추가하면 된다.
+import qrcode from "qrcode-generator";
 import { bgManifest } from "../ui/bgSlots";
 import { allUiSkinSlots } from "../ui/uiSkin";
 import { bgmTracks } from "../ui/audio";
@@ -51,6 +52,10 @@ root.innerHTML = `
           title="치트 메뉴(⚙) 포함 — 팀 테스트용"
           onmouseenter="this.style.borderColor='#8fe3b0'" onmouseleave="this.style.borderColor='#3a2555'">🤖 APK · 디버그<br/>
           <small id="apk-info" style="color:#8a76a8;font-weight:400;font-size:11px"></small></a>
+        <div id="apk-qr" style="display:none;text-align:center;background:#241539;border:2px solid #3a2555;border-radius:14px;padding:10px 12px">
+          <div id="apk-qr-img" style="line-height:0"></div>
+          <small style="color:#8a76a8;font-size:10px">폰 카메라로 스캔<br/>디버그 APK 받기</small>
+        </div>
         <a id="apkr-dl" href="/__apkrelease" style="display:none;text-align:center;background:#241539;border:2px solid #3a2555;border-radius:14px;padding:12px 18px;text-decoration:none;color:#ffd98a;font-weight:800;font-size:13px"
           title="치트 메뉴 제외 — 제출·외부 공유용 (디버그 키 서명이라 사이드로드 설치 가능)"
           onmouseenter="this.style.borderColor='#ffd98a'" onmouseleave="this.style.borderColor='#3a2555'">📦 APK · 릴리즈<br/>
@@ -71,16 +76,30 @@ const fmtTime = (mtime: number): string => {
   const pad = (n: number): string => String(n).padStart(2, "0");
   return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
-const showApk = (route: string, infoId: string, dlId: string, suffix: string): void => {
+const showApk = (route: string, infoId: string, dlId: string, suffix: string, after?: () => void): void => {
   void fetch(`${route}?info`).then(async (r) => {
     if (!r.ok) return; // 빌드 없음 → 버튼 숨김 유지
     const { size, mtime } = (await r.json()) as { size: number; mtime: number };
     (document.getElementById(infoId) as HTMLElement).textContent =
       `${fmtTime(mtime)} · ${Math.round(size / 1024 / 1024)}MB${suffix}`;
     (document.getElementById(dlId) as HTMLElement).style.display = "block";
+    after?.();
   }).catch(() => {});
 };
-showApk("/__apk", "apk-info", "apk-dl", " · 치트 포함");
+// 디버그 APK QR — 폰에서 케이블 없이 바로 받기. 주소는 지금 접속한 origin 기준이라
+// 로컬(localhost)이든 터널(trycloudflare)이든 그 자리에서 맞는 링크가 나온다.
+// localhost는 폰에서 열리지 않으므로 QR을 띄우지 않는다 (터널 주소로 접속해야 의미가 있다)
+const showApkQr = (): void => {
+  const host = location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") return;
+  const qr = qrcode(0, "M"); // 0=버전 자동 · M=중간 오류정정 (인쇄 아닌 화면 스캔에 충분)
+  qr.addData(`${location.origin}/__apk`);
+  qr.make();
+  (document.getElementById("apk-qr-img") as HTMLElement).innerHTML = qr.createImgTag(4, 0);
+  (document.getElementById("apk-qr") as HTMLElement).style.display = "block";
+};
+
+showApk("/__apk", "apk-info", "apk-dl", " · 치트 포함", showApkQr);
 showApk("/__apkrelease", "apkr-info", "apkr-dl", " · 치트 제외");
 void fetch("/__ioszip?info").then(async (r) => {
   if (!r.ok) return;

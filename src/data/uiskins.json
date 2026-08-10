@@ -6,6 +6,17 @@
       "label": "타이틀 화면",
       "slots": [
         {
+          "id": "title-end-restart",
+          "label": "엔딩 버튼 · 처음부터 (트루 엔딩 영상 위) — 1배율=원본 크기",
+          "file": "assets/ui/title-end-restart.webp",
+          "size": [
+            300,
+            56
+          ],
+          "mode": "stretch",
+          "natural": true
+        },
+        {
           "id": "title-hero",
           "label": "게임 타이틀 + 시작 버튼 통짜 (🎬 영상 · 화면 전체 cover · 권장 1080×2400)",
           "file": "assets/ui/title-hero.mp4",
@@ -29,7 +40,7 @@
           "file": "",
           "size": [
             394,
-            600
+            700
           ],
           "mode": "9slice",
           "slice": 24,
@@ -238,11 +249,10 @@
           "file": "assets/ui/side-panel.webp",
           "size": [
             320,
-            420
+            569
           ],
           "mode": "9slice",
-          "slice": 24,
-          "dom": true
+          "slice": 24
         },
         {
           "id": "side-close-x",
@@ -252,8 +262,7 @@
             26,
             26
           ],
-          "mode": "stretch",
-          "dom": true
+          "mode": "stretch"
         },
         {
           "id": "side-title-bar",
@@ -264,8 +273,47 @@
             34
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
+        },
+        {
+          "id": "side-daily-bg",
+          "label": "데일리 보너스 · 배경판 — 원본 비율 유지",
+          "file": "assets/ui/side-daily-bg.webp",
+          "size": [
+            360,
+            621
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "side-album-bg",
+          "label": "포토앨범 · 배경판 — 원본 비율 유지",
+          "file": "",
+          "size": [
+            360,
+            664
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "side-shop-bg",
+          "label": "상점 · 배경판 — 원본 비율 유지",
+          "file": "",
+          "size": [
+            360,
+            362
+          ],
+          "mode": "stretch"
+        },
+        {
+          "id": "side-settings-bg",
+          "label": "설정 · 배경판 — 원본 비율 유지",
+          "file": "assets/ui/side-settings-bg.webp",
+          "size": [
+            360,
+            640
+          ],
+          "mode": "stretch"
         },
         {
           "id": "side-daily-cell-done",
@@ -276,8 +324,7 @@
             62
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
         },
         {
           "id": "side-daily-cell-today",
@@ -288,8 +335,7 @@
             62
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
         },
         {
           "id": "side-daily-cell-lock",
@@ -300,8 +346,7 @@
             62
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
         },
         {
           "id": "side-album-cell-got",
@@ -312,8 +357,7 @@
             92
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
         },
         {
           "id": "side-album-cell-lock",
@@ -324,8 +368,7 @@
             92
           ],
           "mode": "9slice",
-          "slice": 12,
-          "dom": true
+          "slice": 12
         },
         {
           "id": "side-shop-row",
@@ -336,8 +379,7 @@
             62
           ],
           "mode": "9slice",
-          "slice": 14,
-          "dom": true
+          "slice": 14
         },
         {
           "id": "side-shop-btn-buy",
@@ -348,8 +390,7 @@
             32
           ],
           "mode": "9slice",
-          "slice": 10,
-          "dom": true
+          "slice": 10
         },
         {
           "id": "side-shop-coin",
@@ -359,8 +400,7 @@
             18,
             18
           ],
-          "mode": "stretch",
-          "dom": true
+          "mode": "stretch"
         }
       ]
     },
@@ -530,7 +570,7 @@
           "file": "assets/ui/train-panel.webp",
           "size": [
             394,
-            612
+            700
           ],
           "mode": "stretch",
           "opacity": -0.5
@@ -1076,10 +1116,10 @@
         {
           "id": "gate-panel",
           "label": "공통 · 관문 패널 프레임 (배경 이미지 없을 때)",
-          "file": "assets/ui/gate-panel.png",
+          "file": "assets/ui/gate-panel.webp",
           "size": [
             394,
-            600
+            700
           ],
           "mode": "9slice",
           "slice": 24
@@ -1793,14 +1833,15 @@
         {
           "id": "audition-btn-sub",
           "label": "버튼 · 보조 (보류·돌아가기) — 1배율=원본 크기",
-          "file": "assets/ui/audition-btn-sub.png",
+          "file": "assets/ui/audition-btn-sub.webp",
           "size": [
             220,
             52
           ],
           "mode": "stretch",
           "small": true,
-          "natural": true
+          "natural": true,
+          "scale": 0.44
         },
         {
           "id": "audition-btn-ok",
@@ -1895,7 +1936,7 @@
         {
           "id": "audition-card",
           "label": "후보 결과 카드 — 원본 비율 유지",
-          "file": "assets/ui/audition-card.webp",
+          "file": "",
           "size": [
             180,
             200
@@ -1913,7 +1954,8 @@
           ],
           "mode": "stretch",
           "small": true,
-          "natural": true
+          "natural": true,
+          "scale": 0.44
         }
       ]
     }

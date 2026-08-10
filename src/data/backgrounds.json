@@ -104,6 +104,12 @@
       "file": "assets/bg/loading.mp4",
       "frameMs": 125,
       "vid": true
+    },
+    {
+      "id": "true-ending",
+      "label": "트루 엔딩 영상 (🎬 mp4 · 화면 전체 · 위에 처음부터 버튼)",
+      "file": "assets/bg/true-ending.mp4",
+      "vid": true
     }
   ]
 }

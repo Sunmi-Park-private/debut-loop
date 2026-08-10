@@ -15,12 +15,27 @@ export interface Pos {
   scale?: number; fontSize?: number; color?: string;
   texts?: Array<string | null>;
   textForce?: boolean;
+  hidden?: boolean; // 배경판 아트 업로드로 필요 없어진 폴백 프레임 등을 화면에서 끄기 위한 스위치
+  center?: boolean; // 켜면 저장 x가 "글자 왼쪽 끝"이 아니라 "글자 중심" — 문구 길이가 달라도 자리가 유지된다
 }
 
 const layout: Record<string, Pos> = { ...(layoutJson as Record<string, Pos>) };
 
 // 이번 세션에 건드린 키 → 건드린 속성 이름 (부팅 동기화가 덮지 않도록 먼저 선언한다)
 const dirty = new Map<string, Set<string>>();
+
+// 공용 키에서 통째로 승계해 메모리에만 채워 둔 키 (아직 layout.json에는 없다)
+const inherited = new Set<string>();
+
+/** 키를 관문별로 나눈 컴포넌트가, 제 이름의 저장값이 아직 없을 때 공용 키의 항목을 통째로 승계한다.
+ *  x/y만 물려받으면 배율·색·문구 같은 표시 속성이 빠져 분리 직후 화면이 달라진다.
+ *  **읽기 전용 승계** — dirty로 표시하지 않으므로 저장 파일에는 복사본이 생기지 않는다.
+ *  (에디터로 실제 편집하는 순간에만 mark()가 제 이름으로 굳힌다) */
+export function inheritEntry(name: string, from: string): void {
+  if (layout[name] !== undefined || layout[from] === undefined) return;
+  layout[name] = { ...layout[from] };
+  inherited.add(name);
+}
 
 // dev 서버는 layout.json을 감시 대상에서 빼두었다(저장할 때마다 게임이 리로드되면 런이 날아가므로).
 // 그 탓에 Vite가 옛 모듈을 물고 있는 구간이 생기고, 새로고침하면 저장한 좌표가 아니라
@@ -31,11 +46,20 @@ if (import.meta.hot) {
     .then((disk) => {
       if (!disk) return;
       let n = 0;
+      // 디스크에서 지워진 키(초기화 등)도 반영 — 덮어쓰기만 하면 옛 모듈의 삭제된 키가 살아남아
+      // "초기화해도 리로드하면 옛 좌표로 되돌아오는" 것처럼 보인다. 디스크가 유일한 진실이다.
+      for (const k of Object.keys(layout)) {
+        if (dirty.has(k) || k in disk) continue;
+        delete layout[k];
+        inherited.delete(k); // 승계본은 다음 렌더에서 다시 채워진다
+        n++;
+      }
       for (const [k, v] of Object.entries(disk)) {
         // 이번 세션에 이미 편집한 키는 건드리지 않는다 — 디스크 값이 더 낡았을 수 있다
         if (dirty.has(k)) continue;
         if (JSON.stringify(layout[k]) !== JSON.stringify(v)) n++;
         layout[k] = v;
+        inherited.delete(k); // 디스크에 제 항목이 있으면 더는 승계본이 아니다
       }
       if (n > 0) void import("./editor").then((e) => e.triggerRedraw());
     })
@@ -53,6 +77,10 @@ export function onDirty(cb: () => void): void { dirtyCb = cb; }
 
 function mark(name: string, fields: string[]): void {
   const s = dirty.get(name) ?? new Set<string>();
+  // 승계로 채워진 항목을 처음 편집하면, 그 항목 전체(좌표+표시 속성)를 제 이름으로 굳힌다.
+  // 고친 속성만 저장하면 x/y 없는 반쪽 항목이 남아 다음 부팅에 좌표가 깨지고,
+  // 승계로만 들고 있던 나머지 속성(배율·색 등)도 함께 사라진다.
+  if (inherited.delete(name)) for (const f of Object.keys(layout[name] ?? {})) s.add(f);
   for (const f of fields) s.add(f);
   dirty.set(name, s);
   dirtyCb?.();
@@ -72,7 +100,7 @@ export function setPos(name: string, p: Pos): void {
 export function setStyle(name: string, patch: Partial<Omit<Pos, "x" | "y">>): void {
   const cur = layout[name] ?? { x: 0, y: 0 };
   const next: Pos = { ...cur, ...patch };
-  for (const k of ["scale", "fontSize", "color", "texts", "textForce"] as const) {
+  for (const k of ["scale", "fontSize", "color", "texts", "textForce", "hidden", "center"] as const) {
     if (patch[k] === undefined && k in patch) delete next[k];
   }
   // 전부 null인 덮어쓰기 배열은 의미가 없으니 키째 제거 (저장 파일이 지저분해지지 않게)
