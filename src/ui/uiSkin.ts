@@ -90,13 +90,10 @@ async function loadSlotTexture(slot: UiSkinSlot): Promise<{ tex: Texture; raw: T
   return { tex: trimAlpha(raw), raw };
 }
 
-/** 로딩 게이트에서 뺄 슬롯 — 관문·연습·오디션 아트는 첫 화면(타이틀·로비·스토리)에서 안 쓰여
- *  백그라운드 로드로 충분 (플레이어가 해당 화면에 도달하기 한참 전에 도착) */
-const DEFER_SLOT = /^(gate-|train-|audition-|member-|board-|grade-)/;
-
 /** 게임 에셋 로딩 시 1회 — 스킨 파일 시도 로드 (미업로드는 스킵 → 벡터 폴백).
- *  첫 화면용 이미지만 병렬로 대기하고, 영상(수 MB·canplay 대기)과 후반 화면 아트는
- *  로딩 게이트를 막지 않고 백그라운드 로드 — 도착 전 진입 시엔 해당 슬롯만 폴백 */
+ *  이미지는 관문·연습 아트까지 전부 로딩 게이트에서 대기한다 — 로딩 화면은 진행률 게이지가
+ *  보이는 구간이라 길어져도 낫고, 게임 진행 중 백그라운드 디코딩이 없어 버벅임이 줄어든다.
+ *  영상(수 MB·canplay 대기)만 게이트를 막지 않고 백그라운드 로드 — 도착 전 진입 시엔 폴백 */
 export async function loadUiSkins(onTick?: () => void): Promise<void> {
   await Promise.all(allUiSkinSlots().map(async (slot) => {
     if (!slot.file) { onTick?.(); return; } // 삭제된(빈) 슬롯 — 로드 시도 없음
@@ -107,11 +104,6 @@ export async function loadUiSkins(onTick?: () => void): Promise<void> {
         loaded.set(slot.id, { ...r, slot });
         void import("./editor").then((e) => e.triggerRedraw()); // 영상 도착 → 현재 화면 갱신 (타이틀 등 폴백으로 먼저 뜬 화면 교체)
       }).catch(() => {});
-      return;
-    }
-    if (DEFER_SLOT.test(slot.id)) {
-      onTick?.();
-      void loadSlotTexture(slot).then((r) => loaded.set(slot.id, { ...r, slot })).catch(() => {});
       return;
     }
     try {

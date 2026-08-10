@@ -64,17 +64,19 @@ async function main(): Promise<void> {
   initGameCheats(); // 게임 치트(관문 숏컷 포함) — 로비 치트 목록에도 항상 표시 (게임 밖에선 안내)
   initAudioUnlock(); // 첫 제스처에서 재생 언락 (자동재생 정책)
 
-  // 무거운 에셋은 프롤로그 뒤에서 백그라운드 로딩 시작 (로딩 화면 배경은 별도 선로드)
+  // 프롤로그·로딩 화면 배경만 먼저 — 이 둘은 부트 첫 화면이라 기다릴 수 없다
   const progress = { done: 0, total: 1 };
   const loadingBgPromise = loadLoadingBg();
   const prologueBgPromise = loadPrologueBg(); // 프롤로그 배경 — 기다리지 않고 도착 시 반영
-  const assetsPromise = loadGameAssets((d, t) => { progress.done = d; progress.total = t; }, app.renderer);
 
   // E2E 테스트용 씬 마커 — 현재 부트 단계 노출 (게임 로직에선 미사용)
   const mark = (s: string): void => { (window as unknown as { __scene?: string }).__scene = s; };
   mark("prologue");
   await playPrologue(app, prologueBgPromise);           // ① 프롤로그 (경량, 즉시)
   mark("loading");
+  // 무거운 에셋은 로딩 화면에 들어와서야 시작 — 프롤로그 재생과 겹치면 디코딩 부하로 영상이 끊긴다.
+  // 로딩이 길어져도 진행률 게이지가 보이는 구간이므로 체감이 낫다
+  const assetsPromise = loadGameAssets((d, t) => { progress.done = d; progress.total = t; }, app.renderer);
   await showLoading(app, progress, assetsPromise, loadingBgPromise); // ② 로딩 (남은 진행률)
   const assets = await assetsPromise;
   onHotAssetUpdate((update) => {
