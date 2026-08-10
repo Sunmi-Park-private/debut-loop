@@ -30,13 +30,8 @@ async function main(): Promise<void> {
   // 남는 자리는 CSS가 레터박스로 처리한다. 이렇게 하지 않으면 캔버스가 아트보다 넓어져
   // cover가 아트 상하를 잘라낸다(430×800일 때 상하 각 78px — 타이틀 로고가 날아감).
   const ART_H = 956; // 430 × 2400/1080
-  // 실제로 그릴 수 있는 영역 — viewport-fit=cover라 화면 끝(노치·둥근 모서리 아래)까지
-  // innerWidth에 포함된다. 그대로 쓰면 좌우 끝이 모서리에 깎여 보인다.
-  // #app에 안전영역 패딩을 주고, 그 안쪽 크기(clientWidth/Height)로 배율을 잡는다.
-  let viewW = window.innerWidth;
-  let viewH = window.innerHeight;
-  const fitScale = (): number => Math.min(viewW / 430, viewH / ART_H);
-  const logicalH = (): number => Math.max(ART_H, Math.round(viewH / fitScale()));
+  const fitScale = (): number => Math.min(window.innerWidth / 430, window.innerHeight / ART_H);
+  const logicalH = (): number => Math.max(ART_H, Math.round(window.innerHeight / fitScale()));
   const app = new Application();
   await app.init({
     width: 430,
@@ -51,14 +46,10 @@ async function main(): Promise<void> {
   const el = document.getElementById("app");
   if (!el) throw new Error("#app not found");
   el.appendChild(app.canvas);
-  el.style.cssText = "display:flex;align-items:center;justify-content:center;width:100vw;height:100vh;"
-    + "overflow:hidden;box-sizing:border-box;"
-    // 안전영역 + 최소 4px — 인셋을 0으로 보고하는 기기(둥근 모서리만 있는 폰)에서도 끝이 안 깎이게
-    + "padding:max(env(safe-area-inset-top),0px) max(env(safe-area-inset-right),4px)"
-    + " max(env(safe-area-inset-bottom),0px) max(env(safe-area-inset-left),4px)";
+  // 여백은 두지 않는다 — 안전영역 패딩(좌우 4·12px)을 넣어 봤지만 실기에서 좌우 잘림은
+  // 그대로면서 화면만 작아지고 상하까지 잘렸다. 잘림의 원인이 캔버스 넘침이 아니라는 뜻.
+  el.style.cssText = "display:flex;align-items:center;justify-content:center;width:100vw;height:100vh;overflow:hidden";
   const fit = (): void => {
-    viewW = el.clientWidth || window.innerWidth;
-    viewH = el.clientHeight || window.innerHeight;
     const s = fitScale();
     const lh = logicalH();
     app.renderer.resize(430, lh);

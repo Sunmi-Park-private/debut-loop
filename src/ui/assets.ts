@@ -71,9 +71,26 @@ export type AssetProgress = (done: number, total: number) => void;
 
 const EMPTY: CharAssets = { bust: null, daily: null, dailyFrames: [], stage: null, stageFrames: [], practiceFrames: [], practiceVids: [], stand: null, idleFrames: [], idleFps: 10, bustIdleFrames: [], profileFace: null, tiltLeft: [], tiltRight: [], scaleOf: () => 1 };
 
+// 동시 로드 상한 — 부팅 때 캐릭터 시퀀스·표정·관문 배경·UI 스킨 수백 장을 한꺼번에
+// 요청하던 것이 폰에서 문제였다. 요청은 큐로 흘려보내 **피크**를 낮춘다.
+// (전체 로딩 시간은 거의 같다 — 디코딩이 몰리지 않아 오히려 체감이 낫다)
+const LOAD_LIMIT = 6;
+let inFlight = 0;
+const waiting: Array<() => void> = [];
+async function acquire(): Promise<void> {
+  if (inFlight < LOAD_LIMIT) { inFlight++; return; }
+  await new Promise<void>((res) => waiting.push(res));
+  inFlight++;
+}
+function release(): void {
+  inFlight--;
+  waiting.shift()?.();
+}
+
 /** 개별 파일 시도 로드 — 404 등 실패는 null (플레이스홀더 폴백) */
 async function tryLoad(url: string | undefined): Promise<Texture | null> {
   if (!url) return null;
+  await acquire();
   try {
     const resolved = assetUrl(url) ?? url;
     // 비디오는 Pixi 기본 로더가 WebKit에서 영원히 pending — Safari-safe 커스텀 로더 사용
@@ -81,6 +98,8 @@ async function tryLoad(url: string | undefined): Promise<Texture | null> {
     return await Assets.load<Texture>(resolved);
   } catch {
     return null;
+  } finally {
+    release();
   }
 }
 
