@@ -1558,9 +1558,9 @@
     "y": 160
   },
   "doom_end_action": {
-    "x": 110,
+    "x": 100,
     "y": 430,
-    "scale": 0.55
+    "scale": 0.65
   },
   "doom_end_body_text": {
     "x": 115,
